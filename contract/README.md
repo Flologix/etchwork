@@ -107,7 +107,11 @@ python3 -m pytest contract/tests -q     # host: pure tests; pcbnew tests skip
 There is no golden reference board (the seed design has no licence, so none
 is vendored). Trust in the grader rests on **mutation fixtures**: a clean board
 that passes every clause, and one mutant per clause that fails that clause and
-no other.
+no other. Adversarial variants, named `<clause>--<case>`, each script one way
+the grader could be fooled into a false pass (a capacitor beside the
+transmitter rather than the encoder, a resistor touching the LED's net but not
+in series with it, a connector in place of a switch, an auto-named net) and
+must likewise fail their named clause and no other.
 
 ## Stated limits
 
