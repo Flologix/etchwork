@@ -1,0 +1,129 @@
+# keyfob-base: the CONTRACT clause list for a two-button 433 MHz learning-code
+# keyfob. HELD OUT: never shown to the agent. Derivation, supplied-vs-withheld
+# numbers and dropped clauses are in provenance.md. Every clause is a range or
+# a relation, never a comparison with the reference (design spec §3.2).
+
+# --- parts: allowlists, never exact library ids (spec §5.1) ------------------
+# Identity clauses use the strict aliases. Topology clauses find the same parts
+# by reference designator, so a part outside an allowlist fails its identity
+# clause and nothing else.
+
+[parts.coincell]
+lib_id = ["(?i)2032"]
+
+[parts.encoder]
+value = ["(?i)(1527|2260|2262|5262|HT12E|HT6P20)"]
+
+[parts.button]
+lib_id = ["(?i)^Button_Switch_(SMD|THT):(?!SW_DIP)", "(?i)(SW_Push|tact|PTS[0-9])"]
+
+[parts.led]
+lib_id = ["(?i)LED"]
+
+[parts.battery_ref]
+ref = ["^BT[0-9]+$"]
+
+[parts.ic_ref]
+ref = ["^U[0-9]+$"]
+
+[parts.switch_ref]
+ref = ["^(SW|S|BTN)[0-9]+$"]
+
+[parts.led_ref]
+ref = ["^(D|LED)[0-9]+$"]
+
+# --- nets: by function, not by name (spec §5.2) ------------------------------
+
+[nets.supply]
+words = ["VCC", "VDD", "VBAT", "BAT+", "BATT+", "+3V", "+3V0", "+3V3"]
+
+[nets.ground]
+words = ["GND", "VSS", "0V"]
+
+[nets.enc_vdd]
+part = "ic_ref"
+words = ["VDD", "VCC"]
+
+[nets.enc_osc]
+part = "ic_ref"
+words = ["OSC", "OSC1", "OSCI", "ROSC"]
+
+[nets.enc_data]
+part = "ic_ref"
+words = ["K0", "K1", "K2", "K3", "D0", "D1", "D2", "D3"]
+
+[nets.batt_pos]
+part = "battery_ref"
+words = ["+", "POS", "BAT+", "BATT+", "VBAT"]
+
+# Every net on the LED; led_limit excludes supply and ground from it.
+[nets.led_nets]
+part = "led_ref"
+
+# --- clauses ------------------------------------------------------------------
+
+[[clause]]
+id = "envelope"
+statement = "Board outline fits within 37.0 x 23.4 mm (+0.2 mm), either orientation."
+checker = "outline_within"
+args = { width_mm = 37.0, height_mm = 23.4, tolerance_mm = 0.2 }
+
+[[clause]]
+id = "coincell"
+statement = "A CR2032-class coin-cell holder is present."
+checker = "part_present"
+args = { part = "coincell" }
+
+[[clause]]
+id = "encoder"
+statement = "An OOK/ASK remote-control encoder IC is present."
+checker = "part_present"
+args = { part = "encoder" }
+
+[[clause]]
+id = "buttons"
+statement = "Two momentary SPST push switches are present."
+checker = "part_present"
+args = { part = "button", count = 2 }
+
+[[clause]]
+id = "led"
+statement = "An LED is present."
+checker = "part_present"
+args = { part = "led" }
+
+[[clause]]
+id = "rosc"
+statement = "A 300k-430k resistor connects the encoder's oscillator pin to the supply."
+checker = "series_part_between"
+args = { net_a = "enc_osc", net_b = "supply", kind = "R", min = 300e3, max = 430e3 }
+
+[[clause]]
+id = "led_limit"
+statement = "A 470R-4.7k resistor is in series with the LED."
+checker = "series_part_between"
+args = { net_a = "led_nets", exclude = ["supply", "ground"], kind = "R", min = 470.0, max = 4700.0 }
+
+[[clause]]
+id = "decoupling"
+statement = "A capacitor of at least 10 nF sits within 3 mm of the encoder's supply pin."
+checker = "decoupling_near"
+args = { pin = "enc_vdd", ground = "ground", min_farads = 10e-9, max_mm = 3.0 }
+
+[[clause]]
+id = "btn_inputs"
+statement = "Each switch reaches a distinct encoder data input."
+checker = "net_connects"
+args = { each_part = "switch_ref", net_b = "enc_data", distinct = true }
+
+[[clause]]
+id = "btn_not_shorted"
+statement = "No encoder data input is tied to the supply net."
+checker = "no_short"
+args = { net_a = "enc_data", net_b = "supply" }
+
+[[clause]]
+id = "batt_supply"
+statement = "The coin-cell holder's positive terminal reaches the encoder's supply pin."
+checker = "net_connects"
+args = { net_a = "batt_pos", net_b = "enc_vdd" }
