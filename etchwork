@@ -14,6 +14,7 @@ case "$cmd" in
   build)  exec "$ETCHWORK_ROOT/libexec/build.sh" "$@" ;;
   test)   exec "$ETCHWORK_ROOT/libexec/test.sh" "$@" ;;
   job)    exec "$ETCHWORK_ROOT/libexec/job.sh" "$@" ;;
+  contract) exec "$ETCHWORK_ROOT/libexec/contract.sh" "$@" ;;
   runner) sub="${1:-}"; [ $# -gt 0 ] && shift
           [ "$sub" = build ] || { echo "usage: etchwork runner build [--agent-bin <path>]" >&2; exit 2; }
           exec "$ETCHWORK_ROOT/libexec/runner-build.sh" "$@" ;;
@@ -28,6 +29,11 @@ etchwork job <runner tag> <job dir> [--probes]
                                      requires ETCHWORK_EGRESS_IMAGE=<egress tag>
                                      and OPENROUTER_API_KEY=<key>; reads
                                      <job dir>/prompt.txt; writes to <job dir>.out/
+etchwork contract score <task> <board dir> [--out <file>]
+                                     grade a delivered board against a CONTRACT
+                                     task (see contract/README.md)
+etchwork contract test [pytest args] run CONTRACT's tests in the engine image
+etchwork contract fixtures           regenerate CONTRACT's fixture boards
 EOF
     ;;
   *) echo "unknown command: $cmd (try: etchwork help)" >&2; exit 2 ;;
