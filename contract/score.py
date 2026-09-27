@@ -111,6 +111,18 @@ def _jsonable(value):
     return json.loads(json.dumps(value, default=str))
 
 
+def _strict(rows: list[dict]) -> bool | None:
+    """False if any clause failed or nothing was delivered; None (no verdict)
+    if nothing failed but some clause could not be graded, so a harness
+    fault is never counted as the agent's failure; True if all passed."""
+    statuses = {r["status"] for r in rows}
+    if statuses & {FAIL, NOT_DELIVERED}:
+        return False
+    if ERROR in statuses:
+        return None
+    return True
+
+
 def grade(task: Task, board: Board | None, run_error: str | None = None) -> dict:
     """result.json for one run. `board` None means nothing was delivered;
     `run_error` means something was, and the harness could not read it."""
@@ -143,7 +155,7 @@ def grade(task: Task, board: Board | None, run_error: str | None = None) -> dict
     return {
         "task": task.name,
         "delivered": board is not None or run_error is not None,
-        "strict_pass": all(r["status"] == PASS for r in rows),
+        "strict_pass": _strict(rows),
         "graded": not errors,
         "clauses": rows,
         "harness_errors": errors,

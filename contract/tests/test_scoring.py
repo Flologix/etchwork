@@ -53,7 +53,7 @@ def test_load_binds_aliases(tmp_path):
 
 def test_all_pass_is_strict_pass(tmp_path):
     r = score.grade(score.load_task(task_dir(tmp_path)), board())
-    assert r["strict_pass"] and r["graded"] and r["delivered"]
+    assert r["strict_pass"] is True and r["graded"] and r["delivered"]
     assert statuses(r) == {"envelope": "pass", "ic": "pass"}
     assert r["harness_errors"] == []
     json.dumps(r)  # result.json must serialise
@@ -61,21 +61,21 @@ def test_all_pass_is_strict_pass(tmp_path):
 
 def test_one_failure_is_strict_fail_with_measured(tmp_path):
     r = score.grade(score.load_task(task_dir(tmp_path)), board(w=40.0))
-    assert not r["strict_pass"] and r["graded"]
+    assert r["strict_pass"] is False and r["graded"]
     assert statuses(r) == {"envelope": "fail", "ic": "pass"}
     assert r["clauses"][0]["measured"] == {"width_mm": 40.0, "height_mm": 20.0}
 
 
 def test_non_delivery_is_strict_failure_not_harness_error(tmp_path):
     r = score.grade(score.load_task(task_dir(tmp_path)), None)
-    assert not r["strict_pass"] and not r["delivered"]
+    assert r["strict_pass"] is False and not r["delivered"]
     assert r["graded"] and r["harness_errors"] == []
     assert set(statuses(r).values()) == {"not_delivered"}
 
 
 def test_run_error_is_a_harness_error_not_a_failure(tmp_path):
     r = score.grade(score.load_task(task_dir(tmp_path)), None, run_error="dump crashed")
-    assert r["delivered"] and not r["graded"] and not r["strict_pass"]
+    assert r["delivered"] and not r["graded"] and r["strict_pass"] is None
     assert set(statuses(r).values()) == {"error"}
     assert r["harness_errors"] == [{"clause": None, "error": "dump crashed"}]
 
@@ -85,7 +85,8 @@ def test_absent_checker_is_a_clause_harness_error(tmp_path):
     t = score.load_task(task_dir(tmp_path, text))
     r = score.grade(t, board())
     assert statuses(r) == {"envelope": "pass", "ic": "pass", "ghost": "error"}
-    assert not r["graded"] and not r["strict_pass"]
+    # Nothing failed; one clause could not be graded: no verdict, not a fail.
+    assert not r["graded"] and r["strict_pass"] is None
     assert r["harness_errors"][0]["clause"] == "ghost"
     assert "pin_floating" in r["harness_errors"][0]["error"]
 
@@ -110,6 +111,16 @@ def test_checker_that_raises_is_a_harness_error_others_still_grade(tmp_path, mon
     r = score.grade(score.load_task(task_dir(tmp_path)), board())
     assert statuses(r) == {"envelope": "error", "ic": "pass"}
     assert "kaboom" in r["harness_errors"][0]["error"]
+    assert r["strict_pass"] is None
+
+
+def test_a_failure_beside_a_harness_error_is_still_strict_fail(tmp_path, monkeypatch):
+    def boom(board, *, part, count=1):
+        raise RuntimeError("kaboom")
+    monkeypatch.setitem(REGISTRY, "part_present", boom)
+    r = score.grade(score.load_task(task_dir(tmp_path)), board(w=40.0))
+    assert statuses(r) == {"envelope": "fail", "ic": "error"}
+    assert r["strict_pass"] is False and not r["graded"]
 
 
 def test_checker_returning_non_result_is_a_harness_error(tmp_path, monkeypatch):
