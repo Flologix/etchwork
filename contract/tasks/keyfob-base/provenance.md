@@ -38,12 +38,18 @@ defensible choice, not necessarily "the agent was wrong":
 
 - `coincell`: library id contains `2032`.
 - `encoder`: value names a 1527/2260/2262/5262/HT12E/HT6P20-family encoder.
-- `buttons`: a KiCad `Button_Switch_SMD`/`_THT` footprint other than a DIP
-  switch, or a footprint named like a tactile/push switch; at least two.
+- `buttons`: a momentary push/tactile switch: a KiCad `Button_Switch_SMD`/`_THT`
+  footprint, or a footprint named `SW_Push`/`Tactile`/`PTS<n>`, in either case
+  not a DIP, slide, toggle, reed or SPDT/DPDT/SP3T switch; at least two.
+  Connectors (spring contacts, terminal blocks) never count.
 - `led`: library id contains `LED`.
 
-Topology clauses find parts by reference designator (`BT*`, `U*`, `SW*`/`S*`/
-`BTN*`, `D*`/`LED*`), so an allowlist miss fails its identity clause alone.
+Topology clauses find parts by reference designator (`BT*`, `SW*`/`S*`/`BTN*`,
+`D*`/`LED*`), so an allowlist miss fails its identity clause alone. The encoder
+is the `U*` part with at least one pin, connected or not, named as an encoder
+data input (`K0`-`K3`/`D0`-`D3`): a real fob has a second `U*`, the transmitter,
+on the same supply, and the encoder's supply, oscillator and data clauses must
+not be satisfied by it.
 
 ## Widened ranges
 
@@ -65,10 +71,13 @@ Topology clauses find parts by reference designator (`BT*`, `U*`, `SW*`/`S*`/
 
 ## Known limit of function matching
 
-Net clauses find encoder pins by pin name (from the netlist's library symbol
-or the pad's pin function) or by net name. KiCad ships no EV1527 symbol, so an
-agent that draws a custom symbol with no pin names, **and** gives the nets
-anonymous names, fails `rosc`, `decoupling`, `btn_inputs`, `btn_not_shorted`
-and `batt_supply`, even if wired correctly. By spec §5.2 this is a clause
+Net clauses find pins by pin name (from the netlist's library symbol or the
+pad's pin function). Only for a pad whose pin has no name do they fall back to
+the name of the pad's net, and a KiCad auto-generated net name (`Net-(...)`,
+`unconnected-(...)`) never counts: `Net-(D2-A)` names a designator, not data
+input D2. KiCad ships no EV1527 symbol, so an agent that draws a custom symbol
+with no pin names, **and** leaves its nets with anonymous or auto-generated
+names, fails `rosc`, `decoupling`, `btn_inputs`, `btn_not_shorted` and
+`batt_supply`, even if wired correctly. By spec §5.2 this is a clause
 failure: a board whose supply cannot be identified has not shown it meets the
 requirement.
