@@ -119,15 +119,37 @@ MUTANTS = {
 }
 
 
+# Fixed so every build() draws the same uuid sequence for the same items:
+# SaveBoard serializes footprints (and their pads) sorted by uuid, so a
+# random seed would give every variant its own file order and make even a
+# one-line mutation diff as a full rewrite (spec §6: fixtures must be
+# diffable). Any constant works; this one has no other significance.
+UUID_SEED = 0xC0FFEE
+
+
 def main(out_dir) -> None:
     out_dir = Path(out_dir)
+    # KiCad's footprint-library plugin cache warms lazily on first use, and
+    # a cold cache draws a different number of uuids than a warm one for
+    # the same footprints -- so the first variant built in a process would
+    # never line up against the rest even with identical seeding. One
+    # throwaway build, before any variant is seeded and generated for real,
+    # pays that one-time cost so every real build() below starts warm.
+    pcbnew.KIID.SeedGenerator(UUID_SEED)
+    build()
     for name in ["clean", *MUTANTS]:
+        pcbnew.KIID.SeedGenerator(UUID_SEED)
         board = build()
         if name != "clean":
             MUTANTS[name](board)
         path = out_dir / name / "kicad" / "board.kicad_pcb"
         path.parent.mkdir(parents=True, exist_ok=True)
         pcbnew.SaveBoard(str(path), board)
+        # SaveBoard also writes a project and a local-settings file next to
+        # the board; nothing here reads either, so drop them rather than
+        # leaving them for the next `./etchwork contract fixtures` to churn.
+        for suffix in (".kicad_pro", ".kicad_prl"):
+            path.with_suffix(suffix).unlink(missing_ok=True)
         print(f"wrote {path}")
 
 
