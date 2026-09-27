@@ -59,6 +59,19 @@ def _strings(value) -> tuple[str, ...]:
     return (value,) if isinstance(value, str) else tuple(str(v) for v in value)
 
 
+def _ints(value) -> tuple[int, ...]:
+    """TOML gives a bare int or a list; a bare int is one count."""
+    if isinstance(value, int):
+        return (value,)
+    out = []
+    for v in value:
+        try:
+            out.append(int(v))
+        except (TypeError, ValueError):
+            raise ValueError(f"non-integer pad count: {v!r}")
+    return tuple(out)
+
+
 _PART_KEYS = {"ref", "lib_id", "value", "pads"}
 
 
@@ -77,10 +90,14 @@ class PartSpec:
         unknown = set(table) - _PART_KEYS
         if unknown:
             raise ValueError(f"[parts.{name}]: unknown key(s) {sorted(unknown)}")
+        try:
+            pads = _ints(table.get("pads", ()))
+        except ValueError as e:
+            raise ValueError(f"[parts.{name}]: {e}") from e
         spec = cls(name, ref=_strings(table.get("ref", ())),
                    lib_id=_strings(table.get("lib_id", ())),
                    value=_strings(table.get("value", ())),
-                   pads=tuple(int(n) for n in table.get("pads", ())))
+                   pads=pads)
         if not (spec.ref or spec.lib_id or spec.value or spec.pads):
             raise ValueError(f"[parts.{name}] would match every part; "
                              f"give at least one of {sorted(_PART_KEYS)}")
@@ -125,9 +142,12 @@ class NetSpec:
                                  "(words split on anything but letters, digits and '+')")
         part = None
         if "part" in table:
-            if table["part"] not in parts:
-                raise ValueError(f"[nets.{name}]: part {table['part']!r} is not a [parts] alias")
-            part = parts[table["part"]]
+            part_value = table["part"]
+            if not isinstance(part_value, str):
+                raise ValueError(f"[nets.{name}]: part must be a string, not {type(part_value).__name__}")
+            if part_value not in parts:
+                raise ValueError(f"[nets.{name}]: part {part_value!r} is not a [parts] alias")
+            part = parts[part_value]
         if not synonyms and part is None:
             raise ValueError(f"[nets.{name}] would match every net; give words, a part, or both")
         return cls(name, frozenset(s.upper() for s in synonyms), part)

@@ -81,6 +81,20 @@ def test_matching_lists_footprints():
     assert [f.ref for f in matching(b, PartSpec.from_toml("u", {"ref": "^U"}))] == ["U1"]
 
 
+def test_partspec_pads_accepts_bare_int():
+    spec = PartSpec.from_toml("p", {"pads": 3})
+    assert spec.pads == (3,)
+
+
+@pytest.mark.parametrize("table", [
+    {"pads": ["x"]},
+    {"pads": [None]},
+])
+def test_partspec_pads_rejects_non_ints(table):
+    with pytest.raises(ValueError):
+        PartSpec.from_toml("p", table)
+
+
 # --- NetSpec ---------------------------------------------------------------
 
 PARTS = {"ic": PartSpec.from_toml("ic", {"ref": "^U[0-9]+$"})}
@@ -100,6 +114,11 @@ def test_netspec_words_are_uppercased():
 def test_netspec_rejects_bad_tables(table):
     with pytest.raises(ValueError):
         NetSpec.from_toml("n", table, PARTS)
+
+
+def test_netspec_rejects_non_string_part():
+    with pytest.raises(ValueError):
+        NetSpec.from_toml("n", {"words": ["VCC"], "part": ["ic"]}, PARTS)
 
 
 # --- resolution ------------------------------------------------------------
