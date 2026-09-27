@@ -85,6 +85,47 @@ def test_series_excluded_net_should_not_pass():
     assert not r.passed and "R3" not in str(r.measured)
 
 
+def _led_on_dout(r3_to="TX_DATA"):
+    # D1 driven straight from DOUT with no resistor; a 1k R3 hangs off DOUT
+    # towards something else (the transmitter's data pin). R3 touches the
+    # LED's net but is not in series with the LED.
+    return make(
+        footprints=[fp("U1", "EV1527", pad_count=8), fp("U2", "SYN115", pad_count=6),
+                    fp("D1", "RED"), fp("R3", "1k")],
+        pads=[pad("U1", 7, "DOUT", names=["DOUT"]),
+              pad("D1", 1, "GND", names=["K"]), pad("D1", 2, "DOUT", names=["A"]),
+              pad("R3", 1, "DOUT"), pad("R3", 2, r3_to),
+              pad("U2", 6, r3_to, names=["DATA"])])
+
+
+def test_series_open_ended_needs_a_series_node():
+    r = series_part_between(_led_on_dout(), net_a=LED_NETS, exclude=(SUPPLY, GROUND),
+                            kind="R", min=470.0, max=4700.0)
+    assert not r.passed, r.detail
+    assert "R3" in r.detail and "U1" in r.detail
+    assert r.measured["parts"] == [] and r.measured["not_in_series"] == ["R3 1k"]
+
+
+def test_series_node_may_hold_other_net_a_parts():
+    # Two LEDs chained through one node, fed by R2: every pad on LED_A
+    # belongs to R2 or to an LED, so R2 is in series.
+    b = make(footprints=[fp("R2", "1k"), fp("D1", "RED"), fp("D2", "GRN")],
+             pads=[pad("R2", 1, "DOUT"), pad("R2", 2, "LED_A"),
+                   pad("D1", 2, "LED_A"), pad("D1", 1, "MID"),
+                   pad("D2", 2, "MID"), pad("D2", 1, "GND")])
+    r = series_part_between(b, net_a=LED_NETS, exclude=(SUPPLY, GROUND),
+                            kind="R", min=470.0, max=4700.0)
+    assert r.passed and r.measured["parts"] == ["R2 1k"]
+
+
+def test_series_node_rule_skipped_without_a_part():
+    # net_a found by words alone names no part to be in series with, so any
+    # other pads on the shared net are allowed.
+    dout = N("dout", {"words": ["DOUT"]})
+    r = series_part_between(_led_on_dout(), net_a=dout, kind="R", min=470.0, max=4700.0)
+    assert r.passed and r.measured["parts"] == ["R3 1k"]
+
+
 def test_series_unresolvable_net_is_a_failure():
     nowhere = N("nowhere", {"words": ["ZZZ"]})
     r = series_part_between(keyfob(), net_a=nowhere, net_b=SUPPLY, kind="R", min=0, max=1e9)

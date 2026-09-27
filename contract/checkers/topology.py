@@ -16,7 +16,14 @@ def series_part_between(board: Board, *, net_a: NetSpec, kind: str, min: float, 
                         exclude: tuple[NetSpec, ...] = ()) -> Result:
     """A two-net part of designator `kind`, valued within [min, max], with one
     pad on net_a (less the excluded nets) and the other on net_b -- or, when
-    net_b is omitted, on any net outside net_a."""
+    net_b is omitted, on any net outside net_a.
+
+    Open-ended (no net_b), "in series" is checked, not assumed: the net the
+    part shares with net_a must be a series node, every pad on it belonging
+    to the part itself or to a part net_a.part matches. Otherwise a resistor
+    that merely touches the LED's driven net (say, towards another IC's
+    input) would count as the LED's current limit. With no net_a.part there
+    is nothing to be in series with, and the rule is skipped."""
     lo, hi = min, max  # contract.toml spells them min/max; the builtins are unused below
     removed = frozenset().union(*(resolve_net(board, e) for e in exclude))
     full = resolve_net(board, net_a)
@@ -31,7 +38,14 @@ def series_part_between(board: Board, *, net_a: NetSpec, kind: str, min: float, 
             return Result(False, f"no net matches {net_b.name}")
     other = (lambda n: n in b) if b is not None else (lambda n: n not in full)
     by_ref = pads_by_ref(board)
-    between, found = [], []
+    series_with = None
+    if b is None and net_a.part is not None:
+        series_with = {f.ref for f in matching(board, net_a.part)}
+    on_net: dict[str, set[str]] = {}
+    for p in board.pads():
+        if p.net:
+            on_net.setdefault(p.net, set()).add(p.ref)
+    between, found, loose = [], [], []
     for f in board.footprints():
         if not is_kind(f, kind):
             continue
@@ -41,19 +55,30 @@ def series_part_between(board: Board, *, net_a: NetSpec, kind: str, min: float, 
         x, y = sorted(nets)
         if not ((x in a and other(y)) or (y in a and other(x))):
             continue
+        if series_with is not None:
+            node = x if x in a else y
+            strangers = sorted(on_net[node] - series_with - {f.ref})
+            if strangers:
+                loose.append((f"{f.ref} {f.value}", node, strangers))
+                continue
         between.append(f"{f.ref} {f.value}")
         value = parse_value(f.value)
         if value is not None and lo <= value <= hi:
             found.append(f.ref)
     where = (f"{net_a.name} ({_names(a)}) and "
              + (f"{net_b.name} ({_names(b)})" if b is not None else "another net"))
+    measured = {"parts": between}
+    if loose:
+        measured["not_in_series"] = [part for part, _, _ in loose]
     if found:
         return Result(True, f"{', '.join(found)} between {where}, within {lo:g}..{hi:g}",
-                      {"parts": between})
+                      measured)
     if between:
         return Result(False, f"{kind} between {where}: {', '.join(between)}; "
-                             f"none within {lo:g}..{hi:g}", {"parts": between})
-    return Result(False, f"no {kind} between {where}", {"parts": []})
+                             f"none within {lo:g}..{hi:g}", measured)
+    why = "".join(f"; {part} shares {node} with {', '.join(refs)}, so it is not in series"
+                  for part, node, refs in loose)
+    return Result(False, f"no {kind} in series between {where}{why}", measured)
 
 
 def _assign(reach: dict[str, list[str]]) -> dict[str, str] | None:
