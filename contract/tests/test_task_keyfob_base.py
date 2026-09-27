@@ -46,6 +46,8 @@ def _sw(lib_id):
     "Button_Switch_SMD:SW_CK_JS202011CQN_DPDT_Straight",
     "Button_Switch_SMD:SW_Push_2P1T_Toggle_CK_PVA1xxH1xxxxxxV2",
     "Button_Switch_SMD:SW_DIP_SPSTx01_Slide_6.7x4.1mm_W6.73mm_P2.54mm_LowProfile_JPin",
+    # The KiCad 10 library's own name for the CK JS202011 DPDT slide switch.
+    "Button_Switch_SMD:SW_DPDT_CK_JS202011JCQN",
 ])
 def test_button_allowlist_rejects_non_momentary_and_connectors(lib_id):
     assert not _CLAUSE["buttons"].args["part"].matches(_sw(lib_id))
