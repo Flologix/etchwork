@@ -37,10 +37,21 @@ def _explain(result):
     return [(r["id"], r["status"], r["detail"]) for r in result["clauses"]]
 
 
+def _dirs():
+    return sorted(p.name for p in FIXTURES.iterdir() if p.name != "clean")
+
+
 def test_every_clause_has_exactly_one_mutant():
-    variants = sorted(p.name for p in FIXTURES.iterdir() if p.name != "clean")
-    assert variants == sorted(CLAUSES)
+    plain = [d for d in _dirs() if "--" not in d]
+    assert plain == sorted(CLAUSES)
     assert sorted(gen_keyfob.MUTANTS) == sorted(CLAUSES)
+
+
+def test_every_variant_is_named_for_a_clause_and_committed():
+    assert [d for d in _dirs() if "--" in d] == sorted(gen_keyfob.VARIANTS)
+    for name in gen_keyfob.VARIANTS:
+        clause, case = name.split("--")
+        assert clause in CLAUSES and case, name
 
 
 def test_clean_board_passes_every_clause():
@@ -62,6 +73,13 @@ def test_mutant_fails_its_clause_and_only_it(clause):
     result = _grade(clause)
     assert result["graded"], result["harness_errors"]
     assert _not_passing(result) == {clause}, _explain(result)
+
+
+@pytest.mark.parametrize("variant", sorted(gen_keyfob.VARIANTS))
+def test_adversarial_variant_fails_its_clause_and_only_it(variant):
+    result = _grade(variant)
+    assert result["graded"], result["harness_errors"]
+    assert _not_passing(result) == {variant.split("--")[0]}, _explain(result)
 
 
 def _canonical(data: dict) -> dict:
