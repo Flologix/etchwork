@@ -1,0 +1,640 @@
+(export 
+  (version "D")
+  (design
+    (source "board.py")
+    (date "09/23/2026 08:35 PM")
+    (tool "SKiDL (2.3.0)")
+    (sheet
+      (number 1)
+      (name "/")
+      (tstamps "/")
+      (title_block
+        (title)
+        (company)
+        (rev)
+        (date)
+        (source "board.py")
+        (comment
+          (number "1")
+          (value ""))
+        (comment
+          (number "2")
+          (value ""))
+        (comment
+          (number "3")
+          (value ""))
+        (comment
+          (number "4")
+          (value ""))
+        (comment
+          (number "5")
+          (value ""))
+        (comment
+          (number "6")
+          (value ""))
+        (comment
+          (number "7")
+          (value ""))
+        (comment
+          (number "8")
+          (value ""))
+        (comment
+          (number "9")
+          (value "")))))
+  (components
+    (comp
+      (ref "C1")
+      (value "10u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "KpgVe8rCjG")
+        (field
+          (name "SKiDL Line") "board.py:65"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "feafa0a5-96b8-5b01-abe3-2f045de3cfcc"))
+    (comp
+      (ref "C2")
+      (value "22u")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "zq0uZbXCEf")
+        (field
+          (name "SKiDL Line") "board.py:66"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "1011c5ed-7b7b-5bee-bbda-469c9db22622"))
+    (comp
+      (ref "C3")
+      (value "100n")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_SMD:C_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_SMD:C_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "TXfEqzXL7z")
+        (field
+          (name "SKiDL Line") "board.py:84"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "f4c82e64-8772-5679-8093-2597c0563c5c"))
+    (comp
+      (ref "D1")
+      (value "LED")
+      (description "Light emitting diode")
+      (footprint "LED_SMD:LED_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Light emitting diode")
+        (field
+          (name "Footprint") "LED_SMD:LED_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "xsq35PYko9")
+        (field
+          (name "SKiDL Line") "board.py:145"))
+      (libsource
+        (lib "Device")
+        (part "LED"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "cd1b4006-54c6-53b3-b9a7-ec62ef163865"))
+    (comp
+      (ref "D2")
+      (value "LED")
+      (description "Light emitting diode")
+      (footprint "LED_SMD:LED_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Light emitting diode")
+        (field
+          (name "Footprint") "LED_SMD:LED_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "8EeVfdst8b")
+        (field
+          (name "SKiDL Line") "board.py:146"))
+      (libsource
+        (lib "Device")
+        (part "LED"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "02902a85-9982-5845-b2a4-23cb3c0ebfde"))
+    (comp
+      (ref "D3")
+      (value "LED")
+      (description "Light emitting diode")
+      (footprint "LED_SMD:LED_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Light emitting diode")
+        (field
+          (name "Footprint") "LED_SMD:LED_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "x65WFjBuco")
+        (field
+          (name "SKiDL Line") "board.py:158"))
+      (libsource
+        (lib "Device")
+        (part "LED"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "fa609040-ae22-5eb4-a439-43606938fdbe"))
+    (comp
+      (ref "J1")
+      (value "USB_C_Receptacle_PowerOnly_24P")
+      (description "USB Power-Only 24P Type-C Receptacle connector")
+      (footprint "Connector_USB:USB_C_Receptacle_Palconn_UTC16-G")
+      (fields
+        (field
+          (name "Description") "USB Power-Only 24P Type-C Receptacle connector")
+        (field
+          (name "Footprint") "Connector_USB:USB_C_Receptacle_Palconn_UTC16-G")
+        (field
+          (name "Datasheet") "https://www.usb.org/sites/default/files/documents/usb_type-c.zip")
+        (field
+          (name "SKiDL Tag") "PR3tuoS23r")
+        (field
+          (name "SKiDL Line") "board.py:29"))
+      (libsource
+        (lib "Connector")
+        (part "USB_C_Receptacle_PowerOnly_24P"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "57aab10e-0850-56fb-866f-52a786e29848"))
+    (comp
+      (ref "J2")
+      (value "AVR-ISP-6")
+      (description "Atmel 6-pin ISP connector")
+      (footprint "Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical")
+      (fields
+        (field
+          (name "Description") "Atmel 6-pin ISP connector")
+        (field
+          (name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "J0D0y8xbNo")
+        (field
+          (name "SKiDL Line") "board.py:113"))
+      (libsource
+        (lib "Connector")
+        (part "AVR-ISP-6"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "761bfc47-6d4a-57f0-908c-2f6b75f02200"))
+    (comp
+      (ref "R1")
+      (value "330")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "XV7fyiS1lN")
+        (field
+          (name "SKiDL Line") "board.py:130"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "dadf9bbc-e794-5435-b71d-696fd94b0c4b"))
+    (comp
+      (ref "R2")
+      (value "330")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "FN6nAZRcRd")
+        (field
+          (name "SKiDL Line") "board.py:131"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "9c68ac0d-e83b-5635-a0a2-b914540cbf98"))
+    (comp
+      (ref "R3")
+      (value "10k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "FKBIr8fn40")
+        (field
+          (name "SKiDL Line") "board.py:90"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "04697314-4e25-5db9-8cd5-6062d2a820de"))
+    (comp
+      (ref "R4")
+      (value "5.1k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "pO_kmGWec7")
+        (field
+          (name "SKiDL Line") "board.py:37"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "a78e0f45-809a-5964-ae1d-fab1bc66f686"))
+    (comp
+      (ref "R5")
+      (value "5.1k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "ni4F_12xh7")
+        (field
+          (name "SKiDL Line") "board.py:38"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "c2d6062a-c75e-5fa9-8c17-4d4e06f078ab"))
+    (comp
+      (ref "R6")
+      (value "1k")
+      (description "Resistor")
+      (footprint "Resistor_SMD:R_0805_2012Metric")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_SMD:R_0805_2012Metric")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "UsEaKdcwf5")
+        (field
+          (name "SKiDL Line") "board.py:156"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "c6cf7f53-f53f-553a-a6e1-4624cc271b46"))
+    (comp
+      (ref "SW1")
+      (value "SW_Push")
+      (description "Push button switch, generic, two pins")
+      (footprint "Button_Switch_SMD:SW_Push_1P1T_NO_CK_KMR2")
+      (fields
+        (field
+          (name "Description") "Push button switch, generic, two pins")
+        (field
+          (name "Footprint") "Button_Switch_SMD:SW_Push_1P1T_NO_CK_KMR2")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "M9plVxpt3_")
+        (field
+          (name "SKiDL Line") "board.py:124"))
+      (libsource
+        (lib "Switch")
+        (part "SW_Push"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "6b24ce18-545d-53e5-87bd-ca4cb4d023db"))
+    (comp
+      (ref "U1")
+      (value "ATtiny85-20S")
+      (description "20MHz, 8kB Flash, 512B SRAM, 512B EEPROM, debugWIRE, SOIC-8")
+      (footprint "Package_SO:SOIC-8_5.3x5.3mm_P1.27mm")
+      (fields
+        (field
+          (name "Description") "20MHz, 8kB Flash, 512B SRAM, 512B EEPROM, debugWIRE, SOIC-8")
+        (field
+          (name "Footprint") "Package_SO:SOIC-8_5.3x5.3mm_P1.27mm")
+        (field
+          (name "Datasheet") "http://ww1.microchip.com/downloads/en/DeviceDoc/atmel-2586-avr-8-bit-microcontroller-attiny25-attiny45-attiny85_datasheet.pdf")
+        (field
+          (name "SKiDL Tag") "KKz9CKNzyK")
+        (field
+          (name "SKiDL Line") "board.py:76"))
+      (libsource
+        (lib "MCU_Microchip_ATtiny")
+        (part "ATtiny85-20S"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "df2ab3fd-6972-5282-9ce7-48112850b30b"))
+    (comp
+      (ref "U2")
+      (value "AP2112K-3.3")
+      (description "600mA low dropout linear regulator, with enable pin, 3.8V-6V input voltage range, 3.3V fixed positive output, SOT-23-5")
+      (footprint "Package_TO_SOT_SMD:SOT-23-5")
+      (fields
+        (field
+          (name "Description") "600mA low dropout linear regulator, with enable pin, 3.8V-6V input voltage range, 3.3V fixed positive output, SOT-23-5")
+        (field
+          (name "Footprint") "Package_TO_SOT_SMD:SOT-23-5")
+        (field
+          (name "Datasheet") "https://www.diodes.com/assets/Datasheets/AP2112.pdf")
+        (field
+          (name "SKiDL Tag") "8kX2jLTlrO")
+        (field
+          (name "SKiDL Line") "board.py:54"))
+      (libsource
+        (lib "Regulator_Linear")
+        (part "AP2112K-3.3"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (tstamps "a7a8f5ab-6b36-53f3-b5b4-2aacad7fe175")))
+  (nets
+    (net
+      (code 1)
+      (name "CC1")
+      (node
+        (ref "J1")
+        (pin "A5"))
+      (node
+        (ref "R4")
+        (pin "2")))
+    (net
+      (code 2)
+      (name "CC2")
+      (node
+        (ref "J1")
+        (pin "B5"))
+      (node
+        (ref "R5")
+        (pin "2")))
+    (net
+      (code 3)
+      (name "GND")
+      (node
+        (ref "C1")
+        (pin "2"))
+      (node
+        (ref "C2")
+        (pin "2"))
+      (node
+        (ref "C3")
+        (pin "2"))
+      (node
+        (ref "D3")
+        (pin "2"))
+      (node
+        (ref "J1")
+        (pin "A1"))
+      (node
+        (ref "J1")
+        (pin "A12"))
+      (node
+        (ref "J1")
+        (pin "B1"))
+      (node
+        (ref "J1")
+        (pin "B12"))
+      (node
+        (ref "J2")
+        (pin "6"))
+      (node
+        (ref "R4")
+        (pin "1"))
+      (node
+        (ref "R5")
+        (pin "1"))
+      (node
+        (ref "SW1")
+        (pin "2"))
+      (node
+        (ref "U1")
+        (pin "4"))
+      (node
+        (ref "U2")
+        (pin "2")))
+    (net
+      (code 4)
+      (name "LED_A")
+      (node
+        (ref "D1")
+        (pin "2"))
+      (node
+        (ref "U1")
+        (pin "2")))
+    (net
+      (code 5)
+      (name "LED_B")
+      (node
+        (ref "D2")
+        (pin "2"))
+      (node
+        (ref "U1")
+        (pin "3")))
+    (net
+      (code 6)
+      (name "MISO")
+      (node
+        (ref "J2")
+        (pin "1"))
+      (node
+        (ref "U1")
+        (pin "6")))
+    (net
+      (code 7)
+      (name "MOSI")
+      (node
+        (ref "J2")
+        (pin "4"))
+      (node
+        (ref "SW1")
+        (pin "1"))
+      (node
+        (ref "U1")
+        (pin "5")))
+    (net
+      (code 8)
+      (name "N$1")
+      (node
+        (ref "D3")
+        (pin "1"))
+      (node
+        (ref "R6")
+        (pin "2")))
+    (net
+      (code 9)
+      (name "NET_LED_A")
+      (node
+        (ref "D1")
+        (pin "1"))
+      (node
+        (ref "R1")
+        (pin "2")))
+    (net
+      (code 10)
+      (name "NET_LED_B")
+      (node
+        (ref "D2")
+        (pin "1"))
+      (node
+        (ref "R2")
+        (pin "2")))
+    (net
+      (code 11)
+      (name "RESET")
+      (node
+        (ref "J2")
+        (pin "5"))
+      (node
+        (ref "R3")
+        (pin "2"))
+      (node
+        (ref "U1")
+        (pin "1")))
+    (net
+      (code 12)
+      (name "SCK")
+      (node
+        (ref "J2")
+        (pin "3"))
+      (node
+        (ref "U1")
+        (pin "7")))
+    (net
+      (code 13)
+      (name "VBUS")
+      (node
+        (ref "C1")
+        (pin "1"))
+      (node
+        (ref "J1")
+        (pin "A4"))
+      (node
+        (ref "J1")
+        (pin "A9"))
+      (node
+        (ref "J1")
+        (pin "B4"))
+      (node
+        (ref "J1")
+        (pin "B9"))
+      (node
+        (ref "R6")
+        (pin "1"))
+      (node
+        (ref "U2")
+        (pin "1"))
+      (node
+        (ref "U2")
+        (pin "3")))
+    (net
+      (code 14)
+      (name "VCC_3V3")
+      (node
+        (ref "C2")
+        (pin "1"))
+      (node
+        (ref "C3")
+        (pin "1"))
+      (node
+        (ref "J2")
+        (pin "2"))
+      (node
+        (ref "R1")
+        (pin "1"))
+      (node
+        (ref "R2")
+        (pin "1"))
+      (node
+        (ref "R3")
+        (pin "1"))
+      (node
+        (ref "U1")
+        (pin "8"))
+      (node
+        (ref "U2")
+        (pin "5")))))

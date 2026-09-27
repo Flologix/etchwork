@@ -1,0 +1,7 @@
+Etchwork
+
+This repository was extracted on 2026-09-27 from the flai repository
+(github.com/FlologixAI/flai) at commit 8e37357d2, where it
+was developed as flai's "circuit" feature (docker/circuit, docker/runner,
+crates/flai-circuit, and the circuit docs under docs/superpowers). The full
+commit history of that code remains in the flai repository.

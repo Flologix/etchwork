@@ -1,0 +1,437 @@
+{
+    "$schema": "https://schemas.kicad.org/drc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-09-03T20:11:52+0000",
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "9.0.9",
+    "schematic_parity": [],
+    "source": "interf_u.kicad_pcb",
+    "unconnected_items": [],
+    "violations": [
+        {
+            "description": "Thermal relief connection to zone incomplete (layer bottom_copper; zone min spoke count 2; actual 1)",
+            "items": [
+                {
+                    "description": "Zone [GND] on bottom_copper, priority 0",
+                    "pos": {
+                        "x": 193.675,
+                        "y": 133.35
+                    },
+                    "uuid": "00000000-0000-0000-0000-00004cdec22b"
+                },
+                {
+                    "description": "PTH pad 16 [GND] of U5",
+                    "pos": {
+                        "x": 125.095,
+                        "y": 76.2
+                    },
+                    "uuid": "363a9f9a-0b01-4ef4-a972-9e6d1eab7c5a"
+                }
+            ],
+            "severity": "error",
+            "type": "starved_thermal"
+        },
+        {
+            "description": "Thermal relief connection to zone incomplete (layer bottom_copper; 1 spokes connected to isolated island)",
+            "items": [
+                {
+                    "description": "Zone [GND] on bottom_copper, priority 0",
+                    "pos": {
+                        "x": 193.675,
+                        "y": 133.35
+                    },
+                    "uuid": "00000000-0000-0000-0000-00004cdec22b"
+                },
+                {
+                    "description": "PTH pad G2 [GND] of U9",
+                    "pos": {
+                        "x": 145.415,
+                        "y": 82.55
+                    },
+                    "uuid": "7cc25ef2-8581-477e-8ad4-e0906ba743c8"
+                }
+            ],
+            "severity": "error",
+            "type": "starved_thermal"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint R5",
+                    "pos": {
+                        "x": 171.958,
+                        "y": 42.037
+                    },
+                    "uuid": "00000000-0000-0000-0000-0000322d32a0"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint C6",
+                    "pos": {
+                        "x": 159.385,
+                        "y": 111.76
+                    },
+                    "uuid": "00000000-0000-0000-0000-000032307dc0"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint C5",
+                    "pos": {
+                        "x": 86.995,
+                        "y": 113.03
+                    },
+                    "uuid": "00000000-0000-0000-0000-000032307dca"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint C4",
+                    "pos": {
+                        "x": 170.688,
+                        "y": 52.197
+                    },
+                    "uuid": "00000000-0000-0000-0000-000032307dcf"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint C1",
+                    "pos": {
+                        "x": 83.185,
+                        "y": 83.82
+                    },
+                    "uuid": "00000000-0000-0000-0000-000032307de2"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint C2",
+                    "pos": {
+                        "x": 121.305,
+                        "y": 91.44
+                    },
+                    "uuid": "00000000-0000-0000-0000-000032307ecf"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint C3",
+                    "pos": {
+                        "x": 121.305,
+                        "y": 99.06
+                    },
+                    "uuid": "00000000-0000-0000-0000-000032307ed4"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint JP1",
+                    "pos": {
+                        "x": 116.205,
+                        "y": 105.41
+                    },
+                    "uuid": "00000000-0000-0000-0000-000032568d1e"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint U1",
+                    "pos": {
+                        "x": 151.765,
+                        "y": 124.46
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005214e8d1"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint U2",
+                    "pos": {
+                        "x": 95.885,
+                        "y": 124.46
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005214e8ef"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint U3",
+                    "pos": {
+                        "x": 123.825,
+                        "y": 124.46
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005214e90d"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint U5",
+                    "pos": {
+                        "x": 86.995,
+                        "y": 76.2
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a0cae55"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint U8",
+                    "pos": {
+                        "x": 123.825,
+                        "y": 112.903
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a0cae87"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint X1",
+                    "pos": {
+                        "x": 113.665,
+                        "y": 92.71
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a0caeb1"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint R4",
+                    "pos": {
+                        "x": 151.765,
+                        "y": 41.91
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a43d0ce"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint D1",
+                    "pos": {
+                        "x": 155.58,
+                        "y": 38.06
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a43d2ea"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint D2",
+                    "pos": {
+                        "x": 165.71,
+                        "y": 38.08
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a43d2fb"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint P1",
+                    "pos": {
+                        "x": 182.1,
+                        "y": 72.4
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a4472d7"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint RR1",
+                    "pos": {
+                        "x": 95.885,
+                        "y": 113.03
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a44c66d"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint U9",
+                    "pos": {
+                        "x": 158.115,
+                        "y": 82.55
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a44ec28"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint BUS1",
+                    "pos": {
+                        "x": 131.445,
+                        "y": 138.43
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a44ecac"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint R3",
+                    "pos": {
+                        "x": 92.075,
+                        "y": 57.15
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a59c08c"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint R2",
+                    "pos": {
+                        "x": 127.635,
+                        "y": 91.44
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a59c0a2"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint R1",
+                    "pos": {
+                        "x": 117.475,
+                        "y": 99.06
+                    },
+                    "uuid": "00000000-0000-0000-0000-00005a59c0b8"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'interf_u'.",
+            "items": [
+                {
+                    "description": "Footprint G1",
+                    "pos": {
+                        "x": 134.0,
+                        "y": 47.0
+                    },
+                    "uuid": "70adcd04-61ea-44da-8fca-883f0bdbed28"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        }
+    ]
+}

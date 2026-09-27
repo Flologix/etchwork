@@ -1,0 +1,75 @@
+# Fab profiles: what DRC checks when the agent passes no `rules`.
+#
+# Without one, KiCad's own defaults apply -- clearance 0.0, edge 0.5, hole
+# 0.25 -- which are no fab's numbers: on release check 2 the 0.5 edge rule,
+# which KiCad also applies to NPTH holes, flagged 13 tracks and pads that
+# JLCPCB builds without complaint.
+#
+# Floors only: every value is a minimum DRC enforces. Net-class widths and
+# clearances (set_net_classes) are the design's choices and are never lowered
+# to a fab minimum. Each value carries where it came from; fetched 2026-09-24.
+
+["jlcpcb-2layer-standard"]
+name = "JLCPCB 2-layer, standard tier (no surcharge)"
+capabilities = "https://jlcpcb.com/capabilities/pcb-capabilities"
+charges = "https://jlcpcb.com/help/article/in-what-cases-will-there-be-charged-extra"
+
+["jlcpcb-2layer-standard".track_width_mm]
+value = 0.10
+source = "capabilities"
+quote = "Min. track width & spacing (1 oz): 0.10 / 0.10 mm (4 / 4 mil)"
+
+["jlcpcb-2layer-standard".clearance_mm]
+value = 0.10
+source = "capabilities"
+quote = "Min. track width & spacing (1 oz): 0.10 / 0.10 mm (4 / 4 mil)"
+
+["jlcpcb-2layer-standard".via_drill_mm]
+value = 0.30
+source = "charges"
+quote = "costs higher than standard holes (>=0.3mm diameter)"
+
+["jlcpcb-2layer-standard".via_diameter_mm]
+value = 0.45
+source = "capabilities"
+quote = "Via diameter should be 0.1mm (0.15mm preferred) larger than Via hole size"
+
+["jlcpcb-2layer-standard".annular_ring_mm]
+value = 0.075
+source = "derived"
+quote = "(via diameter 0.45 - via drill 0.30) / 2"
+
+["jlcpcb-2layer-standard".hole_to_hole_mm]
+value = 0.20
+source = "capabilities"
+quote = "Via hole-to-hole spacing: 0.2mm"
+
+["jlcpcb-2layer-standard".hole_clearance_mm]
+value = 0.20
+source = "capabilities"
+quote = "Via hole to track: 0.2mm"
+
+["jlcpcb-2layer-standard".edge_clearance_mm]
+value = 0.20
+source = "capabilities"
+quote = "Copper clearance from routed board edges: >=0.2 mm"
+
+["jlcpcb-2layer-standard".pth_hole_clearance_mm]
+value = 0.28
+source = "capabilities"
+quote = "PTH to track: 0.28mm (0.35mm is recommended)"
+
+["jlcpcb-2layer-standard".npth_hole_clearance_mm]
+value = 0.254
+source = "community"
+quote = "JLCPCB states no NPTH-to-track value; labtroll/KiCad-DesignRules JLCPCB.kicad_dru uses 0.254mm"
+
+["jlcpcb-2layer-standard".pth_hole_to_hole_mm]
+value = 0.45
+source = "capabilities"
+quote = "Pad hole-to-hole spacing: 0.45mm"
+
+["jlcpcb-2layer-standard".npth_min_drill_mm]
+value = 0.50
+source = "capabilities"
+quote = "Min. NPTH: 0.50mm"

@@ -1,0 +1,65 @@
+{
+    "$schema": "https://schemas.kicad.org/erc.v1.json",
+    "coordinate_units": "mm",
+    "date": "2026-09-03T20:12:05+0000",
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "9.0.9",
+    "sheets": [
+        {
+            "path": "/",
+            "uuid_path": "/092cfb52-b6f1-4355-8e6c-0f835c9fcaf7",
+            "violations": [
+                {
+                    "description": "The current configuration does not include the footprint library 'interf_u'.",
+                    "items": [
+                        {
+                            "description": "Symbol BUS1 [Bus_ISA_8bit]",
+                            "pos": {
+                                "x": 0.5715,
+                                "y": 0.7493
+                            },
+                            "uuid": "00000000-0000-0000-0000-0000322d3011"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "footprint_link_issues"
+                },
+                {
+                    "description": "The current configuration does not include the footprint library 'interf_u'.",
+                    "items": [
+                        {
+                            "description": "Symbol U9 [4003APG120]",
+                            "pos": {
+                                "x": 2.8448,
+                                "y": 1.4478
+                            },
+                            "uuid": "00000000-0000-0000-0000-0000322d32fa"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "footprint_link_issues"
+                },
+                {
+                    "description": "Footprint 'DSUB-25_Female_Horizontal_P2.77x2.84mm_EdgePinOffset9.90mm_Housed_MountingHolesOffset11.32mm' not found in library 'Connector_Dsub'.",
+                    "items": [
+                        {
+                            "description": "Symbol P1 [DB25_Female]",
+                            "pos": {
+                                "x": 3.8227,
+                                "y": 1.8288
+                            },
+                            "uuid": "00000000-0000-0000-0000-00003256759c"
+                        }
+                    ],
+                    "severity": "warning",
+                    "type": "footprint_link_issues"
+                }
+            ]
+        }
+    ],
+    "source": "interf_u.kicad_sch"
+}

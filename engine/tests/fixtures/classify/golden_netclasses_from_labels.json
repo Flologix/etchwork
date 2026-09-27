@@ -1,0 +1,485 @@
+{
+  "needs_review": [],
+  "nets": {
+    "+5V": {
+      "class": "power_logic",
+      "clearance_mm": 0.2,
+      "netclass": "power_logic_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "COOLANT": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "CUT_GATE": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "CUT_OUT": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "EN_X": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "EN_Y": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "EN_Z": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "E_STOP_FB": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "GND": {
+      "class": "ground",
+      "clearance_mm": 0.2,
+      "netclass": "ground_2a_to_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "2a_to_5a",
+      "width_mm": 2.5
+    },
+    "LED_HB": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "LED_MOTOR": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "LED_PWR": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "LIMIT_X": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "LIMIT_Y": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "LIMIT_Z": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "MCU_DTR": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "MCU_RST": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "MCU_RXD": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "MCU_TXD": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "MS1": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "MS2": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "MS3": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "N$1": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_2a_to_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "2a_to_5a",
+      "width_mm": 2.5
+    },
+    "PROBE": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "SPARE_1": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "SPARE_2": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "SPN_DIR": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "SPN_GATE": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "SPN_OUT": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "SPN_PWM": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "VIN": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_2a_to_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "2a_to_5a",
+      "width_mm": 2.5
+    },
+    "VIN_PROT": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_2a_to_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "2a_to_5a",
+      "width_mm": 2.5
+    },
+    "VMOT": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_2a_to_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "2a_to_5a",
+      "width_mm": 2.5
+    },
+    "XTAL1": {
+      "class": "crystal",
+      "clearance_mm": 0.2,
+      "netclass": "crystal_lt_0_5a",
+      "note": "keep short, no vias, guard with ground",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "XTAL2": {
+      "class": "crystal",
+      "clearance_mm": 0.2,
+      "netclass": "crystal_lt_0_5a",
+      "note": "keep short, no vias, guard with ground",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "X_A1": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "X_A2": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "X_B1": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "X_B2": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "X_DIR": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "X_STEP": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "Y_A1": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "Y_A2": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "Y_B1": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "Y_B2": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "Y_DIR": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "Y_STEP": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "Z_A1": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "Z_A2": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "Z_B1": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "Z_B2": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    },
+    "Z_DIR": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "Z_STEP": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "rule",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    }
+  },
+  "version": 1
+}

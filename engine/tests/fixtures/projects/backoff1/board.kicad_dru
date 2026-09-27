@@ -1,0 +1,26 @@
+(version 1)
+# Written by the circuit tools' rules step: profile jlcpcb-2layer-standard.
+# Values and their sources: circuit_mcp/fab_profiles.toml. Rewritten on
+# every run_layout; edit rules through `rules`, not here.
+
+(rule "PTH hole to track"
+	(condition "A.Type == 'Pad' && A.isPlated() && (B.Type == 'Track' || B.Type == 'Arc')")
+	(constraint hole_clearance (min 0.28mm)))
+
+(rule "NPTH hole to track"
+	(condition "A.Type == 'Pad' && !A.isPlated() && (B.Type == 'Track' || B.Type == 'Arc')")
+	(constraint hole_clearance (min 0.254mm)))
+
+# KiCad checks an NPTH hole against the board-edge rule; a fab rates
+# copper-to-NPTH by its hole rule, not the routed outline's.
+(rule "NPTH hole as edge"
+	(condition "(A.Type == 'Pad' && !A.isPlated()) || (B.Type == 'Pad' && !B.isPlated())")
+	(constraint edge_clearance (min 0.254mm)))
+
+(rule "PTH pad hole to hole"
+	(condition "A.Type == 'Pad' && B.Type == 'Pad' && A.isPlated() && B.isPlated()")
+	(constraint hole_to_hole (min 0.45mm)))
+
+(rule "NPTH minimum drill"
+	(condition "A.Type == 'Pad' && !A.isPlated()")
+	(constraint hole_size (min 0.5mm)))

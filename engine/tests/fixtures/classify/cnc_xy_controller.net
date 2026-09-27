@@ -1,0 +1,2641 @@
+(export 
+  (version "D")
+  (design
+    (source "cnc_xy_controller.py")
+    (date "09/17/2026 07:44 PM")
+    (tool "SKiDL (2.3.0)")
+    (sheet
+      (number 1)
+      (name "/")
+      (tstamps "/")
+      (title_block
+        (title)
+        (company)
+        (rev)
+        (date)
+        (source "cnc_xy_controller.py")
+        (comment
+          (number "1")
+          (value ""))
+        (comment
+          (number "2")
+          (value ""))
+        (comment
+          (number "3")
+          (value ""))
+        (comment
+          (number "4")
+          (value ""))
+        (comment
+          (number "5")
+          (value ""))
+        (comment
+          (number "6")
+          (value ""))
+        (comment
+          (number "7")
+          (value ""))
+        (comment
+          (number "8")
+          (value ""))
+        (comment
+          (number "9")
+          (value "")))))
+  (components
+    (comp
+      (ref "C1")
+      (value "2200uF 25V")
+      (description "Polarized capacitor")
+      (footprint "Capacitor_THT:CP_Radial_D10.0mm_P5.00mm")
+      (fields
+        (field
+          (name "Description") "Polarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:CP_Radial_D10.0mm_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "6Kb6RFF_lK")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C_Polarized"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "7e461e72-fd66-58f1-990c-20c92edbde28"))
+    (comp
+      (ref "C10")
+      (value "1uF film")
+      (description "Polarized capacitor")
+      (footprint "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Polarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "DKu8yPoFtn")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C_Polarized"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "a3d3e964-0fe6-5a83-991e-abd640e5c3f1"))
+    (comp
+      (ref "C11")
+      (value "1uF film")
+      (description "Polarized capacitor")
+      (footprint "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Polarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "YtGLiIMAbO")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C_Polarized"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "9addf552-ba5b-56c4-85ac-c19079fa7c32"))
+    (comp
+      (ref "C12")
+      (value "1uF film")
+      (description "Polarized capacitor")
+      (footprint "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Polarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "2grL1Wsl1c")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C_Polarized"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "ef15c614-f786-5d10-bad4-f8d55c2c2e95"))
+    (comp
+      (ref "C16")
+      (value "100nF")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "5zE7j9coaJ")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "55e265fe-aa41-5895-93a4-342fd9ad39c3"))
+    (comp
+      (ref "C17")
+      (value "100nF")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "8ftFCK2N4Q")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "1411d101-ac72-5d70-b824-f9d7490647ae"))
+    (comp
+      (ref "C2")
+      (value "2200uF 25V")
+      (description "Polarized capacitor")
+      (footprint "Capacitor_THT:CP_Radial_D10.0mm_P5.00mm")
+      (fields
+        (field
+          (name "Description") "Polarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:CP_Radial_D10.0mm_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "FxuySUvVNp")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C_Polarized"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "22c69d49-58a6-5945-a50b-4342719698f0"))
+    (comp
+      (ref "C3")
+      (value "1uF film")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "NEcjD66GJn")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "afa9338a-5e02-5724-9c17-5ef01e1d9899"))
+    (comp
+      (ref "C4")
+      (value "100uF 16V")
+      (description "Polarized capacitor")
+      (footprint "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Polarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "dESWrXZeGz")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C_Polarized"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8d7ab329-e755-5fe3-87da-ba2140b4ff47"))
+    (comp
+      (ref "C5")
+      (value "22pF")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "KYVge7gJhz")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "f60af52d-edff-5d63-8afc-3ab026a87265"))
+    (comp
+      (ref "C6")
+      (value "22pF")
+      (description "Unpolarized capacitor")
+      (footprint "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Unpolarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:C_Disc_D3.4mm_W2.1mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "Fsogv_TwgM")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "e3307451-fb2b-5471-859f-927dd48f525d"))
+    (comp
+      (ref "C7")
+      (value "220uF 25V")
+      (description "Polarized capacitor")
+      (footprint "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Polarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "AQcT5xEXa1")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C_Polarized"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "34ecc3e3-2833-5af2-afeb-8c3a026af7f6"))
+    (comp
+      (ref "C8")
+      (value "220uF 25V")
+      (description "Polarized capacitor")
+      (footprint "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Polarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "JpA34vLV1a")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C_Polarized"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "96e41ea9-0551-5ba3-8dc1-08eebd162404"))
+    (comp
+      (ref "C9")
+      (value "220uF 25V")
+      (description "Polarized capacitor")
+      (footprint "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm")
+      (fields
+        (field
+          (name "Description") "Polarized capacitor")
+        (field
+          (name "Footprint") "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "FDHK7WHsZl")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "C_Polarized"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "5c784c0c-6e0d-5ee4-9afd-add5bf07ee5e"))
+    (comp
+      (ref "D1")
+      (value "10SQ100")
+      (description "Schottky diode")
+      (footprint "Diode_THT:D_5KP_P10.16mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Schottky diode")
+        (field
+          (name "Footprint") "Diode_THT:D_5KP_P10.16mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "kbU7Brseo7")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "D_Schottky"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3afd3a72-8940-5170-b845-33c9d48243d1"))
+    (comp
+      (ref "D2")
+      (value "5KP18A")
+      (description "Bidirectional transient-voltage-suppression diode")
+      (footprint "Diode_THT:D_5KP_P10.16mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Bidirectional transient-voltage-suppression diode")
+        (field
+          (name "Footprint") "Diode_THT:D_5KP_P10.16mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "z9m2Xbd_2a")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "D_TVS"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "7f8b3502-f2b9-532a-8c55-571530f31c34"))
+    (comp
+      (ref "D3")
+      (value "BZX55C4V7")
+      (description "Zener diode")
+      (footprint "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Zener diode")
+        (field
+          (name "Footprint") "Diode_THT:D_DO-35_SOD27_P7.62mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "K3NSeAB0b3")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "D_Zener"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "43824ce0-ffdb-5086-baf2-71521a34d3ed"))
+    (comp
+      (ref "D4")
+      (value "1N4007")
+      (description "Diode")
+      (footprint "Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Diode")
+        (field
+          (name "Footprint") "Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "MRRI7gu_Ma")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "D"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "d47d060f-2ed1-5575-b04c-fa0a5b93e175"))
+    (comp
+      (ref "D5")
+      (value "1N4007")
+      (description "Diode")
+      (footprint "Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Diode")
+        (field
+          (name "Footprint") "Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "pkDBj1UrNk")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "D"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "69338c4b-fdeb-54f5-bdea-6b5aa49f2a5c"))
+    (comp
+      (ref "F1")
+      (value "5A slow blow")
+      (description "Fuse")
+      (footprint "Fuse:Fuseholder_Clip-5x20mm_Littelfuse_111_Inline_P20.00x5.00mm_D1.05mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Fuse")
+        (field
+          (name "Footprint") "Fuse:Fuseholder_Clip-5x20mm_Littelfuse_111_Inline_P20.00x5.00mm_D1.05mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "lbYC4vkC63")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "Fuse"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "80f6a2c7-c812-5b71-a5dd-2a3a9c2130f8"))
+    (comp
+      (ref "H1")
+      (value "M3")
+      (description "Mounting Hole with connection")
+      (footprint "MountingHole:MountingHole_3.2mm_M3_Pad")
+      (fields
+        (field
+          (name "Description") "Mounting Hole with connection")
+        (field
+          (name "Footprint") "MountingHole:MountingHole_3.2mm_M3_Pad")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "1OrFOm0jJG")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Mechanical")
+        (part "MountingHole_Pad"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "6a2a2ead-3f48-56e0-b32b-dd0ad9a7ea2e"))
+    (comp
+      (ref "H2")
+      (value "M3")
+      (description "Mounting Hole with connection")
+      (footprint "MountingHole:MountingHole_3.2mm_M3_Pad")
+      (fields
+        (field
+          (name "Description") "Mounting Hole with connection")
+        (field
+          (name "Footprint") "MountingHole:MountingHole_3.2mm_M3_Pad")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "MY9GzNnnzI")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Mechanical")
+        (part "MountingHole_Pad"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "363ea1c0-9f93-54b5-b921-016506d304a7"))
+    (comp
+      (ref "H3")
+      (value "M3")
+      (description "Mounting Hole with connection")
+      (footprint "MountingHole:MountingHole_3.2mm_M3_Pad")
+      (fields
+        (field
+          (name "Description") "Mounting Hole with connection")
+        (field
+          (name "Footprint") "MountingHole:MountingHole_3.2mm_M3_Pad")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "RmHWX4ibOp")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Mechanical")
+        (part "MountingHole_Pad"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b44f31dc-7655-5501-b657-7ae1998d87ff"))
+    (comp
+      (ref "H4")
+      (value "M3")
+      (description "Mounting Hole with connection")
+      (footprint "MountingHole:MountingHole_3.2mm_M3_Pad")
+      (fields
+        (field
+          (name "Description") "Mounting Hole with connection")
+        (field
+          (name "Footprint") "MountingHole:MountingHole_3.2mm_M3_Pad")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "r1fNqd3uRJ")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Mechanical")
+        (part "MountingHole_Pad"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "ec1b0b24-c91f-5143-a029-5d427aefb1e8"))
+    (comp
+      (ref "H5")
+      (value "M3")
+      (description "Mounting Hole with connection")
+      (footprint "MountingHole:MountingHole_3.2mm_M3_Pad")
+      (fields
+        (field
+          (name "Description") "Mounting Hole with connection")
+        (field
+          (name "Footprint") "MountingHole:MountingHole_3.2mm_M3_Pad")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "NSIA8bj2fq")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Mechanical")
+        (part "MountingHole_Pad"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "d96217f9-930c-51d0-b2ad-41a72e099ebe"))
+    (comp
+      (ref "H6")
+      (value "M3")
+      (description "Mounting Hole with connection")
+      (footprint "MountingHole:MountingHole_3.2mm_M3_Pad")
+      (fields
+        (field
+          (name "Description") "Mounting Hole with connection")
+        (field
+          (name "Footprint") "MountingHole:MountingHole_3.2mm_M3_Pad")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "OI8MN8NYKP")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Mechanical")
+        (part "MountingHole_Pad"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "0f3a84a2-22b3-522b-8db8-aec719f12d5b"))
+    (comp
+      (ref "J1")
+      (value "12V IN")
+      (description "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm")
+      (fields
+        (field
+          (name "Description") "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "jYExOqUHuC")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector")
+        (part "Screw_Terminal_01x02"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "1a0529fd-0c16-50b7-b877-8609c8222b4a"))
+    (comp
+      (ref "J10")
+      (value "Y MOTOR")
+      (description "Generic screw terminal, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-04P_1x04_P5.00mm")
+      (fields
+        (field
+          (name "Description") "Generic screw terminal, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-04P_1x04_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "BFRLkdeE5b")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector")
+        (part "Screw_Terminal_01x04"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3b746b02-728c-5d49-9e8e-f476cae33c63"))
+    (comp
+      (ref "J11")
+      (value "Z MOTOR")
+      (description "Generic screw terminal, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-04P_1x04_P5.00mm")
+      (fields
+        (field
+          (name "Description") "Generic screw terminal, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-04P_1x04_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "0XiBvQTXXV")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector")
+        (part "Screw_Terminal_01x04"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8296b475-2a00-5298-aae9-cf8935777ffa"))
+    (comp
+      (ref "J2")
+      (value "E-STOP NC")
+      (description "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm")
+      (fields
+        (field
+          (name "Description") "Generic screw terminal, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-02P_1x02_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "kgk8WuPfhr")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector")
+        (part "Screw_Terminal_01x02"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "05df31d6-dfe6-51dd-9799-c8da01dfc1e9"))
+    (comp
+      (ref "J3")
+      (value "LIMITS")
+      (description "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical")
+      (fields
+        (field
+          (name "Description") "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "kay3bsFBuJ")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector_Generic")
+        (part "Conn_01x08"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "6d11aff5-5167-5520-8cf7-ea8c8aaa7e5f"))
+    (comp
+      (ref "J4")
+      (value "FTDI")
+      (description "Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical")
+      (fields
+        (field
+          (name "Description") "Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "5Xi6eh3eme")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector_Generic")
+        (part "Conn_01x06"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3910ef3f-8126-5303-b812-9823743cedbb"))
+    (comp
+      (ref "J5")
+      (value "SPINDLE/COOLANT")
+      (description "Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical")
+      (fields
+        (field
+          (name "Description") "Generic connector, single row, 01x06, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "6djdVeQwr6")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector_Generic")
+        (part "Conn_01x06"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "edeb413f-75c2-5d5b-9213-fc0e64c09203"))
+    (comp
+      (ref "J6")
+      (value "ISP")
+      (description "Atmel 6-pin ISP connector")
+      (footprint "Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical")
+      (fields
+        (field
+          (name "Description") "Atmel 6-pin ISP connector")
+        (field
+          (name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "hA66Ryx54x")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector")
+        (part "AVR-ISP-6"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "977edc2c-458c-5f7a-8fc8-fcf60ef19779"))
+    (comp
+      (ref "J7")
+      (value "EN SEL")
+      (description "Generic connector, double row, 02x04, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical")
+      (fields
+        (field
+          (name "Description") "Generic connector, double row, 02x04, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "3B27vaGNWA")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector_Generic")
+        (part "Conn_02x04_Odd_Even"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "4f52668f-5a14-5367-95fd-42e50ef0e789"))
+    (comp
+      (ref "J8")
+      (value "MS SEL")
+      (description "Generic connector, double row, 02x04, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical")
+      (fields
+        (field
+          (name "Description") "Generic connector, double row, 02x04, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "tnMfmOWOQj")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector_Generic")
+        (part "Conn_02x04_Odd_Even"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "c934bd28-6d31-5416-8c5c-ed774b1374a9"))
+    (comp
+      (ref "J9")
+      (value "X MOTOR")
+      (description "Generic screw terminal, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+      (footprint "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-04P_1x04_P5.00mm")
+      (fields
+        (field
+          (name "Description") "Generic screw terminal, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)")
+        (field
+          (name "Footprint") "TerminalBlock:TerminalBlock_MaiXu_MX126-5.0-04P_1x04_P5.00mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "3YZ1AJ0W__")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Connector")
+        (part "Screw_Terminal_01x04"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "0fdd2049-3475-5aac-9da6-4b2e953ce105"))
+    (comp
+      (ref "LD1")
+      (value "GREEN")
+      (description "Light emitting diode")
+      (footprint "LED_THT:LED_D5.0mm")
+      (fields
+        (field
+          (name "Description") "Light emitting diode")
+        (field
+          (name "Footprint") "LED_THT:LED_D5.0mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "HMpK_O2SM5")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "LED"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "2c9edc48-be93-5dd4-be1a-d23ae12f784a"))
+    (comp
+      (ref "LD2")
+      (value "YELLOW")
+      (description "Light emitting diode")
+      (footprint "LED_THT:LED_D5.0mm")
+      (fields
+        (field
+          (name "Description") "Light emitting diode")
+        (field
+          (name "Footprint") "LED_THT:LED_D5.0mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "Aau5awKy8g")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "LED"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "851fb512-2ba8-5a9e-9586-dd6df5b2d839"))
+    (comp
+      (ref "LD3")
+      (value "RED")
+      (description "Light emitting diode")
+      (footprint "LED_THT:LED_D5.0mm")
+      (fields
+        (field
+          (name "Description") "Light emitting diode")
+        (field
+          (name "Footprint") "LED_THT:LED_D5.0mm")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "gVTpDjg2FZ")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "LED"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "a1d05a1e-3b55-53ca-a9b4-b1ecc762d38f"))
+    (comp
+      (ref "Q1")
+      (value "IRLZ44N")
+      (description "47A Id, 55V Vds, 22mOhm Rds Single N-Channel HEXFET Power MOSFET, TO-220AB")
+      (footprint "Package_TO_SOT_THT:TO-220-3_Vertical")
+      (fields
+        (field
+          (name "Description") "47A Id, 55V Vds, 22mOhm Rds Single N-Channel HEXFET Power MOSFET, TO-220AB")
+        (field
+          (name "Footprint") "Package_TO_SOT_THT:TO-220-3_Vertical")
+        (field
+          (name "Datasheet") "http://www.irf.com/product-info/datasheets/data/irlz44n.pdf")
+        (field
+          (name "SKiDL Tag") "pyfZrOlwDl")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Transistor_FET")
+        (part "IRLZ44N"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "57c7a4d2-0d8a-5421-871a-5172ad0a9df5"))
+    (comp
+      (ref "Q2")
+      (value "IRLZ44N")
+      (description "47A Id, 55V Vds, 22mOhm Rds Single N-Channel HEXFET Power MOSFET, TO-220AB")
+      (footprint "Package_TO_SOT_THT:TO-220-3_Vertical")
+      (fields
+        (field
+          (name "Description") "47A Id, 55V Vds, 22mOhm Rds Single N-Channel HEXFET Power MOSFET, TO-220AB")
+        (field
+          (name "Footprint") "Package_TO_SOT_THT:TO-220-3_Vertical")
+        (field
+          (name "Datasheet") "http://www.irf.com/product-info/datasheets/data/irlz44n.pdf")
+        (field
+          (name "SKiDL Tag") "q3ISwaTqSl")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Transistor_FET")
+        (part "IRLZ44N"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "8a17c204-6087-5e0a-9bda-67f090d6adc8"))
+    (comp
+      (ref "R1")
+      (value "10k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "HodBskLsnq")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "fa22c050-dd62-5390-a5c8-7c69b39bbfa5"))
+    (comp
+      (ref "R11")
+      (value "100k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "ciYyOOtx3o")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "78a9864c-60b5-53a5-92c0-2d48a22de4d5"))
+    (comp
+      (ref "R12")
+      (value "100k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "pYV6TXIkTY")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3afe1541-6058-522a-9451-60b0dcb40667"))
+    (comp
+      (ref "R13")
+      (value "100k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "r3Zc1s1niK")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "d68f99c2-44a5-5d6d-8c71-e4b18ce715a6"))
+    (comp
+      (ref "R14")
+      (value "470")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "5eLqRTIDEw")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "15abf902-ef39-596d-b792-c9eb310284e8"))
+    (comp
+      (ref "R15")
+      (value "1k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "LKBdP81EXG")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "30da91ee-c612-5695-868d-f1eaa7ac7f35"))
+    (comp
+      (ref "R16")
+      (value "1k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "6JtVlRer1G")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "00058bf3-fb3c-5092-b306-f20de839fbec"))
+    (comp
+      (ref "R17")
+      (value "1k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "JioL3uSkda")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "92a88f18-75ad-5f4a-b7f8-60a1d5e7d346"))
+    (comp
+      (ref "R2")
+      (value "10k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "SMfbrYgGan")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "1649a12a-704d-560c-93d0-136dc392cfe3"))
+    (comp
+      (ref "R3")
+      (value "3k9")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "5RVn4uqX2G")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "4d175ebe-cd7e-513a-a79b-ca8dd6e832cd"))
+    (comp
+      (ref "R4")
+      (value "220")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "wwnEMUCuOp")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "dfe10806-f31e-5ada-b1b3-e13d03ca0bf6"))
+    (comp
+      (ref "R5")
+      (value "220")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "WHsNbRWlzJ")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "4c776724-cedb-5d82-acb5-10414dbebc72"))
+    (comp
+      (ref "R6")
+      (value "10k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "i1eft7Cwf8")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "c27ee60b-28e8-5bc2-b57b-3197d3515e2b"))
+    (comp
+      (ref "R7")
+      (value "10k")
+      (description "Resistor")
+      (footprint "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+      (fields
+        (field
+          (name "Description") "Resistor")
+        (field
+          (name "Footprint") "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "_qf8H8bXds")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "R"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "09835dde-e034-5ddc-8d18-5805eed214c8"))
+    (comp
+      (ref "S1")
+      (value "RESET")
+      (description "Push button switch, generic, two pins")
+      (footprint "Button_Switch_THT:KSA_Tactile_SPST")
+      (fields
+        (field
+          (name "Description") "Push button switch, generic, two pins")
+        (field
+          (name "Footprint") "Button_Switch_THT:KSA_Tactile_SPST")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "hNQ6njx9_f")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Switch")
+        (part "SW_Push"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3d5d0599-e36f-5bd1-8355-a64ac7d28df0"))
+    (comp
+      (ref "U1")
+      (value "LM7805")
+      (description "Positive 1A 35V Linear Regulator, Fixed Output 5V, TO-220")
+      (footprint "Package_TO_SOT_THT:TO-220-3_Vertical")
+      (fields
+        (field
+          (name "Description") "Positive 1A 35V Linear Regulator, Fixed Output 5V, TO-220")
+        (field
+          (name "Footprint") "Package_TO_SOT_THT:TO-220-3_Vertical")
+        (field
+          (name "Datasheet") "https://www.onsemi.cn/PowerSolutions/document/MC7800-D.PDF")
+        (field
+          (name "SKiDL Tag") "fVtODoP6Ih")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Regulator_Linear")
+        (part "LM7805_TO220"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "3a94af9c-c3f3-53ad-9681-b7ebcc4cd70c"))
+    (comp
+      (ref "U2")
+      (value "A4988 class")
+      (description "Pololu Breakout Board, Stepper Driver A4988")
+      (footprint "Module:Pololu_Breakout-16_15.2x20.3mm")
+      (fields
+        (field
+          (name "Description") "Pololu Breakout Board, Stepper Driver A4988")
+        (field
+          (name "Footprint") "Module:Pololu_Breakout-16_15.2x20.3mm")
+        (field
+          (name "Datasheet") "https://www.pololu.com/product/2980/pictures")
+        (field
+          (name "SKiDL Tag") "GU7NuCXu2W")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Driver_Motor")
+        (part "Pololu_Breakout_A4988"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "9ad54a62-378b-521b-833f-bd11e820b002"))
+    (comp
+      (ref "U3")
+      (value "A4988 class")
+      (description "Pololu Breakout Board, Stepper Driver A4988")
+      (footprint "Module:Pololu_Breakout-16_15.2x20.3mm")
+      (fields
+        (field
+          (name "Description") "Pololu Breakout Board, Stepper Driver A4988")
+        (field
+          (name "Footprint") "Module:Pololu_Breakout-16_15.2x20.3mm")
+        (field
+          (name "Datasheet") "https://www.pololu.com/product/2980/pictures")
+        (field
+          (name "SKiDL Tag") "jIxhVPCa1N")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Driver_Motor")
+        (part "Pololu_Breakout_A4988"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "b1ba2e89-65ac-5bdf-95c6-08c273b58e60"))
+    (comp
+      (ref "U4")
+      (value "A4988 class")
+      (description "Pololu Breakout Board, Stepper Driver A4988")
+      (footprint "Module:Pololu_Breakout-16_15.2x20.3mm")
+      (fields
+        (field
+          (name "Description") "Pololu Breakout Board, Stepper Driver A4988")
+        (field
+          (name "Footprint") "Module:Pololu_Breakout-16_15.2x20.3mm")
+        (field
+          (name "Datasheet") "https://www.pololu.com/product/2980/pictures")
+        (field
+          (name "SKiDL Tag") "AamdhbH_fS")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Driver_Motor")
+        (part "Pololu_Breakout_A4988"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "ce71a6ca-47d4-5d31-90b1-40cb4d99b212"))
+    (comp
+      (ref "U5")
+      (value "ATmega328P-PU")
+      (description "20MHz, 32kB Flash, 2kB SRAM, 1kB EEPROM, DIP-28")
+      (footprint "Package_DIP:DIP-28_W7.62mm")
+      (fields
+        (field
+          (name "Description") "20MHz, 32kB Flash, 2kB SRAM, 1kB EEPROM, DIP-28")
+        (field
+          (name "Footprint") "Package_DIP:DIP-28_W7.62mm")
+        (field
+          (name "Datasheet") "http://ww1.microchip.com/downloads/en/DeviceDoc/ATmega328_P%20AVR%20MCU%20with%20picoPower%20Technology%20Data%20Sheet%2040001984A.pdf")
+        (field
+          (name "SKiDL Tag") "hRlvKYkM4u")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "MCU_Microchip_ATmega")
+        (part "ATmega328P-P"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "6eb5b719-4e76-5efc-819f-2acc6e1b3489"))
+    (comp
+      (ref "Y1")
+      (value "16MHz")
+      (description "Two pin crystal")
+      (footprint "Crystal:Crystal_HC49-U_Vertical")
+      (fields
+        (field
+          (name "Description") "Two pin crystal")
+        (field
+          (name "Footprint") "Crystal:Crystal_HC49-U_Vertical")
+        (field
+          (name "Datasheet"))
+        (field
+          (name "SKiDL Tag") "6kMU61VFal")
+        (field
+          (name "SKiDL Line") "cnc_xy_controller.py:48"))
+      (libsource
+        (lib "Device")
+        (part "Crystal"))
+      (sheetpath
+        (names "/")
+        (tstamps "/"))
+      (component_classes)
+      (tstamps "0dce7dd6-1126-5d23-ad0b-574514364bdd")))
+  (nets
+    (net
+      (code 1)
+      (name "+5V")
+      (class "Default")
+      (node
+        (ref "C4")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J3")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J6")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J8")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J8")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J8")
+        (pin "5")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J8")
+        (pin "7")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R15")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R16")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "3")
+        (pintype "POWER-OUT"))
+      (node
+        (ref "U2")
+        (pin "13")
+        (pintype "INPUT"))
+      (node
+        (ref "U2")
+        (pin "14")
+        (pintype "INPUT"))
+      (node
+        (ref "U2")
+        (pin "2")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U3")
+        (pin "13")
+        (pintype "INPUT"))
+      (node
+        (ref "U3")
+        (pin "14")
+        (pintype "INPUT"))
+      (node
+        (ref "U3")
+        (pin "2")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U4")
+        (pin "13")
+        (pintype "INPUT"))
+      (node
+        (ref "U4")
+        (pin "14")
+        (pintype "INPUT"))
+      (node
+        (ref "U4")
+        (pin "2")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U5")
+        (pin "20")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U5")
+        (pin "7")
+        (pintype "POWER-IN")))
+    (net
+      (code 2)
+      (name "COOLANT")
+      (class "Default")
+      (node
+        (ref "J6")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R5")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "18")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 3)
+      (name "CUT_GATE")
+      (class "Default")
+      (node
+        (ref "Q2")
+        (pin "1")
+        (pintype "INPUT"))
+      (node
+        (ref "R5")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R7")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 4)
+      (name "CUT_OUT")
+      (class "Default")
+      (node
+        (ref "D5")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J5")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "Q2")
+        (pin "2")
+        (pintype "PASSIVE")))
+    (net
+      (code 5)
+      (name "EN_X")
+      (class "Default")
+      (node
+        (ref "J7")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R11")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "9")
+        (pintype "INPUT")))
+    (net
+      (code 6)
+      (name "EN_Y")
+      (class "Default")
+      (node
+        (ref "J7")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R12")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U3")
+        (pin "9")
+        (pintype "INPUT")))
+    (net
+      (code 7)
+      (name "EN_Z")
+      (class "Default")
+      (node
+        (ref "J7")
+        (pin "6")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R13")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U4")
+        (pin "9")
+        (pintype "INPUT")))
+    (net
+      (code 8)
+      (name "E_STOP_FB")
+      (class "Default")
+      (node
+        (ref "D3")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R3")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "15")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 9)
+      (name "GND")
+      (class "Default")
+      (node
+        (ref "C1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C10")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C11")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C12")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C16")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C5")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C6")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C7")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C8")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C9")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J4")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J4")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J5")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J5")
+        (pin "6")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J6")
+        (pin "6")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J7")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J7")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J7")
+        (pin "5")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J7")
+        (pin "7")
+        (pintype "PASSIVE"))
+      (node
+        (ref "LD1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "Q1")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "Q2")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R11")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R12")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R13")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R14")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R17")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R6")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R7")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "S1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "2")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U2")
+        (pin "1")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U2")
+        (pin "7")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U3")
+        (pin "1")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U3")
+        (pin "7")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U4")
+        (pin "1")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U4")
+        (pin "7")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U5")
+        (pin "21")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "22")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "8")
+        (pintype "POWER-IN")))
+    (net
+      (code 10)
+      (name "LED_HB")
+      (class "Default")
+      (node
+        (ref "LD2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "LD2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R16")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "14")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 11)
+      (name "LED_MOTOR")
+      (class "Default")
+      (node
+        (ref "LD3")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R17")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 12)
+      (name "LED_PWR")
+      (class "Default")
+      (node
+        (ref "LD1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R15")
+        (pin "2")
+        (pintype "PASSIVE")))
+    (net
+      (code 13)
+      (name "LIMIT_X")
+      (class "Default")
+      (node
+        (ref "J3")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "24")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 14)
+      (name "LIMIT_Y")
+      (class "Default")
+      (node
+        (ref "J3")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "25")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 15)
+      (name "LIMIT_Z")
+      (class "Default")
+      (node
+        (ref "J3")
+        (pin "5")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "26")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 16)
+      (name "MCU_DTR")
+      (class "Default")
+      (node
+        (ref "C17")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J4")
+        (pin "6")
+        (pintype "PASSIVE")))
+    (net
+      (code 17)
+      (name "MCU_RST")
+      (class "Default")
+      (node
+        (ref "C16")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C17")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J6")
+        (pin "5")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "S1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "1")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 18)
+      (name "MCU_RXD")
+      (class "Default")
+      (node
+        (ref "J4")
+        (pin "5")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "2")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 19)
+      (name "MCU_TXD")
+      (class "Default")
+      (node
+        (ref "J4")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "3")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 20)
+      (name "MS1")
+      (class "Default")
+      (node
+        (ref "J8")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "10")
+        (pintype "INPUT"))
+      (node
+        (ref "U3")
+        (pin "10")
+        (pintype "INPUT"))
+      (node
+        (ref "U4")
+        (pin "10")
+        (pintype "INPUT")))
+    (net
+      (code 21)
+      (name "MS2")
+      (class "Default")
+      (node
+        (ref "J8")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "11")
+        (pintype "INPUT"))
+      (node
+        (ref "U3")
+        (pin "11")
+        (pintype "INPUT"))
+      (node
+        (ref "U4")
+        (pin "11")
+        (pintype "INPUT")))
+    (net
+      (code 22)
+      (name "MS3")
+      (class "Default")
+      (node
+        (ref "J8")
+        (pin "6")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "12")
+        (pintype "INPUT"))
+      (node
+        (ref "U3")
+        (pin "12")
+        (pintype "INPUT"))
+      (node
+        (ref "U4")
+        (pin "12")
+        (pintype "INPUT")))
+    (net
+      (code 23)
+      (name "N$1")
+      (class "Default")
+      (node
+        (ref "D1")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "F1")
+        (pin "2")
+        (pintype "PASSIVE")))
+    (net
+      (code 24)
+      (name "PROBE")
+      (class "Default")
+      (node
+        (ref "J3")
+        (pin "6")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "23")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 25)
+      (name "SPARE_1")
+      (class "Default")
+      (node
+        (ref "J3")
+        (pin "7")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "27")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 26)
+      (name "SPARE_2")
+      (class "Default")
+      (node
+        (ref "J3")
+        (pin "8")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "28")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 27)
+      (name "SPN_DIR")
+      (class "Default")
+      (node
+        (ref "J5")
+        (pin "5")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J6")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "19")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 28)
+      (name "SPN_GATE")
+      (class "Default")
+      (node
+        (ref "Q1")
+        (pin "1")
+        (pintype "INPUT"))
+      (node
+        (ref "R4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R6")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 29)
+      (name "SPN_OUT")
+      (class "Default")
+      (node
+        (ref "D4")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J5")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "Q1")
+        (pin "2")
+        (pintype "PASSIVE")))
+    (net
+      (code 30)
+      (name "SPN_PWM")
+      (class "Default")
+      (node
+        (ref "J6")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R4")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "17")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 31)
+      (name "VIN")
+      (class "Default")
+      (node
+        (ref "F1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J1")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 32)
+      (name "VIN_PROT")
+      (class "Default")
+      (node
+        (ref "C1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C3")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D1")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U1")
+        (pin "1")
+        (pintype "POWER-IN")))
+    (net
+      (code 33)
+      (name "VMOT")
+      (class "Default")
+      (node
+        (ref "C10")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C11")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C12")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C7")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C8")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "C9")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D4")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "D5")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J2")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "J5")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "LD3")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R14")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "R2")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "8")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U3")
+        (pin "8")
+        (pintype "POWER-IN"))
+      (node
+        (ref "U4")
+        (pin "8")
+        (pintype "POWER-IN")))
+    (net
+      (code 34)
+      (name "XTAL1")
+      (class "Default")
+      (node
+        (ref "C5")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "9")
+        (pintype "BIDIRECTIONAL"))
+      (node
+        (ref "Y1")
+        (pin "1")
+        (pintype "PASSIVE")))
+    (net
+      (code 35)
+      (name "XTAL2")
+      (class "Default")
+      (node
+        (ref "C6")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U5")
+        (pin "10")
+        (pintype "BIDIRECTIONAL"))
+      (node
+        (ref "Y1")
+        (pin "2")
+        (pintype "PASSIVE")))
+    (net
+      (code 36)
+      (name "X_A1")
+      (class "Default")
+      (node
+        (ref "J9")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "3")
+        (pintype "OUTPUT")))
+    (net
+      (code 37)
+      (name "X_A2")
+      (class "Default")
+      (node
+        (ref "J9")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "4")
+        (pintype "OUTPUT")))
+    (net
+      (code 38)
+      (name "X_B1")
+      (class "Default")
+      (node
+        (ref "J9")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "5")
+        (pintype "OUTPUT")))
+    (net
+      (code 39)
+      (name "X_B2")
+      (class "Default")
+      (node
+        (ref "J9")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U2")
+        (pin "6")
+        (pintype "OUTPUT")))
+    (net
+      (code 40)
+      (name "X_DIR")
+      (class "Default")
+      (node
+        (ref "U2")
+        (pin "16")
+        (pintype "INPUT"))
+      (node
+        (ref "U5")
+        (pin "5")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 41)
+      (name "X_STEP")
+      (class "Default")
+      (node
+        (ref "U2")
+        (pin "15")
+        (pintype "INPUT"))
+      (node
+        (ref "U5")
+        (pin "4")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 42)
+      (name "Y_A1")
+      (class "Default")
+      (node
+        (ref "J10")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U3")
+        (pin "3")
+        (pintype "OUTPUT")))
+    (net
+      (code 43)
+      (name "Y_A2")
+      (class "Default")
+      (node
+        (ref "J10")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U3")
+        (pin "4")
+        (pintype "OUTPUT")))
+    (net
+      (code 44)
+      (name "Y_B1")
+      (class "Default")
+      (node
+        (ref "J10")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U3")
+        (pin "5")
+        (pintype "OUTPUT")))
+    (net
+      (code 45)
+      (name "Y_B2")
+      (class "Default")
+      (node
+        (ref "J10")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U3")
+        (pin "6")
+        (pintype "OUTPUT")))
+    (net
+      (code 46)
+      (name "Y_DIR")
+      (class "Default")
+      (node
+        (ref "U3")
+        (pin "16")
+        (pintype "INPUT"))
+      (node
+        (ref "U5")
+        (pin "11")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 47)
+      (name "Y_STEP")
+      (class "Default")
+      (node
+        (ref "U3")
+        (pin "15")
+        (pintype "INPUT"))
+      (node
+        (ref "U5")
+        (pin "6")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 48)
+      (name "Z_A1")
+      (class "Default")
+      (node
+        (ref "J11")
+        (pin "1")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U4")
+        (pin "3")
+        (pintype "OUTPUT")))
+    (net
+      (code 49)
+      (name "Z_A2")
+      (class "Default")
+      (node
+        (ref "J11")
+        (pin "2")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U4")
+        (pin "4")
+        (pintype "OUTPUT")))
+    (net
+      (code 50)
+      (name "Z_B1")
+      (class "Default")
+      (node
+        (ref "J11")
+        (pin "3")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U4")
+        (pin "5")
+        (pintype "OUTPUT")))
+    (net
+      (code 51)
+      (name "Z_B2")
+      (class "Default")
+      (node
+        (ref "J11")
+        (pin "4")
+        (pintype "PASSIVE"))
+      (node
+        (ref "U4")
+        (pin "6")
+        (pintype "OUTPUT")))
+    (net
+      (code 52)
+      (name "Z_DIR")
+      (class "Default")
+      (node
+        (ref "U4")
+        (pin "16")
+        (pintype "INPUT"))
+      (node
+        (ref "U5")
+        (pin "13")
+        (pintype "BIDIRECTIONAL")))
+    (net
+      (code 53)
+      (name "Z_STEP")
+      (class "Default")
+      (node
+        (ref "U4")
+        (pin "15")
+        (pintype "INPUT"))
+      (node
+        (ref "U5")
+        (pin "12")
+        (pintype "BIDIRECTIONAL")))))

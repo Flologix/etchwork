@@ -1,0 +1,304 @@
+{
+  "classes": [
+    {
+      "criterion": "Ground or return net: the reference that other nets' current returns through",
+      "id": "ground",
+      "power": true
+    },
+    {
+      "criterion": "Supply or load net carrying substantial current: input power, motor supplies, motor phase outputs, switched loads such as solenoids, pumps or heaters",
+      "id": "power_high_current",
+      "power": true
+    },
+    {
+      "criterion": "Regulated low-voltage supply rail feeding logic and ICs, typically well under an amp",
+      "id": "power_logic",
+      "power": true
+    },
+    {
+      "criterion": "Connection between a crystal or resonator and its oscillator pins",
+      "id": "crystal",
+      "power": false
+    },
+    {
+      "criterion": "Radio-frequency feed to an antenna, RF connector or RF module, needing controlled 50 ohm impedance",
+      "id": "rf_50ohm",
+      "power": false
+    },
+    {
+      "criterion": "One half of a differential pair: USB data, Ethernet, LVDS, CAN, RS-485 or similar",
+      "id": "diff_pair",
+      "power": false
+    },
+    {
+      "criterion": "Low-level analog signal whose accuracy suffers from noise: sensor outputs, ADC inputs, voltage references, audio, regulator feedback nodes",
+      "id": "analog_sensitive",
+      "power": false
+    },
+    {
+      "criterion": "Ordinary digital or control signal at logic current: GPIO, enables, serial buses, resets, LED drive, transistor gate or base drive, switch inputs",
+      "id": "signal",
+      "power": false
+    }
+  ],
+  "physical": {
+    "analog_sensitive|-": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": "keep away from switching and high-current nets",
+      "width_mm": 0.25
+    },
+    "analog_sensitive|0_5a_to_2a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": "keep away from switching and high-current nets",
+      "width_mm": 0.8
+    },
+    "analog_sensitive|2a_to_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": "keep away from switching and high-current nets",
+      "width_mm": 2.5
+    },
+    "analog_sensitive|gt_5a": {
+      "clearance_mm": 0.2,
+      "flag": "over 5 A needs a copper-weight or pour decision",
+      "note": "keep away from switching and high-current nets",
+      "width_mm": 2.5
+    },
+    "analog_sensitive|lt_0_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": "keep away from switching and high-current nets",
+      "width_mm": 0.25
+    },
+    "crystal|-": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": "keep short, no vias, guard with ground",
+      "width_mm": 0.25
+    },
+    "crystal|0_5a_to_2a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": "keep short, no vias, guard with ground",
+      "width_mm": 0.8
+    },
+    "crystal|2a_to_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": "keep short, no vias, guard with ground",
+      "width_mm": 2.5
+    },
+    "crystal|gt_5a": {
+      "clearance_mm": 0.2,
+      "flag": "over 5 A needs a copper-weight or pour decision",
+      "note": "keep short, no vias, guard with ground",
+      "width_mm": 2.5
+    },
+    "crystal|lt_0_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": "keep short, no vias, guard with ground",
+      "width_mm": 0.25
+    },
+    "diff_pair|-": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 0.25
+    },
+    "diff_pair|0_5a_to_2a": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 0.8
+    },
+    "diff_pair|2a_to_5a": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 2.5
+    },
+    "diff_pair|gt_5a": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 2.5
+    },
+    "diff_pair|lt_0_5a": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 0.25
+    },
+    "ground|-": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.8
+    },
+    "ground|0_5a_to_2a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.8
+    },
+    "ground|2a_to_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 2.5
+    },
+    "ground|gt_5a": {
+      "clearance_mm": 0.2,
+      "flag": "over 5 A needs a copper-weight or pour decision",
+      "note": null,
+      "width_mm": 2.5
+    },
+    "ground|lt_0_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.25
+    },
+    "power_high_current|-": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.25
+    },
+    "power_high_current|0_5a_to_2a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.8
+    },
+    "power_high_current|2a_to_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 2.5
+    },
+    "power_high_current|gt_5a": {
+      "clearance_mm": 0.2,
+      "flag": "over 5 A needs a copper-weight or pour decision",
+      "note": null,
+      "width_mm": 2.5
+    },
+    "power_high_current|lt_0_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.25
+    },
+    "power_logic|-": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.25
+    },
+    "power_logic|0_5a_to_2a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.8
+    },
+    "power_logic|2a_to_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 2.5
+    },
+    "power_logic|gt_5a": {
+      "clearance_mm": 0.2,
+      "flag": "over 5 A needs a copper-weight or pour decision",
+      "note": null,
+      "width_mm": 2.5
+    },
+    "power_logic|lt_0_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.25
+    },
+    "rf_50ohm|-": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 0.25
+    },
+    "rf_50ohm|0_5a_to_2a": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 0.8
+    },
+    "rf_50ohm|2a_to_5a": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 2.5
+    },
+    "rf_50ohm|gt_5a": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 2.5
+    },
+    "rf_50ohm|lt_0_5a": {
+      "clearance_mm": 0.2,
+      "flag": "controlled impedance needs a stackup; v0.1 cannot size this net",
+      "note": null,
+      "width_mm": 0.25
+    },
+    "signal|-": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.25
+    },
+    "signal|0_5a_to_2a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.8
+    },
+    "signal|2a_to_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 2.5
+    },
+    "signal|gt_5a": {
+      "clearance_mm": 0.2,
+      "flag": "over 5 A needs a copper-weight or pour decision",
+      "note": null,
+      "width_mm": 2.5
+    },
+    "signal|lt_0_5a": {
+      "clearance_mm": 0.2,
+      "flag": null,
+      "note": null,
+      "width_mm": 0.25
+    }
+  },
+  "tiers": [
+    {
+      "criterion": "Below 0.5 A: logic signals, LEDs, small regulated rails",
+      "id": "lt_0_5a"
+    },
+    {
+      "criterion": "0.5 to 2 A: a single motor phase, a small switched load, a moderate supply rail",
+      "id": "0_5a_to_2a"
+    },
+    {
+      "criterion": "2 to 5 A: a board's main input or a supply feeding several loads",
+      "id": "2a_to_5a"
+    },
+    {
+      "criterion": "Above 5 A: high-power supply, large motor or heater",
+      "id": "gt_5a"
+    }
+  ]
+}

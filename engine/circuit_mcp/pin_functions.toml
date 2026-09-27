@@ -1,0 +1,67 @@
+# Pin functions KiCad's own symbols do not carry.
+#
+# The AVR libraries define no `(alternate ...)` entries, so describe_part
+# showed the ATtiny85's pin 7 as `PB2` and nothing about SCK -- and a run
+# wired its ISP header from memory, wrongly. These rows add the functions.
+#
+# Keyed by the symbol that DEFINES the pins, after following `extends`: that
+# is where every package variant's pins come from (ATtiny85-20S extends
+# ATtiny25V-10S; ATmega328P-A extends ATmega48PV-10A). A pin's primary name
+# (`AREF/PB0`) comes from the symbol itself and is not repeated here.
+# tests/test_pin_functions_eval.py checks every row against the symbol's own
+# pin names, so a wrong pin number fails a test rather than a board.
+
+# ATtiny25/45/85, 8-pin: SOIC 208 mil (S), SOIC 150 mil (SS) and PDIP (P)
+# share one pinout. Microchip DS-2586, Figure 1-1 "Pinout ATtiny25/45/85".
+["MCU_Microchip_ATtiny:ATtiny25V-10S".pins]
+"1" = ["RESET", "dW", "ADC0", "PCINT5"]
+"2" = ["XTAL1", "CLKI", "OC1B", "ADC3", "PCINT3"]
+"3" = ["XTAL2", "CLKO", "OC1B", "ADC2", "PCINT4"]
+"5" = ["MOSI", "DI", "SDA", "AIN0", "OC0A", "OC1A", "AREF", "PCINT0"]
+"6" = ["MISO", "DO", "AIN1", "OC0B", "OC1A", "PCINT1"]
+"7" = ["SCK", "USCK", "SCL", "ADC1", "T0", "INT0", "PCINT2"]
+
+["MCU_Microchip_ATtiny:ATtiny25V-10SS".pins]
+"1" = ["RESET", "dW", "ADC0", "PCINT5"]
+"2" = ["XTAL1", "CLKI", "OC1B", "ADC3", "PCINT3"]
+"3" = ["XTAL2", "CLKO", "OC1B", "ADC2", "PCINT4"]
+"5" = ["MOSI", "DI", "SDA", "AIN0", "OC0A", "OC1A", "AREF", "PCINT0"]
+"6" = ["MISO", "DO", "AIN1", "OC0B", "OC1A", "PCINT1"]
+"7" = ["SCK", "USCK", "SCL", "ADC1", "T0", "INT0", "PCINT2"]
+
+["MCU_Microchip_ATtiny:ATtiny25V-10P".pins]
+"1" = ["RESET", "dW", "ADC0", "PCINT5"]
+"2" = ["XTAL1", "CLKI", "OC1B", "ADC3", "PCINT3"]
+"3" = ["XTAL2", "CLKO", "OC1B", "ADC2", "PCINT4"]
+"5" = ["MOSI", "DI", "SDA", "AIN0", "OC0A", "OC1A", "AREF", "PCINT0"]
+"6" = ["MISO", "DO", "AIN1", "OC0B", "OC1A", "PCINT1"]
+"7" = ["SCK", "USCK", "SCL", "ADC1", "T0", "INT0", "PCINT2"]
+
+# ATmega48/88/168/328(P), TQFP-32 (A). Microchip DS40002061,
+# Figure 1-1 "28-pin PDIP, 32-pin TQFP ... Pinout".
+["MCU_Microchip_ATmega:ATmega48PV-10A".pins]
+"12" = ["ICP1", "CLKO", "PCINT0"]
+"13" = ["OC1A", "PCINT1"]
+"14" = ["SS", "OC1B", "PCINT2"]
+"15" = ["MOSI", "OC2A", "PCINT3"]
+"16" = ["MISO", "PCINT4"]
+"17" = ["SCK", "PCINT5"]
+"27" = ["SDA", "ADC4", "PCINT12"]
+"28" = ["SCL", "ADC5", "PCINT13"]
+"29" = ["RESET", "PCINT14"]
+"30" = ["RXD", "PCINT16"]
+"31" = ["TXD", "PCINT17"]
+
+# The same die in PDIP-28 (P); same figure.
+["MCU_Microchip_ATmega:ATmega48PV-10P".pins]
+"14" = ["ICP1", "CLKO", "PCINT0"]
+"15" = ["OC1A", "PCINT1"]
+"16" = ["SS", "OC1B", "PCINT2"]
+"17" = ["MOSI", "OC2A", "PCINT3"]
+"18" = ["MISO", "PCINT4"]
+"19" = ["SCK", "PCINT5"]
+"27" = ["SDA", "ADC4", "PCINT12"]
+"28" = ["SCL", "ADC5", "PCINT13"]
+"1" = ["RESET", "PCINT14"]
+"2" = ["RXD", "PCINT16"]
+"3" = ["TXD", "PCINT17"]

@@ -1,0 +1,63 @@
+# Ground truth for cnc_xy_controller.net. Spec Appendix A; reviewed by the
+# board's owner 2026-09-22. 12 V / 5 A brick, 5 A fuse, A4988 <= 2 A per
+# coil, 7805 at ~150 mA, IRLZ44N low-side outputs to a 12 V pump / SSR coil.
+
+[nets]
+GND = { class = "ground", tier = "2a_to_5a" }
+
+VIN = { class = "power_high_current", tier = "2a_to_5a" }
+"N$1" = { class = "power_high_current", tier = "2a_to_5a" }
+VIN_PROT = { class = "power_high_current", tier = "2a_to_5a" }
+VMOT = { class = "power_high_current", tier = "2a_to_5a" }
+
+X_A1 = { class = "power_high_current", tier = "0_5a_to_2a" }
+X_A2 = { class = "power_high_current", tier = "0_5a_to_2a" }
+X_B1 = { class = "power_high_current", tier = "0_5a_to_2a" }
+X_B2 = { class = "power_high_current", tier = "0_5a_to_2a" }
+Y_A1 = { class = "power_high_current", tier = "0_5a_to_2a" }
+Y_A2 = { class = "power_high_current", tier = "0_5a_to_2a" }
+Y_B1 = { class = "power_high_current", tier = "0_5a_to_2a" }
+Y_B2 = { class = "power_high_current", tier = "0_5a_to_2a" }
+Z_A1 = { class = "power_high_current", tier = "0_5a_to_2a" }
+Z_A2 = { class = "power_high_current", tier = "0_5a_to_2a" }
+Z_B1 = { class = "power_high_current", tier = "0_5a_to_2a" }
+Z_B2 = { class = "power_high_current", tier = "0_5a_to_2a" }
+SPN_OUT = { class = "power_high_current", tier = "0_5a_to_2a" }
+CUT_OUT = { class = "power_high_current", tier = "0_5a_to_2a" }
+
+"+5V" = { class = "power_logic", tier = "lt_0_5a" }
+
+XTAL1 = { class = "crystal", tier = "lt_0_5a" }
+XTAL2 = { class = "crystal", tier = "lt_0_5a" }
+
+COOLANT = { class = "signal", tier = "lt_0_5a" }
+CUT_GATE = { class = "signal", tier = "lt_0_5a" }
+EN_X = { class = "signal", tier = "lt_0_5a" }
+EN_Y = { class = "signal", tier = "lt_0_5a" }
+EN_Z = { class = "signal", tier = "lt_0_5a" }
+E_STOP_FB = { class = "signal", tier = "lt_0_5a" }
+LED_HB = { class = "signal", tier = "lt_0_5a" }
+LED_MOTOR = { class = "signal", tier = "lt_0_5a" }
+LED_PWR = { class = "signal", tier = "lt_0_5a" }
+LIMIT_X = { class = "signal", tier = "lt_0_5a" }
+LIMIT_Y = { class = "signal", tier = "lt_0_5a" }
+LIMIT_Z = { class = "signal", tier = "lt_0_5a" }
+MCU_DTR = { class = "signal", tier = "lt_0_5a" }
+MCU_RST = { class = "signal", tier = "lt_0_5a" }
+MCU_RXD = { class = "signal", tier = "lt_0_5a" }
+MCU_TXD = { class = "signal", tier = "lt_0_5a" }
+MS1 = { class = "signal", tier = "lt_0_5a" }
+MS2 = { class = "signal", tier = "lt_0_5a" }
+MS3 = { class = "signal", tier = "lt_0_5a" }
+PROBE = { class = "signal", tier = "lt_0_5a" }
+SPARE_1 = { class = "signal", tier = "lt_0_5a" }
+SPARE_2 = { class = "signal", tier = "lt_0_5a" }
+SPN_DIR = { class = "signal", tier = "lt_0_5a" }
+SPN_GATE = { class = "signal", tier = "lt_0_5a" }
+SPN_PWM = { class = "signal", tier = "lt_0_5a" }
+X_DIR = { class = "signal", tier = "lt_0_5a" }
+X_STEP = { class = "signal", tier = "lt_0_5a" }
+Y_DIR = { class = "signal", tier = "lt_0_5a" }
+Y_STEP = { class = "signal", tier = "lt_0_5a" }
+Z_DIR = { class = "signal", tier = "lt_0_5a" }
+Z_STEP = { class = "signal", tier = "lt_0_5a" }

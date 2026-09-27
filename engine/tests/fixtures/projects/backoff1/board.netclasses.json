@@ -1,0 +1,145 @@
+{
+  "needs_review": [
+    {
+      "net": "CC1",
+      "reason": "resolver held: lowers jev's rating: signal lt_0_5a (power_high_current net accepted as signal); sized 0.25 mm from jev's lt_0_5a"
+    },
+    {
+      "net": "CC2",
+      "reason": "resolver held: lowers jev's rating: signal lt_0_5a (power_high_current net accepted as signal); sized 0.25 mm from jev's lt_0_5a"
+    },
+    {
+      "net": "VBUS_5V",
+      "reason": "resolver held: lowers jev's rating: power_high_current lt_0_5a (tier lt_0_5a below jev's 0_5a_to_2a); sized 0.8 mm from jev's 0_5a_to_2a"
+    }
+  ],
+  "nets": {
+    "+3V3": {
+      "class": "power_logic",
+      "clearance_mm": 0.2,
+      "netclass": "power_logic_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "CC1": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_lt_0_5a",
+      "source": "jev (resolver held)",
+      "status": "needs_review",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "CC2": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_lt_0_5a",
+      "source": "jev (resolver held)",
+      "status": "needs_review",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "GND": {
+      "class": "ground",
+      "clearance_mm": 0.2,
+      "netclass": "ground",
+      "source": "rule",
+      "status": "accepted",
+      "tier": null,
+      "width_mm": 0.8
+    },
+    "ISP_MISO": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "ISP_MOSI": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "ISP_RST": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "ISP_SCK": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "LED1": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "LED1_R": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "LED2": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "LED2_R": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "PWR_LED": {
+      "class": "signal",
+      "clearance_mm": 0.2,
+      "netclass": "signal_lt_0_5a",
+      "source": "jev",
+      "status": "accepted",
+      "tier": "lt_0_5a",
+      "width_mm": 0.25
+    },
+    "VBUS_5V": {
+      "class": "power_high_current",
+      "clearance_mm": 0.2,
+      "netclass": "power_high_current_0_5a_to_2a",
+      "source": "jev (resolver held)",
+      "status": "needs_review",
+      "tier": "0_5a_to_2a",
+      "width_mm": 0.8
+    }
+  },
+  "version": 1
+}

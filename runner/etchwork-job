@@ -1,0 +1,18 @@
+#!/bin/sh
+# The agent half of one Etchwork job. It writes its own MCP config and skill
+# (the engine is a local process here), then runs the agent. It does not
+# package: that runs in a separate container after this one exits.
+set -u
+prompt_file="${1:?usage: etchwork-job <prompt-file>}"
+cd /workspace || exit 2
+export FLAI_NO_TELEMETRY=1 DO_NOT_TRACK=1
+mkdir -p /workspace/.flai-code/skills/etchwork || exit 3
+{ cat /opt/etchwork/skill/SKILL.md; printf '\n'; cat /opt/etchwork/skill/flai-addendum.md; } \
+  > /workspace/.flai-code/skills/etchwork/SKILL.md || exit 3
+cat > /workspace/.mcp.json <<'EOF' || exit 3
+{"mcpServers": {"etchwork": {"command": "python3", "args": ["-m", "circuit_mcp.server"],
+ "env": {"CIRCUIT_WORKSPACE": "/workspace"}, "shared": false}}}
+EOF
+exec flai run --no-update \
+  -p "${CIRCUIT_PROVIDER:-openrouter}" -m "${CIRCUIT_MODEL:-qwen/qwen3.8-flash}" \
+  --socket /tmp/flai-job.sock -- "$(cat "$prompt_file")"

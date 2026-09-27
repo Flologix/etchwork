@@ -1,0 +1,34 @@
+#!/bin/sh
+# Etchwork CLI. Resolves its own root through symlinks, so a link on PATH works.
+set -eu
+self=$0
+while [ -h "$self" ]; do
+  link=$(readlink "$self")
+  case "$link" in /*) self=$link ;; *) self=$(dirname "$self")/$link ;; esac
+done
+ETCHWORK_ROOT=$(CDPATH= cd -- "$(dirname "$self")" && pwd)
+export ETCHWORK_ROOT
+cmd="${1:-help}"; [ $# -gt 0 ] && shift
+case "$cmd" in
+  init)   exec "$ETCHWORK_ROOT/libexec/init.sh" "$@" ;;
+  build)  exec "$ETCHWORK_ROOT/libexec/build.sh" "$@" ;;
+  test)   exec "$ETCHWORK_ROOT/libexec/test.sh" "$@" ;;
+  job)    exec "$ETCHWORK_ROOT/libexec/job.sh" "$@" ;;
+  runner) sub="${1:-}"; [ $# -gt 0 ] && shift
+          [ "$sub" = build ] || { echo "usage: etchwork runner build [--agent-bin <path>]" >&2; exit 2; }
+          exec "$ETCHWORK_ROOT/libexec/runner-build.sh" "$@" ;;
+  help|-h|--help)
+    cat <<'EOF'
+etchwork init <dir> --client claude-code|codex|flai [--build]
+etchwork build                      build the engine image
+etchwork test                       run the engine test suite in the image
+etchwork runner build [--agent-bin <path>]
+                                     needs a Linux flai binary (no other agent yet)
+etchwork job <runner tag> <job dir> [--probes]
+                                     requires ETCHWORK_EGRESS_IMAGE=<egress tag>
+                                     and OPENROUTER_API_KEY=<key>; reads
+                                     <job dir>/prompt.txt; writes to <job dir>.out/
+EOF
+    ;;
+  *) echo "unknown command: $cmd (try: etchwork help)" >&2; exit 2 ;;
+esac
