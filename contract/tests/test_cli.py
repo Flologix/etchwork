@@ -106,3 +106,37 @@ def test_image_is_required(task, delivered):
     with pytest.raises(SystemExit) as e:
         cli.main(["score", str(task), str(delivered)])
     assert e.value.code == 2
+
+
+def test_harness_error_prints_not_graded(task, delivered, tmp_path, capsys):
+    out = tmp_path / "r.json"
+    assert run(task, delivered, out, loader(error="dump crashed")) == 3
+    assert json.loads(out.read_text())["strict_pass"] is None
+    assert any(l.startswith("strict: NOT GRADED") for l in capsys.readouterr().out.splitlines())
+
+
+@pytest.mark.parametrize("exc", [RuntimeError("surprise"), KeyError("k"), NotImplementedError("x")])
+def test_unexpected_load_exception_is_exit_3_with_result(task, delivered, tmp_path, exc):
+    def load(found, image):
+        raise exc
+    out = tmp_path / "r.json"
+    assert run(task, delivered, out, load) == 3
+    result = json.loads(out.read_text())
+    assert not result["graded"] and result["strict_pass"] is None
+    assert type(exc).__name__ in result["harness_errors"][0]["error"]
+
+
+def test_unexpected_open_exception_is_exit_3_with_result(task, delivered, tmp_path, monkeypatch):
+    def broken(board_dir):
+        raise PermissionError("cannot list")
+    monkeypatch.setattr(cli.delivery, "open_delivery", broken)
+    out = tmp_path / "r.json"
+    assert run(task, delivered, out, loader()) == 3
+    assert "cannot list" in json.loads(out.read_text())["harness_errors"][0]["error"]
+
+
+def test_unwritable_out_is_a_clear_exit_3(task, delivered, tmp_path, capsys):
+    out = tmp_path / "no" / "such" / "dir" / "r.json"
+    assert run(task, delivered, out, loader(make(outline=rect(36, 22)))) == 3
+    err = capsys.readouterr().err
+    assert "cannot write" in err and str(out) in err and "Traceback" not in err

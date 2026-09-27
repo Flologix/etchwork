@@ -26,7 +26,8 @@ def _task_dir(name: str) -> Path:
 def _print(result: dict, out: str) -> None:
     for row in result["clauses"]:
         print(f"{row['status'].upper():<14} {row['id']:<18} {row['detail']}")
-    line = f"strict: {'PASS' if result['strict_pass'] else 'FAIL'}"
+    verdict = {True: "PASS", False: "FAIL", None: "NOT GRADED"}[result["strict_pass"]]
+    line = f"strict: {verdict}"
     if not result["graded"]:
         line += f"  ({len(result['harness_errors'])} harness error(s): this run did not grade cleanly)"
     print(line)
@@ -55,6 +56,12 @@ def main(argv: list[str] | None = None, *, load=delivery.load) -> int:
         result = score.grade(task, board)
     except HarnessError as e:
         result = score.grade(task, None, run_error=str(e))
-    Path(args.out).write_text(json.dumps(result, indent=2) + "\n")
+    except Exception as e:  # anything else while opening or loading is ours too
+        result = score.grade(task, None, run_error=f"{type(e).__name__}: {e}")
+    try:
+        Path(args.out).write_text(json.dumps(result, indent=2) + "\n")
+    except OSError as e:
+        print(f"contract: cannot write {args.out}: {e}", file=sys.stderr)
+        return 3
     _print(result, args.out)
     return 0 if result["graded"] else 3

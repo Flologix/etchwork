@@ -70,13 +70,46 @@ def test_not_a_directory_is_a_harness_error(tmp_path):
             pass
 
 
-def test_zip_member_escaping_is_refused(tmp_path):
+def test_zip_member_escaping_is_refused(tmp_path, monkeypatch):
+    # Unpack under tmp_path/scratch, so an escape would land in tmp_path
+    # itself, where the test can see it.
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr(delivery.tempfile, "tempdir", str(scratch))
+    run = tmp_path / "run"
+    run.mkdir()
+    with zipfile.ZipFile(run / "deliverable.zip", "w") as z:
+        z.writestr("kicad/board.kicad_pcb", "(kicad_pcb)")
+        z.writestr("../../escaped.txt", "x")
+    with pytest.raises(HarnessError, match="escapes"):
+        with delivery.open_delivery(run):
+            pass
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["run", "scratch"]
+    assert list(scratch.iterdir()) == []  # the temp dir was cleaned up too
+
+
+def test_zip_without_a_board_is_a_harness_error(tmp_path):
+    # Etchwork writes deliverable.zip only after packaging succeeded, so a zip
+    # with no board in it is a broken harness, not a non-delivery.
     with zipfile.ZipFile(tmp_path / "deliverable.zip", "w") as z:
-        z.writestr("../escaped.txt", "x")
+        z.writestr("source/board.net", "(export)")
+    with pytest.raises(HarnessError, match="no kicad"):
+        with delivery.open_delivery(tmp_path):
+            pass
+
+
+@pytest.mark.parametrize("exc", [OSError("disk"), NotImplementedError("compression type 99"),
+                                 zipfile.LargeZipFile("zip64"), RuntimeError("encrypted")])
+def test_other_archive_errors_are_harness_errors(tmp_path, monkeypatch, exc):
+    with zipfile.ZipFile(tmp_path / "deliverable.zip", "w") as z:
+        z.writestr("kicad/board.kicad_pcb", "(kicad_pcb)")
+
+    def extractall(self, path=None, members=None, pwd=None):
+        raise exc
+    monkeypatch.setattr(zipfile.ZipFile, "extractall", extractall)
     with pytest.raises(HarnessError):
         with delivery.open_delivery(tmp_path):
             pass
-    assert not (tmp_path.parent / "escaped.txt").exists()
 
 
 def test_corrupt_zip_is_a_harness_error(tmp_path):

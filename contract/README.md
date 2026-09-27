@@ -21,7 +21,11 @@ Design: `docs/superpowers/specs/2026-09-27-contract-benchmark-design.md`.
 directory (`--out` to change it). It is never written into the board dir,
 whose `result.json` belongs to the job.
 
-Exit status: 0 when the board was graded (pass or fail), 3 on a harness error.
+Exit status: 0 when the board was graded (pass or fail, including a
+non-delivery); 2 on a usage error (bad arguments); 3 on a harness error (an
+unreadable task, a board that could not be unpacked or dumped, a clause that
+could not be graded, or a result file that could not be written). Whenever a
+task loaded, exit 3 still writes the result file if it can.
 
 ## The result
 
@@ -35,10 +39,21 @@ Each clause is one of:
   task naming a checker that does not exist). Listed under `harness_errors`,
   and never counted as a clause failure.
 
+`strict_pass` is three-state:
+
+- `true`: every clause passed.
+- `false`: at least one clause is `fail` or `not_delivered`.
+- `null`: no clause failed, but at least one is `error`, so the run has no
+  verdict. A run the harness could not read at all is `null` too.
+
+Consumers **exclude `strict_pass: null` runs from the strict-rate denominator**
+and report them under harness integrity: a harness fault is never counted as
+the agent's failure, nor as its success.
+
 Three numbers are reported together and **never collapsed**:
 
-- **Strict pass rate**: the fraction of runs passing every clause. The
-  headline number.
+- **Strict pass rate**: the fraction of runs passing every clause, over the
+  runs with a verdict (`strict_pass` not `null`). The headline number.
 - **Clause satisfaction rate**: per clause, the fraction of runs passing.
 - **Harness integrity**: the fraction of runs with `graded: true`.
 
@@ -56,9 +71,15 @@ contract carries numbers. Every clause is a range or a relation, never a
 comparison with a reference design.
 
 `contract.toml` declares `[parts.<alias>]` allowlists (regexes over `ref`,
-`lib_id`, `value`, and a `pads` count list) and `[nets.<alias>]` function
-matchers (`words` matched against pin names and net names, optionally limited to
-a `part`). Clauses name a checker and pass aliases as arguments.
+`lib_id`, `value`, a `pads` count list, and `with_pins`: words at least one of
+the part's pins, connected or not, must carry) and `[nets.<alias>]` function
+matchers (`words` matched against pin words, optionally limited to a `part`).
+Clauses name a checker and pass aliases as arguments.
+
+A pad's words are the words of its pin names. Only when the pad has no pin
+names do the words of its net's name count instead, and a KiCad
+auto-generated net name (`Net-(...)`, `unconnected-(...)`) contributes no
+words at all: `Net-(D2-A)` names a designator, not a data input D2.
 
 ## Checkers
 
@@ -66,7 +87,7 @@ a `part`). Clauses name a checker and pass aliases as arguments.
 |---|---|
 | `outline_within` | outline bounding box within W x H (+tol), either orientation |
 | `part_present` | at least `count` parts match an allowlist |
-| `series_part_between` | a two-terminal part of a designator kind, value in range, between two nets |
+| `series_part_between` | a two-terminal part of a designator kind, value in range, between two nets; with one net, in series (its shared node carries no other parts) |
 | `decoupling_near` | a cap >= N farads across supply and ground, within N mm of a supply pin |
 | `net_connects` | two nets meet; or every matching part reaches a net (optionally each a distinct one) |
 | `no_short` | two nets are distinct |
@@ -98,6 +119,7 @@ passes every clause is not a validated product, and a clause that fails may
 indicate a defensible alternative design rather than an error.
 
 Net clauses find pins by function: by the pin names in the netlist's library
-symbols or the pads' pin functions, or failing that by net name. A part with
-neither named pins nor meaningfully named nets cannot be identified, and its
-net clauses fail.
+symbols or the pads' pin functions, or, for a pad whose pin has no name, by
+its net's name (never a KiCad auto-generated one). A part with neither named
+pins nor meaningfully named nets cannot be identified, and its net clauses
+fail.

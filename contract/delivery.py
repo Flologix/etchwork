@@ -31,8 +31,14 @@ def _unzip(archive: Path, into: Path) -> None:
                 if not (into / info.filename).resolve().is_relative_to(into.resolve()):
                     raise HarnessError(f"{archive.name}: member {info.filename!r} escapes the archive")
             z.extractall(into)
-    except zipfile.BadZipFile as e:
-        raise HarnessError(f"{archive} is not a readable zip: {e}") from e
+    except HarnessError:
+        raise
+    except (zipfile.BadZipFile, zipfile.LargeZipFile, OSError, NotImplementedError,
+            RuntimeError, ValueError, EOFError) as e:
+        # Not only BadZipFile: an unsupported compression method, an
+        # encrypted member, a disk error while extracting. All the harness's.
+        raise HarnessError(f"{archive} could not be unpacked: "
+                           f"{type(e).__name__}: {e}") from e
 
 
 def _find(root: Path) -> Delivery | None:
@@ -50,7 +56,9 @@ def open_delivery(board_dir) -> Iterator[Delivery | None]:
     """The board in a run's output: `deliverable.zip` (what `etchwork job`
     writes) unpacked to a temp dir, or an already-unpacked kicad/ + source/
     tree. Yields None when there is no board. That is a non-delivery: a
-    strict failure, not a harness error (spec §7.1)."""
+    strict failure, not a harness error (spec §7.1). A zip with no board in
+    it is a harness error: Etchwork writes the zip only after packaging the
+    board succeeded."""
     board_dir = Path(board_dir).resolve()
     if not board_dir.is_dir():
         raise HarnessError(f"{board_dir} is not a directory")
@@ -59,7 +67,10 @@ def open_delivery(board_dir) -> Iterator[Delivery | None]:
         with tempfile.TemporaryDirectory(prefix="contract-") as tmp:
             root = Path(tmp).resolve()
             _unzip(archive, root)
-            yield _find(root)
+            found = _find(root)
+            if found is None:
+                raise HarnessError(f"{archive} holds no kicad/*.kicad_pcb")
+            yield found
     else:
         yield _find(board_dir)
 
