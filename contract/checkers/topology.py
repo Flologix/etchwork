@@ -19,7 +19,8 @@ def series_part_between(board: Board, *, net_a: NetSpec, kind: str, min: float, 
     net_b is omitted, on any net outside net_a."""
     lo, hi = min, max  # contract.toml spells them min/max; the builtins are unused below
     removed = frozenset().union(*(resolve_net(board, e) for e in exclude))
-    a = resolve_net(board, net_a) - removed
+    full = resolve_net(board, net_a)
+    a = full - removed
     if not a:
         return Result(False, f"no net matches {net_a.name}"
                              + (" once the excluded nets are removed" if removed else ""))
@@ -28,7 +29,7 @@ def series_part_between(board: Board, *, net_a: NetSpec, kind: str, min: float, 
         b = resolve_net(board, net_b)
         if not b:
             return Result(False, f"no net matches {net_b.name}")
-    other = (lambda n: n in b) if b is not None else (lambda n: n not in a)
+    other = (lambda n: n in b) if b is not None else (lambda n: n not in full)
     by_ref = pads_by_ref(board)
     between, found = [], []
     for f in board.footprints():

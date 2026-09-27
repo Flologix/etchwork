@@ -21,20 +21,25 @@ BATT = N("batt_pos", {"words": ["+"], "part": "bt"})
 ENC_VDD = N("enc_vdd", {"words": ["VDD"], "part": "ic"})
 
 
-def keyfob(r1="330k", r2="1k", sw2_net="N_SW2", k2_net="", bt_plus="VCC"):
-    return make(
-        footprints=[fp("U1", "EV1527", pad_count=8), fp("R1", r1), fp("R2", r2), fp("D1", "RED"),
-                    fp("SW1", pad_count=4), fp("SW2", pad_count=4), fp("BT1", "CR2032", pad_count=3)],
-        pads=[pad("U1", 1, "GND", names=["VSS"]), pad("U1", 2, "NET3", names=["OSC"]),
-              pad("U1", 3, "N_SW1", names=["K0"]), pad("U1", 4, "N_SW2", names=["K1"]),
-              pad("U1", 5, k2_net, names=["K2"]), pad("U1", 7, "DOUT", names=["DOUT"]),
-              pad("U1", 8, "VCC", names=["VDD"]),
-              pad("R1", 1, "NET3"), pad("R1", 2, "VCC"),
-              pad("R2", 1, "DOUT"), pad("R2", 2, "LED_A"),
-              pad("D1", 1, "GND", names=["K"]), pad("D1", 2, "LED_A", names=["A"]),
-              pad("SW1", 1, "VCC"), pad("SW1", 1, "VCC"), pad("SW1", 2, "N_SW1"), pad("SW1", 2, "N_SW1"),
-              pad("SW2", 1, "VCC"), pad("SW2", 2, sw2_net),
-              pad("BT1", 1, bt_plus, names=["+"]), pad("BT1", 2, "GND", names=["-"])])
+def keyfob(r1="330k", r2="1k", r3=None, sw2_net="N_SW2", k2_net="", bt_plus="VCC"):
+    footprints = [fp("U1", "EV1527", pad_count=8), fp("R1", r1), fp("R2", r2), fp("D1", "RED"),
+                  fp("SW1", pad_count=4), fp("SW2", pad_count=4), fp("BT1", "CR2032", pad_count=3)]
+    if r3:
+        footprints.append(fp("R3", r3))
+    pads = [pad("U1", 1, "GND", names=["VSS"]), pad("U1", 2, "NET3", names=["OSC"]),
+            pad("U1", 3, "N_SW1", names=["K0"]), pad("U1", 4, "N_SW2", names=["K1"]),
+            pad("U1", 5, k2_net, names=["K2"]), pad("U1", 7, "DOUT", names=["DOUT"]),
+            pad("U1", 8, "VCC", names=["VDD"]),
+            pad("R1", 1, "NET3"), pad("R1", 2, "VCC"),
+            pad("R2", 1, "DOUT"), pad("R2", 2, "LED_A"),
+            pad("D1", 1, "GND", names=["K"]), pad("D1", 2, "LED_A", names=["A"]),
+            pad("SW1", 1, "VCC"), pad("SW1", 1, "VCC"), pad("SW1", 2, "N_SW1"), pad("SW1", 2, "N_SW1"),
+            pad("SW2", 1, "VCC"), pad("SW2", 2, sw2_net),
+            pad("BT1", 1, bt_plus, names=["+"]), pad("BT1", 2, "GND", names=["-"])]
+    if r3:
+        pads.append(pad("R3", 1, "GND"))
+        pads.append(pad("R3", 2, "LED_A"))
+    return make(footprints=footprints, pads=pads)
 
 
 def test_registered():
@@ -68,6 +73,16 @@ def test_series_open_ended_with_exclusions():
     assert r.passed and r.measured == {"parts": ["R2 1k"]}
     assert not series_part_between(keyfob(r2="100"), net_a=LED_NETS, exclude=(SUPPLY, GROUND),
                                    kind="R", min=470.0, max=4700.0).passed
+
+
+def test_series_excluded_net_should_not_pass():
+    # A resistor (R3) between an excluded net (GND) and a non-excluded part of net_a (LED_A)
+    # should NOT pass. The excluded net must not be treated as "outside" the reduced set.
+    # R2 is out of range to ensure only R3 is considered.
+    r = series_part_between(keyfob(r2="100", r3="1k"), net_a=LED_NETS, exclude=(SUPPLY, GROUND),
+                            kind="R", min=470.0, max=4700.0)
+    # R3 should NOT be in measured parts; only R2 is (which is out of range)
+    assert not r.passed and "R3" not in str(r.measured)
 
 
 def test_series_unresolvable_net_is_a_failure():
