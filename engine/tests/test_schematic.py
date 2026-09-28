@@ -122,6 +122,7 @@ def test_schematic_netlist_refuses_a_non_regular_path(workspace, monkeypatch):
 
 
 import json
+import pathlib
 import shutil
 
 from circuit_mcp import tools
@@ -130,6 +131,9 @@ from conftest import FIXTURES
 GROUPED = FIXTURES / "projects" / "grouped"
 BACKOFF1 = FIXTURES / "projects" / "backoff1"
 MULTIUNIT = FIXTURES / "projects" / "multiunit"
+# The DRIVER line right after the script's circuit has been written out for
+# the netlist check: a crash injected after it is a generator crash.
+CHECKED = 'print("netlist written " + nonce, flush=True)\n'
 
 
 def _grouped(workspace):
@@ -221,11 +225,11 @@ def test_export_schematic_retries_after_a_generator_crash(workspace, monkeypatch
     # specific seed, without adding test-only branches to the production
     # DRIVER: monkeypatch the DRIVER text itself (export_schematic writes it
     # to a temp file and runs it unmodified) so it raises right after the
-    # "circuit built" marker, only for one seed. The real script and the
+    # check-netlist marker, only for one seed. The real script and the
     # real drawing on every other seed still run for real.
     crashy_driver = schematic.DRIVER.replace(
-        'print("circuit built")\n',
-        'print("circuit built")\n'
+        CHECKED,
+        CHECKED +
         'if seed == 42:\n'
         '    raise RuntimeError("boom from the generator")\n')
     assert crashy_driver != schematic.DRIVER
@@ -256,8 +260,7 @@ def test_export_schematic_mismatch_on_every_seed_is_recorded_not_kept(workspace,
 def test_export_schematic_crash_on_every_seed_is_recorded(workspace, monkeypatch):
     _grouped(workspace)
     monkeypatch.setattr(schematic, "DRIVER", schematic.DRIVER.replace(
-        'print("circuit built")\n',
-        'print("circuit built")\nraise RuntimeError("boom from the generator")\n'))
+        CHECKED, CHECKED + 'raise RuntimeError("boom from the generator")\n'))
     out = schematic.export_schematic("board.py", "board.net")
     assert out.startswith("SCHEMATIC NOT AVAILABLE:") and "crashed" in out, out
     assert _no_outputs(workspace)
@@ -361,3 +364,113 @@ def test_export_schematic_refuses_paths_outside_the_workspace(workspace):
 
 def test_export_schematic_missing_files(workspace):
     assert "no such script" in schematic.export_schematic("nope.py", "nope.net")
+
+
+def _counting(monkeypatch):
+    calls = []
+    real_run = schematic.subprocess.run
+
+    def counting_run(*args, **kwargs):
+        calls.append((args, kwargs))
+        return real_run(*args, **kwargs)
+    monkeypatch.setattr(schematic.subprocess, "run", counting_run)
+    return calls
+
+
+def test_driver_crash_injection_anchor_is_in_the_driver():
+    assert schematic.DRIVER.count(CHECKED) == 1
+
+
+def test_a_script_edited_after_run_skidl_is_refused_not_recorded(workspace, monkeypatch):
+    # board.py changed (the LED turned round) but run_skidl was not re-run:
+    # board.net is the old circuit. Every drawing would mismatch it, and that
+    # must never read as SKiDL's generator failing (residual fix, Important).
+    _grouped(workspace)
+    board = workspace / "board.py"
+    text = board.read_text()
+    assert 'd["A,K"]' in text
+    board.write_text(text.replace('d["A,K"]', 'd["K,A"]'))
+    calls = _counting(monkeypatch)
+    out = schematic.export_schematic("board.py", "board.net")
+    assert out.startswith("the script's circuit differs from board.net"), out
+    assert "run `run_skidl` first" in out
+    assert "D1" in out and "not in the script's circuit" in out
+    assert len(calls) == 1, "a script/netlist mismatch must not be retried with another seed"
+    assert not schematic.present(workspace / "board.sch-unavailable.json")
+    assert _no_outputs(workspace)
+    assert not list(workspace.glob("_etchwork_schematic*"))
+    assert not (workspace / "board-erc.rpt").exists()
+
+
+def test_the_wrong_script_is_refused_not_recorded(workspace):
+    _grouped(workspace)
+    shutil.copy(MULTIUNIT / "board.py", workspace / "other.py")
+    out = schematic.export_schematic("other.py", "board.net")
+    assert out.startswith("the script's circuit differs from board.net"), out
+    assert not schematic.present(workspace / "board.sch-unavailable.json")
+    assert _no_outputs(workspace)
+
+
+def test_the_check_netlist_is_written_outside_the_workspace(workspace, monkeypatch):
+    _grouped(workspace)
+    seen = {}
+    real_run = schematic.subprocess.run
+
+    def spy(cmd, **kwargs):
+        seen.setdefault("cmd", cmd)      # the first run is the driver's
+        return real_run(cmd, **kwargs)
+    monkeypatch.setattr(schematic.subprocess, "run", spy)
+    net = workspace / "board.net"
+    before = net.read_bytes()
+    assert schematic.export_schematic("board.py", "board.net").startswith("EXPORTED")
+    check = seen["cmd"][-1]
+    assert check.endswith(".net") and workspace not in pathlib.Path(check).parents
+    assert net.read_bytes() == before
+
+
+def test_a_script_printing_the_old_marker_then_failing_is_a_script_failure(workspace, monkeypatch):
+    _grouped(workspace)
+    (workspace / "board.py").write_text("print('circuit built')\n"
+                                        "raise RuntimeError('boom from the script')\n")
+    calls = _counting(monkeypatch)
+    out = schematic.export_schematic("board.py", "board.net")
+    assert "could not be drawn" in out and "before building the circuit" in out, out
+    assert len(calls) == 1
+    assert not schematic.present(workspace / "board.sch-unavailable.json")
+
+
+def test_the_unavailable_record_never_writes_through_a_symlink(workspace, monkeypatch, tmp_path_factory):
+    _grouped(workspace)
+    outside = tmp_path_factory.mktemp("outside") / "target.json"
+    outside.write_text("not yours")
+    record = workspace / "board.sch-unavailable.json"
+    record.symlink_to(outside)
+    monkeypatch.setattr(schematic, "problems", lambda sch, net: ["parts missing from the schematic: R9"])
+    out = schematic.export_schematic("board.py", "board.net")
+    assert out.startswith("SCHEMATIC NOT AVAILABLE:"), out
+    assert outside.read_text() == "not yours"
+    assert not record.is_symlink() and record.is_file()
+    assert schematic.unavailable_reason(record)
+
+
+@pytest.mark.parametrize("name", ["board.kicad_sch", "board-schematic.pdf",
+                                  "board.sch-erc.json", "board.sch-unavailable.json"])
+def test_a_folder_in_place_of_an_output_is_an_error_not_a_crash(workspace, monkeypatch, name):
+    _grouped(workspace)
+    folder = workspace / name
+    folder.mkdir()
+    (folder / "keep.txt").write_text("mine")
+    calls = _counting(monkeypatch)
+    out = schematic.export_schematic("board.py", "board.net")
+    assert name in out and "is a folder" in out, out
+    assert (folder / "keep.txt").read_text() == "mine"
+    assert calls == [], "nothing is drawn while an output path is a folder"
+
+
+def test_a_folder_made_by_the_script_is_an_error_not_a_crash(workspace):
+    _grouped(workspace)
+    with (workspace / "board.py").open("a") as f:
+        f.write("import os\nos.makedirs('board-schematic.pdf', exist_ok=True)\n")
+    out = schematic.export_schematic("board.py", "board.net")
+    assert "board-schematic.pdf" in out and "is a folder" in out, out
+    assert (workspace / "board-schematic.pdf").is_dir()

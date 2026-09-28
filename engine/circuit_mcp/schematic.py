@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+import secrets
 import shutil
 import subprocess
 import sys
@@ -72,21 +73,23 @@ def _pins(group) -> str:
     return " ".join(sorted(group))
 
 
-def compare(netlist_text: str, schematic_netlist_text: str) -> list[str]:
-    """What differs between SKiDL's netlist and the schematic's; empty when
-    they match. Net names are not compared: an unnamed net is N$1 to SKiDL
-    and Net-(D1-A) to KiCad."""
+def compare(netlist_text: str, schematic_netlist_text: str,
+            other: str = "the schematic") -> list[str]:
+    """What differs between SKiDL's netlist and the schematic's (or `other`
+    circuit's, named so in the messages); empty when they match. Net names
+    are not compared: an unnamed net is N$1 to SKiDL and Net-(D1-A) to
+    KiCad."""
     want_refs, want = connectivity(netlist_text)
     got_refs, got = connectivity(schematic_netlist_text)
     out = []
     if want_refs - got_refs:
-        out.append("parts missing from the schematic: " + ", ".join(sorted(want_refs - got_refs)))
+        out.append(f"parts missing from {other}: " + ", ".join(sorted(want_refs - got_refs)))
     if got_refs - want_refs:
-        out.append("parts only in the schematic: " + ", ".join(sorted(got_refs - want_refs)))
+        out.append(f"parts only in {other}: " + ", ".join(sorted(got_refs - want_refs)))
     for group in sorted(want - got, key=sorted):
-        out.append("connected in the netlist, not in the schematic: " + _pins(group))
+        out.append(f"connected in the netlist, not in {other}: " + _pins(group))
     for group in sorted(got - want, key=sorted):
-        out.append("connected in the schematic, not in the netlist: " + _pins(group))
+        out.append(f"connected in {other}, not in the netlist: " + _pins(group))
     return out
 
 
@@ -171,18 +174,27 @@ def problems(sch: pathlib.Path, netlist: pathlib.Path) -> list[str]:
 
 
 # Runs in its own python3 process, in the workspace: argv is (script, stem,
-# seed). The agent's script builds the circuit; everything it would write is
-# switched off first -- SKiDL's module-level generate_* functions and the
-# Circuit methods behind them, so `default_circuit.generate_netlist(...)` is
-# a no-op too -- so its netlist is never touched and any drawing of its own
-# never happens. The script's own folder goes on sys.path, as when run_skidl
-# runs it, so a sibling module it imports is found. The "circuit built"
-# marker is printed right after the script succeeds, so a caller can tell the
-# agent's script failing or exiting early (no marker) apart from SKiDL's
-# generator failing on an already-built circuit (marker, then a non-zero exit
-# or no schematic file). Then power flags, then SKiDL's
-# generator with the fixed settings (schematic spec §4). SKiDL finds the
-# default circuit in builtins.
+# seed, nonce, check). The agent's script builds the circuit; everything it
+# would write is switched off first -- SKiDL's module-level generate_*
+# functions and the Circuit methods behind them, so
+# `default_circuit.generate_netlist(...)` is a no-op too -- so its netlist is
+# never touched and any drawing of its own never happens. The real netlist
+# writer and generator are kept aside for the driver's own use. The script's
+# own folder goes on sys.path, as when run_skidl runs it, so a sibling module
+# it imports is found.
+#
+# Right after the script succeeds the driver prints "circuit built <nonce>"
+# on a line of its own; `nonce` is fresh per run, so a script can't print it.
+# A caller tells the agent's script failing or exiting early (no marker)
+# apart from SKiDL's generator failing on an already-built circuit (marker,
+# then a non-zero exit or no schematic file). Then, before anything is added
+# to the circuit, SKiDL's real netlist writer writes the circuit's own
+# netlist to `check` -- a temp path outside the workspace -- and the driver
+# prints "netlist written <nonce>": export_schematic compares it with
+# <stem>.net, so a script edited since run_skidl (or the wrong script) is
+# refused instead of passing for a generator that draws wrongly (residual
+# fix, Important). Then power flags, then SKiDL's generator with the fixed
+# settings (schematic spec §4). SKiDL finds the default circuit in builtins.
 #
 # seed: SKiDL's placer seeds Python's global `random` from `options.get
 # ("seed")`, which is None (i.e. system entropy) unless given. On a denser
@@ -207,15 +219,21 @@ import builtins, os, runpy, sys
 import skidl
 from skidl import Part, Pin
 
-script, stem, seed = sys.argv[1], sys.argv[2], int(sys.argv[3])
+script, stem, seed, nonce, check = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4], sys.argv[5]
 draw = skidl.Circuit.generate_schematic
+write_netlist = skidl.Circuit.generate_netlist
 noop = lambda *args, **kwargs: None
 for name in ("generate_netlist", "generate_schematic", "generate_pcb"):
     setattr(skidl, name, noop)
     setattr(skidl.Circuit, name, noop)
 sys.path.insert(0, os.path.dirname(os.path.abspath(script)))
 runpy.run_path(script, run_name="__main__")
-print("circuit built")
+print("\ncircuit built " + nonce, flush=True)
+
+netlist = write_netlist(builtins.default_circuit, file_=check, do_backup=False)
+with open(check, "w") as f:
+    f.write(str(netlist))
+print("netlist written " + nonce, flush=True)
 
 flagged = []
 for net in list(builtins.default_circuit.nets):
@@ -253,19 +271,32 @@ def _tidy(stem: str, before: set[str]) -> None:
             shutil.rmtree(entry)
 
 
+class _Folder(Exception):
+    """An output path is a real folder: never removed, reported instead."""
+
+
 def _clear(outputs) -> None:
-    """Unlink the run's three outputs, whatever is there (a symlink too)."""
+    """Unlink the run's outputs, whatever is there (a symlink too, never
+    what it points to). A real folder at one of them is not the run's to
+    remove: raise _Folder instead."""
     for path in outputs:
+        if path.is_dir() and not path.is_symlink():
+            raise _Folder(path.name)
         if present(path):
             path.unlink()
 
 
 def _not_available(stem: str, outputs, record: pathlib.Path, reason: str,
                    details: list[str]) -> str:
-    """No drawing to keep: record why instead (final review, Critical 1)."""
-    _clear(outputs)
-    record.write_text(json.dumps({"reason": reason, "details": details,
-                                  "attempts": len(SEEDS)}, indent=2) + "\n")
+    """No drawing to keep: record why instead (final review, Critical 1).
+    Whatever is at the record path goes first and the record is created
+    afresh, never opened through a symlink."""
+    _clear([*outputs, record])
+    body = json.dumps({"reason": reason, "details": details,
+                       "attempts": len(SEEDS)}, indent=2) + "\n"
+    fd = os.open(record, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644)
+    with os.fdopen(fd, "w") as f:
+        f.write(body)
     return "\n".join([
         f"SCHEMATIC NOT AVAILABLE: {reason} — the board can still be finished; "
         "the README will say so",
@@ -283,11 +314,23 @@ def export_schematic(script: str, netlist: str) -> str:
     if not netlist_path.is_file():
         return f"no such netlist in the project: {netlist} (run `run_skidl` first)"
     stem = netlist_path.stem
-    names = files(stem)
-    outputs = [paths.WORKSPACE / n for n in names]
+    before = {p.name for p in paths.WORKSPACE.iterdir()}
+    try:
+        return _export(script, script_path, netlist, netlist_path, before)
+    except _Folder as folder:
+        _tidy(stem, before)
+        return (f"the schematic could not be written: {folder} is a folder, not a file; "
+                "move or rename it, then run export_schematic again")
+
+
+def _export(script: str, script_path: pathlib.Path, netlist: str,
+            netlist_path: pathlib.Path, before: set[str]) -> str:
+    stem = netlist_path.stem
+    outputs = [paths.WORKSPACE / n for n in files(stem)]
     sch, pdf, erc = outputs
     record = paths.WORKSPACE / unavailable_file(stem)
-    before = {p.name for p in paths.WORKSPACE.iterdir()}
+    if record.is_dir() and not record.is_symlink():
+        raise _Folder(record.name)
     # An earlier run's drawing must never pass for this run's: gone before
     # the first attempt. The unavailable record is only replaced once this
     # run has an outcome.
@@ -299,16 +342,22 @@ def export_schematic(script: str, netlist: str) -> str:
     # See the note above DRIVER: fixing the hash seed makes the set/dict
     # iteration order SKiDL's placer depends on the same on every run.
     env = {**os.environ, "PYTHONHASHSEED": "0"}
+    nonce = secrets.token_hex(16)
+    built, written = f"circuit built {nonce}", f"netlist written {nonce}"
     with tempfile.TemporaryDirectory() as tmp:
         driver = pathlib.Path(tmp) / f"{DRIVER_NAME}.py"
         driver.write_text(DRIVER)
+        check = pathlib.Path(tmp) / "circuit.net"
         for attempt, seed in enumerate(SEEDS, start=1):
             if attempt > 1:
                 _tidy(stem, before)
                 _clear(outputs)
+            if present(check):
+                check.unlink()
             try:
                 done = subprocess.run(
-                    [sys.executable, str(driver), str(script_path), stem, str(seed)],
+                    [sys.executable, str(driver), str(script_path), stem, str(seed), nonce,
+                     str(check)],
                     cwd=paths.WORKSPACE, capture_output=True, text=True,
                     timeout=service.TIMEOUT, env=env)
             except subprocess.TimeoutExpired:
@@ -316,7 +365,8 @@ def export_schematic(script: str, netlist: str) -> str:
                 _clear(outputs)
                 return f"{script} timed out after {service.TIMEOUT}s while drawing the schematic"
             output = (done.stdout + done.stderr).strip()
-            if "circuit built" not in output:
+            lines = done.stdout.splitlines()
+            if built not in lines:
                 # The agent's script failed (or exited) before the circuit
                 # was built: nothing was drawn, and a different seed changes
                 # nothing, so don't retry.
@@ -324,9 +374,30 @@ def export_schematic(script: str, netlist: str) -> str:
                 _clear(outputs)
                 return (f"the schematic could not be drawn: {script} failed or exited before "
                         f"building the circuit (exit {done.returncode}):\n{output[-1500:]}")
+            if written not in lines or not check.is_file():
+                # Without the circuit's own netlist there is no telling a
+                # generator bug from a script that isn't <stem>.net's.
+                _tidy(stem, before)
+                _clear(outputs)
+                return (f"the schematic could not be drawn: SKiDL could not write the netlist of "
+                        f"{script}'s circuit to check it against {netlist_path.name} "
+                        f"(exit {done.returncode}):\n{output[-1500:]}")
+            differ = compare(netlist_path.read_text(errors="replace"),
+                             check.read_text(errors="replace"), "the script's circuit")
+            if differ:
+                # Not the netlist's circuit: every drawing would mismatch,
+                # and that is not the generator's fault. No record, no
+                # retry (residual fix, Important).
+                _tidy(stem, before)
+                _clear(outputs)
+                return "\n".join([
+                    f"the script's circuit differs from {netlist_path.name}: run `run_skidl` "
+                    f"first (or pass the script that wrote it)",
+                    *(f"    - {d}" for d in differ[:5]),
+                    *([f"    ... and {len(differ) - 5} more"] if len(differ) > 5 else [])])
             if done.returncode != 0 or not sch.is_file():
-                # The circuit built; SKiDL's generator crashed drawing it.
-                # Retry with the next seed.
+                # The circuit built and is the netlist's; SKiDL's generator
+                # crashed drawing it. Retry with the next seed.
                 crash_output = output
                 continue
             drawn_any = True
@@ -336,8 +407,9 @@ def export_schematic(script: str, netlist: str) -> str:
             if not mismatch:
                 break
         else:
-            # No attempt drew a matching schematic: never keep a wrong
-            # drawing, and never block a correct board on the generator.
+            # No attempt drew a matching schematic of the netlist's own
+            # circuit: never keep a wrong drawing, and never block a correct
+            # board on the generator.
             _tidy(stem, before)
             if drawn_any:
                 reason = (f"SKiDL's schematic generator drew this circuit wrongly with every one "
@@ -348,13 +420,15 @@ def export_schematic(script: str, netlist: str) -> str:
                 details = crash_output[-1500:].splitlines()[-10:]
             return _not_available(stem, outputs, record, reason, details)
     _tidy(stem, before)
+    # The script ran again with this drawing: it may have put something at
+    # the PDF or ERC path.
+    _clear([pdf, erc])
     try:
         export_pdf(sch, pdf)
         report = run_erc(sch, erc)
     except RuntimeError as error:
         return f"the schematic was drawn, but KiCad could not process it: {error}"
-    if present(record):
-        record.unlink()
+    _clear([record])
     return "\n".join([f"EXPORTED {sch.name}, {pdf.name} and {erc.name}",
                       f"  {flags}",
                       f"  drawn with seed {seed} (attempt {attempt} of {len(SEEDS)})",
