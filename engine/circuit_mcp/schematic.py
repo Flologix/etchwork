@@ -9,6 +9,7 @@ schematic by KiCad itself.
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import shutil
 import subprocess
@@ -135,8 +136,12 @@ def problems(sch: pathlib.Path, netlist: pathlib.Path) -> list[str]:
 # Runs in its own python3 process, in the workspace: argv is (script, stem,
 # seed). The agent's script builds the circuit; everything it would write is
 # switched off first, so its netlist is never touched and any drawing of its
-# own never happens. Then power flags, then SKiDL's generator with the fixed
-# settings (schematic spec §4). SKiDL finds the default circuit in builtins.
+# own never happens. The "circuit built" marker is printed right after that
+# succeeds, so a caller can tell the agent's script failing (no marker) apart
+# from SKiDL's generator failing on an already-built circuit (marker, then a
+# non-zero exit or no schematic file). Then power flags, then SKiDL's
+# generator with the fixed settings (schematic spec §4). SKiDL finds the
+# default circuit in builtins.
 #
 # seed: SKiDL's placer seeds Python's global `random` from `options.get
 # ("seed")`, which is None (i.e. system entropy) unless given. On a denser
@@ -146,6 +151,16 @@ def problems(sch: pathlib.Path, netlist: pathlib.Path) -> list[str]:
 # verified against the backoff1 fixture: unseeded, 9 of 10 runs produced a
 # spurious mismatch (e.g. GND merged with PWR_LED). `export_schematic` below
 # tries a fixed list of seeds and keeps the first drawing that matches.
+#
+# A fixed seed alone is not enough, though: drawing backoff1 once crashed
+# inside SKiDL's placer (a KeyError in its switchbox-coalescing code) with
+# seed 42, and the crash did not reproduce over 6 reruns of the exact same
+# script and seed. SKiDL's placer also iterates Python sets and dicts of
+# parts and nets, and their iteration order -- randomized per process by
+# CPython's default hash seed -- feeds into that placement and coalescing
+# code alongside the `random` seed. `export_schematic` fixes PYTHONHASHSEED
+# for the driver subprocess (below) so that order, and so the whole draw, is
+# the same across runs of the same seed.
 DRIVER = r'''
 import builtins, os, runpy, sys
 import skidl
@@ -157,6 +172,7 @@ for name in ("generate_netlist", "generate_schematic", "generate_pcb"):
     setattr(skidl, name, lambda *args, **kwargs: None)
 sys.path.insert(0, os.getcwd())
 runpy.run_path(script, run_name="__main__")
+print("circuit built")
 
 flagged = []
 for net in list(builtins.default_circuit.nets):
@@ -201,6 +217,11 @@ def export_schematic(script: str, netlist: str) -> str:
     before = {p.name for p in paths.WORKSPACE.iterdir()}
     flags = "power flags: none"
     mismatch: list[str] = []
+    crashed = False
+    crash_output = ""
+    # See the note above DRIVER: fixing the hash seed makes the set/dict
+    # iteration order SKiDL's placer depends on the same on every run.
+    env = {**os.environ, "PYTHONHASHSEED": "0"}
     with tempfile.TemporaryDirectory() as tmp:
         driver = pathlib.Path(tmp) / "_etchwork_schematic.py"
         driver.write_text(DRIVER)
@@ -209,14 +230,27 @@ def export_schematic(script: str, netlist: str) -> str:
                 done = subprocess.run(
                     [sys.executable, str(driver), str(script_path), stem, str(seed)],
                     cwd=paths.WORKSPACE, capture_output=True, text=True,
-                    timeout=service.TIMEOUT)
+                    timeout=service.TIMEOUT, env=env)
             except subprocess.TimeoutExpired:
                 _tidy(before, set())
                 return f"{script} timed out after {service.TIMEOUT}s while drawing the schematic"
             output = (done.stdout + done.stderr).strip()
+            built = "circuit built" in output
             if done.returncode != 0 or not sch.is_file():
-                _tidy(before, set())
-                return f"the schematic could not be drawn (exit {done.returncode}):\n{output[-1500:]}"
+                if not built:
+                    # The agent's script failed before the circuit was even
+                    # built: a different seed changes nothing, so don't retry.
+                    _tidy(before, set())
+                    return f"the schematic could not be drawn (exit {done.returncode}):\n{output[-1500:]}"
+                # The circuit built; SKiDL's generator crashed drawing it.
+                # Treat that like a mismatch and retry with the next seed.
+                crashed = True
+                crash_output = output
+                if attempt < len(SEEDS):
+                    _tidy(before, set())
+                    continue
+                break
+            crashed = False
             flags = next((line for line in output.splitlines() if line.startswith("power flags:")),
                          "power flags: none")
             mismatch = problems(sch, netlist_path)
@@ -224,6 +258,10 @@ def export_schematic(script: str, netlist: str) -> str:
                 break
             if attempt < len(SEEDS):
                 _tidy(before, set())
+    if crashed:
+        _tidy(before, set())
+        return (f"the schematic could not be drawn with any of {len(SEEDS)} seeds:\n"
+                f"{crash_output[-1500:]}")
     _tidy(before, set(names))
     try:
         export_pdf(sch, pdf)

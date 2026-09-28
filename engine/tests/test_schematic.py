@@ -165,13 +165,56 @@ def test_export_schematic_on_a_real_project(workspace):
     assert out.startswith("EXPORTED") and "schematic matches the netlist" in out, out
 
 
-def test_export_schematic_reports_a_failing_script(workspace):
+def test_export_schematic_reports_a_failing_script(workspace, monkeypatch):
     _grouped(workspace)
     (workspace / "board.py").write_text("raise RuntimeError('boom from the script')\n")
     before = {p.name for p in workspace.iterdir()}
+    calls = []
+    real_run = schematic.subprocess.run
+
+    def counting_run(*args, **kwargs):
+        calls.append((args, kwargs))
+        return real_run(*args, **kwargs)
+
+    monkeypatch.setattr(schematic.subprocess, "run", counting_run)
     out = schematic.export_schematic("board.py", "board.net")
     assert "could not be drawn" in out and "boom from the script" in out
+    assert "attempt" not in out
+    assert len(calls) == 1, "a failing script must not be retried with another seed"
     assert {p.name for p in workspace.iterdir()} == before
+
+
+def test_export_schematic_passes_pythonhashseed_to_the_driver(workspace, monkeypatch):
+    _grouped(workspace)
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["env"] = kwargs.get("env")
+        return schematic.subprocess.CompletedProcess(cmd, 1, stdout="", stderr="boom from the script")
+
+    monkeypatch.setattr(schematic.subprocess, "run", fake_run)
+    schematic.export_schematic("board.py", "board.net")
+    assert captured["env"] is not None and captured["env"]["PYTHONHASHSEED"] == "0"
+
+
+def test_export_schematic_retries_after_a_generator_crash(workspace, monkeypatch):
+    _grouped(workspace)
+    # The least invasive way to force SKiDL's real generator to crash on a
+    # specific seed, without adding test-only branches to the production
+    # DRIVER: monkeypatch the DRIVER text itself (export_schematic writes it
+    # to a temp file and runs it unmodified) so it raises right after the
+    # "circuit built" marker, only for one seed. The real script and the
+    # real drawing on every other seed still run for real.
+    crashy_driver = schematic.DRIVER.replace(
+        'print("circuit built")\n',
+        'print("circuit built")\n'
+        'if seed == 42:\n'
+        '    raise RuntimeError("boom from the generator")\n')
+    assert crashy_driver != schematic.DRIVER
+    monkeypatch.setattr(schematic, "DRIVER", crashy_driver)
+    out = schematic.export_schematic("board.py", "board.net")
+    assert "schematic matches the netlist" in out
+    assert "attempt 2" in out
 
 
 def test_export_schematic_reports_a_mismatch(workspace, monkeypatch):
