@@ -204,3 +204,27 @@ def test_status_says_drc_clean_on_a_clean_current_board(workspace):
     text = summary.summarize_project("blinker.net")
     assert "Status: DRC clean" in text
     assert "Status: DRC clean" in (workspace / "README.md").read_text()
+
+
+def test_readme_has_a_schematic_line(workspace):
+    import json as _json
+    from circuit_mcp import schematic
+    shutil.copy(FIXTURES / "blinker.net", workspace / "blinker.net")
+    summary.summarize_project("blinker.net")
+    assert "Schematic: not generated: run `export_schematic`" in (workspace / "README.md").read_text()
+    (workspace / "blinker.kicad_sch").write_text("(kicad_sch)")
+    (workspace / "blinker.sch-erc.json").write_text(_json.dumps({"sheets": [{"violations": [
+        {"severity": "warning", "type": "pin_not_connected"}]}]}))
+    summary.summarize_project("blinker.net")
+    assert ("Schematic: blinker.kicad_sch (PDF: blinker-schematic.pdf); "
+            "ERC: 1 warning (1 pin_not_connected)") in (workspace / "README.md").read_text()
+
+
+def test_readme_says_when_the_schematic_is_not_available(workspace):
+    import json as _json
+    shutil.copy(FIXTURES / "blinker.net", workspace / "blinker.net")
+    (workspace / "blinker.sch-unavailable.json").write_text(_json.dumps(
+        {"reason": "SKiDL's generator drew it wrongly", "details": [], "attempts": 5}))
+    summary.summarize_project("blinker.net")
+    assert ("Schematic: not available: SKiDL's generator drew it wrongly."
+            in (workspace / "README.md").read_text())

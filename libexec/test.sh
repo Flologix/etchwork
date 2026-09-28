@@ -6,4 +6,4 @@ set -eu
 docker run --rm --user "$(id -u):$(id -g)" \
   -v "$ETCHWORK_ROOT/engine:/opt/etchwork-src:ro" \
   --entrypoint python3 "$(engine_image)" \
-  -m pytest /opt/etchwork-src/tests -q -p no:cacheprovider
+  -m pytest /opt/etchwork-src/tests -q -p no:cacheprovider "$@"

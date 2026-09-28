@@ -8,11 +8,20 @@ import json
 import os
 import shutil
 
-from circuit_mcp import done, summary
+import pytest
+
+from circuit_mcp import done, schematic, summary
 from conftest import FIXTURES
 
 CLEAN = {"violations": [], "unconnected_items": []}
 FILLED_BOARD = "(kicad_pcb (zone (net 1) (filled_polygon (pts))))"
+
+
+@pytest.fixture(autouse=True)
+def schematic_matches(monkeypatch):
+    """These tests use blinker.net, which has no SKiDL script to draw from;
+    the real schematic check is tested in test_done_schematic.py."""
+    monkeypatch.setattr(schematic, "problems", lambda sch, netlist: [])
 
 
 def _age(path, seconds):
@@ -40,6 +49,8 @@ def _done_project(workspace, board_text=FILLED_BOARD, needs_review=None):
     gerbers.mkdir()
     (gerbers / "blinker-F_Cu.gbr").write_text("G04*")
     (gerbers / "blinker.drl").write_text("M48")
+    for name in schematic.files("blinker")[:2]:
+        (workspace / name).write_text("(kicad_sch)")
     summary.summarize_project("blinker.net")
     readme = workspace / "README.md"
     readme.write_text(readme.read_text().replace(summary.PLACEHOLDER, "Blinks two LEDs."))
@@ -222,3 +233,65 @@ def test_an_explicit_board_is_used(workspace):
     out = done.check_done("blinker.net", board="other.kicad_pcb")
     # other.kicad_pcb has no other.drc.json of its own.
     assert "DRC not run" in out
+
+
+def test_a_missing_schematic_is_not_done(workspace):
+    _done_project(workspace)
+    (workspace / "blinker.kicad_sch").unlink()
+    out = done.check_done("blinker.net")
+    assert out.startswith("NOT DONE") and "blinker.kicad_sch" in out and "export_schematic" in out
+
+
+def test_a_stale_schematic_is_not_done(workspace):
+    _done_project(workspace)
+    _age(workspace / "blinker-schematic.pdf", 3600)
+    out = done.check_done("blinker.net")
+    assert "blinker-schematic.pdf" in out and "older than blinker.net" in out
+
+
+def test_done_names_the_schematic(workspace):
+    _done_project(workspace)
+    out = done.check_done("blinker.net")
+    assert out.startswith("DONE") and "blinker.kicad_sch" in out
+
+
+def _unavailable_project(workspace):
+    """A finished project whose schematic SKiDL could not draw: the record
+    stands in for the drawing (final review, Critical 1)."""
+    _done_project(workspace)
+    for name in schematic.files("blinker"):
+        (workspace / name).unlink(missing_ok=True)
+    record = workspace / "blinker.sch-unavailable.json"
+    record.write_text(json.dumps({"reason": "SKiDL's generator drew it wrongly",
+                                  "details": ["x"], "attempts": 5}))
+    return record
+
+
+def test_an_unavailable_record_in_place_of_the_schematic_is_done(workspace):
+    _unavailable_project(workspace)
+    out = done.check_done("blinker.net")
+    assert out.startswith("DONE"), out
+    assert ("Schematic: not available (SKiDL's generator drew it wrongly); "
+            "say so in your final answer.") in out.splitlines()
+    assert "blinker.kicad_sch" not in out
+
+
+def test_a_stale_unavailable_record_is_not_done(workspace):
+    record = _unavailable_project(workspace)
+    _age(record, 3600)
+    out = done.check_done("blinker.net")
+    assert out.startswith("NOT DONE") and "blinker.sch-unavailable.json older than blinker.net" in out
+
+
+def test_an_unreadable_unavailable_record_is_not_done(workspace):
+    record = _unavailable_project(workspace)
+    record.write_text("not json")
+    out = done.check_done("blinker.net")
+    assert out.startswith("NOT DONE") and "export_schematic" in out
+
+
+def test_a_record_does_not_excuse_a_schematic_that_is_there(workspace):
+    _unavailable_project(workspace)
+    (workspace / "blinker.kicad_sch").write_text("(kicad_sch)")
+    out = done.check_done("blinker.net")
+    assert out.startswith("NOT DONE") and "blinker-schematic.pdf" in out

@@ -13,7 +13,7 @@ an auto-poke is always safe.
 import json
 import pathlib
 
-from circuit_mcp import kicad, kicad_lib, paths, summary, tools
+from circuit_mcp import kicad, kicad_lib, paths, schematic, summary, tools
 
 
 def _older(path: pathlib.Path, board: pathlib.Path) -> bool:
@@ -54,6 +54,42 @@ def _readme(board: pathlib.Path) -> list[str]:
         problems.append(f"README.md still has the line `{summary.PLACEHOLDER}`: "
                         "replace it with what the board does")
     return problems
+
+
+def _unavailable(netlist: pathlib.Path) -> pathlib.Path | None:
+    """The unavailable record, when it stands in for the drawing: it exists
+    and no schematic or PDF does (final review, Critical 1)."""
+    sch, pdf = (paths.WORKSPACE / name for name in schematic.files(netlist.stem)[:2])
+    record = paths.WORKSPACE / schematic.unavailable_file(netlist.stem)
+    if schematic.present(record) and not (schematic.present(sch) or schematic.present(pdf)):
+        return record
+    return None
+
+
+def _schematic(netlist: pathlib.Path) -> list[str]:
+    """The drawing must exist, be newer than the netlist, and show its circuit
+    (schematic spec §6) -- or, when export_schematic found SKiDL can't draw
+    this circuit, its record of that must be newer than the netlist. ERC
+    findings on the drawing never block."""
+    record = _unavailable(netlist)
+    if record is not None:
+        if schematic.unavailable_reason(record) is None:
+            return [f"{record.name} is not a readable record: run `export_schematic`"]
+        if record.stat().st_mtime < netlist.stat().st_mtime:
+            return [f"{record.name} older than {netlist.name}: run `export_schematic`"]
+        return []
+    sch, pdf = (paths.WORKSPACE / name for name in schematic.files(netlist.stem)[:2])
+    missing = [p.name for p in (sch, pdf) if not p.is_file()]
+    if missing:
+        return [f"no {', '.join(missing)}: run `export_schematic`"]
+    stale = [p.name for p in (sch, pdf) if p.stat().st_mtime < netlist.stat().st_mtime]
+    if stale:
+        return [f"{', '.join(stale)} older than {netlist.name}: run `export_schematic`"]
+    mismatch = schematic.problems(sch, netlist)
+    if mismatch:
+        return ["the schematic does not match the netlist: run `export_schematic` ("
+                + "; ".join(mismatch[:5]) + ")"]
+    return []
 
 
 def _flagged(source: pathlib.Path) -> list[str]:
@@ -102,11 +138,23 @@ def check_done(netlist: str, board: str | None = None) -> str:
         problems.append(f"{unfilled} copper pour(s) not filled: run `fill_zones`, then `run_drc`")
     problems += _gerbers(path)
     problems += _readme(path)
+    problems += _schematic(source)
 
     if problems:
         return "NOT DONE:\n" + "\n".join(f"- {p}" for p in problems)
+    record = _unavailable(source)
+    if record is None:
+        head = (f"DONE: {paths.rel(path)} is DRC clean with its pours filled; gerbers/, README.md "
+                f"and the schematic ({schematic.files(source.stem)[0]}) are current.")
+        note = []
+    else:
+        head = (f"DONE: {paths.rel(path)} is DRC clean with its pours filled; gerbers/ and "
+                "README.md are current.")
+        note = [f"Schematic: not available ({schematic.unavailable_reason(record)}); "
+                "say so in your final answer."]
     return "\n".join([
-        f"DONE: {paths.rel(path)} is DRC clean with its pours filled; gerbers/ and README.md are current.",
+        head,
+        *note,
         "Board facts (state these in your final answer; do not re-derive them):",
         *_facts(path, text),
         "Nets awaiting the human's decision (put these in your final answer):",
