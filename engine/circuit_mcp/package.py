@@ -8,7 +8,8 @@ board in a temp folder: check_done reads reports and Gerbers the agent wrote,
 and an agent can forge them. Only a board that is clean in that fresh DRC run
 is packaged, into <out>/deliverable.zip, and the zip ships the fresh report
 and Gerbers, and a schematic re-checked against the netlist, not the agent's
-copies. It always writes <out>/result.json, and never writes into the
+copies -- or, for a circuit SKiDL can't draw, export_schematic's record of
+that as schematic-unavailable.json. It always writes <out>/result.json, and never writes into the
 workspace.
 
 The workspace is untrusted -- the agent controls every path in it -- so a
@@ -168,6 +169,43 @@ def _sized_bytes(path: pathlib.Path, budget: list) -> bytes:
     return path.read_bytes()
 
 
+def _checked_schematic(source_sch: pathlib.Path, netlist: pathlib.Path, tmp: pathlib.Path,
+                       budget: list) -> list[tuple[str, bytes]]:
+    """The schematic, re-checked against the netlist, with a fresh PDF and
+    ERC report made from the copy shipped."""
+    sch_bytes = _sized_bytes(source_sch, budget)
+    copied_sch = tmp / source_sch.name
+    copied_sch.write_bytes(sch_bytes)
+    mismatch = schematic.problems(copied_sch, netlist)
+    if mismatch:
+        raise _Refused("the schematic does not match the delivered netlist: "
+                       + "; ".join(mismatch[:5]))
+    try:
+        schematic.export_pdf(copied_sch, tmp / "schematic.pdf")
+        schematic.run_erc(copied_sch, tmp / "schematic-erc.json")
+    except RuntimeError as error:
+        raise _Refused(f"the packaging step could not process the schematic: {error}")
+    return [
+        (f"kicad/{source_sch.name}", sch_bytes),
+        ("schematic.pdf", _sized_bytes(tmp / "schematic.pdf", budget)),
+        ("schematic-erc.json", _sized_bytes(tmp / "schematic-erc.json", budget)),
+    ]
+
+
+def _unavailable_bytes(record: pathlib.Path, budget: list) -> bytes:
+    """The unavailable record's bytes, refused unless they are the JSON
+    object with a reason that export_schematic writes."""
+    data = _sized_bytes(record, budget)
+    try:
+        parsed = json.loads(data)
+        ok = isinstance(parsed, dict) and isinstance(parsed.get("reason"), str)
+    except ValueError:
+        ok = False
+    if not ok:
+        raise _Refused(f"{record.name} is not a schematic-unavailable record")
+    return data
+
+
 def _entries(workspace, board, netlist, secrets, result) -> tuple[list[tuple[str, bytes]], int]:
     """Everything the zip ships. DRC and Gerbers are re-made from a temp copy
     of the board; a board that is not clean in that run raises _Refused."""
@@ -192,25 +230,15 @@ def _entries(workspace, board, netlist, secrets, result) -> tuple[list[tuple[str
         # the PDF and ERC report are made fresh from the schematic shipped.
         sch_name = schematic.files(netlist.stem)[0]
         source_sch = workspace / sch_name
-        if not (_regular(source_sch) and SAFE_NAME.match(sch_name)):
+        record = workspace / schematic.unavailable_file(netlist.stem)
+        if not schematic.present(source_sch) and _regular(record):
+            # export_schematic found SKiDL can't draw this circuit: the
+            # board ships without a schematic, and with the record of why.
+            schematic_entries = [("schematic-unavailable.json", _unavailable_bytes(record, budget))]
+        elif not (_regular(source_sch) and SAFE_NAME.match(sch_name)):
             raise _Refused(f"{sch_name} is missing, a symlink or not a regular file")
-        sch_bytes = _sized_bytes(source_sch, budget)
-        copied_sch = tmp / sch_name
-        copied_sch.write_bytes(sch_bytes)
-        mismatch = schematic.problems(copied_sch, netlist)
-        if mismatch:
-            raise _Refused("the schematic does not match the delivered netlist: "
-                           + "; ".join(mismatch[:5]))
-        try:
-            schematic.export_pdf(copied_sch, tmp / "schematic.pdf")
-            schematic.run_erc(copied_sch, tmp / "schematic-erc.json")
-        except RuntimeError as error:
-            raise _Refused(f"the packaging step could not process the schematic: {error}")
-        schematic_entries = [
-            (f"kicad/{sch_name}", sch_bytes),
-            ("schematic.pdf", _sized_bytes(tmp / "schematic.pdf", budget)),
-            ("schematic-erc.json", _sized_bytes(tmp / "schematic-erc.json", budget)),
-        ]
+        else:
+            schematic_entries = _checked_schematic(source_sch, netlist, tmp, budget)
     entries = [("fab/gerbers.zip", gerbers), *kicad_files]
     entries += schematic_entries
     entries += [(f"source/{f.name}", _sized_bytes(f, budget)) for f in sorted(workspace.glob("*.py"))
@@ -255,7 +283,12 @@ def package(workspace: pathlib.Path, out: pathlib.Path, secrets: list[str]) -> d
             why = "unsafe file name: " + ", ".join(repr(n) for n in unsafe)
         if netlist is not None:
             required = [board, netlist, workspace / "README.md", workspace / f"{board.stem}.drc.json"]
-            refused = [p.name for p in required if p.exists() and not _regular(p)]
+            # The schematic and its unavailable record ship too, when there:
+            # refused here, before check_done reads them.
+            required += [p for p in (workspace / schematic.files(netlist.stem)[0],
+                                     workspace / schematic.unavailable_file(netlist.stem))
+                         if schematic.present(p)]
+            refused = [p.name for p in required if schematic.present(p) and not _regular(p)]
             oversized = [p.name for p in required if p.exists() and _regular(p)
                         and p.lstat().st_size > MAX_FILE_BYTES]
             gerbers = workspace / "gerbers"

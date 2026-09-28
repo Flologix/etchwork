@@ -349,3 +349,68 @@ def test_an_unprocessable_schematic_refuses_packaging(workspace, out, monkeypatc
     monkeypatch.setattr(schematic, "export_pdf", broken)
     result = package.package(workspace, out, [])
     assert not result["done"] and "boom" in result["reason"]
+
+
+# --- Final review: schematic gate hardening and unavailable schematics ----
+
+
+def test_a_symlinked_schematic_is_refused_before_check_done(workspace, out, monkeypatch):
+    _finished(workspace)
+    real = workspace.parent / "elsewhere.kicad_sch"
+    shutil.move(workspace / "board.kicad_sch", real)
+    (workspace / "board.kicad_sch").symlink_to(real)
+    from circuit_mcp import done
+
+    def no_gate(*args):
+        raise AssertionError("check_done must not run on a symlinked schematic")
+    monkeypatch.setattr(done, "check_done", no_gate)
+    result = package.package(workspace, out, [])
+    assert not result["done"]
+    assert "symlinks" in result["reason"] and "board.kicad_sch" in result["reason"]
+    assert not (out / "deliverable.zip").exists()
+
+
+def test_an_oversized_schematic_is_refused_before_check_done(workspace, out, monkeypatch):
+    _finished(workspace)
+    sch = workspace / "board.kicad_sch"
+    others = [workspace / n for n in ("board.kicad_pcb", "board.net", "README.md", "board.drc.json")]
+    cap = max(p.stat().st_size for p in others)
+    sch.write_bytes(sch.read_bytes() + b" " * (cap + 1 - sch.stat().st_size))
+    monkeypatch.setattr(package, "MAX_FILE_BYTES", cap)
+    result = package.package(workspace, out, [])
+    assert not result["done"]
+    assert "size cap" in result["reason"] and "board.kicad_sch" in result["reason"]
+    assert "board.kicad_pcb" not in result["reason"]
+
+
+def _unavailable(workspace):
+    """A finished project whose schematic SKiDL couldn't draw."""
+    _finished(workspace)
+    for name in schematic.files("board"):
+        (workspace / name).unlink()
+    record = workspace / "board.sch-unavailable.json"
+    record.write_text(json.dumps({"reason": "SKiDL's generator drew it wrongly",
+                                  "details": ["x"], "attempts": 5}))
+    return record
+
+
+def test_a_board_without_a_drawable_schematic_ships_the_record(workspace, out):
+    record = _unavailable(workspace)
+    result = package.package(workspace, out, [])
+    assert result["done"], result["reason"]
+    names = _names(out)
+    assert "schematic-unavailable.json" in names
+    assert not {"kicad/board.kicad_sch", "schematic.pdf", "schematic-erc.json"} & names
+    with zipfile.ZipFile(out / "deliverable.zip") as z:
+        assert z.read("schematic-unavailable.json") == record.read_bytes()
+
+
+def test_a_symlinked_unavailable_record_is_refused(workspace, out):
+    record = _unavailable(workspace)
+    real = workspace.parent / "record.json"
+    shutil.move(record, real)
+    record.symlink_to(real)
+    result = package.package(workspace, out, [])
+    assert not result["done"]
+    assert "board.sch-unavailable.json" in result["reason"]
+    assert not (out / "deliverable.zip").exists()
