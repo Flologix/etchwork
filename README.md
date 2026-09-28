@@ -11,16 +11,62 @@ A PCB design toolkit for AI coding agents. Write a sentence about what you need,
 
 ## Quick start (Claude Code)
 
+**1. Install once.** Clone the repo, put `etchwork` on your `PATH`, and build the engine image.
+The first build takes a few minutes.
+
 ```bash
-git clone https://github.com/FlologixAI/etchwork.git && cd etchwork && ./etchwork init ~/my-board --client claude-code --build
-cd ~/my-board && claude
+git clone https://github.com/FlologixAI/etchwork.git ~/etchwork
+mkdir -p ~/.local/bin && ln -s ~/etchwork/etchwork ~/.local/bin/etchwork
+etchwork build
 ```
 
-Then type:
+(If `etchwork` isn't found afterwards, open a new terminal: `~/.local/bin` must be on your `PATH`.)
+
+**2. Set up a project folder.** Do this once for every new board.
+
+```bash
+mkdir ~/my-board && cd ~/my-board
+etchwork init .
+```
+
+`init` picks your agent itself and prints which one it chose. If several are installed it asks;
+pick Claude Code, or pass `--client claude-code`. It writes three things into the folder:
+`.mcp.json` (how Claude Code starts the engine), the `/etchwork` skill, and a setting that
+pre-approves the engine's tools.
+
+**3. Design.** Start Claude Code in that folder. The first time, it asks whether to trust the
+`etchwork` server: approve it. `/mcp` should then list `etchwork` as connected.
+
+```bash
+claude
+```
 
 ```
-/etchwork design a USB-C LED blinker
+/etchwork design a USB-C powered LED blinker using an ATtiny85, with a 6-pin ISP header
 ```
+
+Say what matters to you: size limits, connectors, power, and parts you insist on. Approve the file
+writes Claude Code asks about (`board.py`, `expected.netlist.toml`, `README.md`). A run takes
+from minutes to about an hour, and ends when the agent reports **DONE**.
+
+**4. What you get**, in the project folder:
+
+| File | What it is |
+|---|---|
+| `board.kicad_pcb` | The board; open it in KiCad |
+| `gerbers/` | Fabrication files; zip them and upload to your fab |
+| `board.py`, `board.net` | The circuit as a SKiDL script, and its netlist |
+| `README.md` | What the board is, its parts, and its trace widths |
+
+Read the **nets awaiting your decision** in the agent's final answer: they are the calls it left
+to you.
+
+**5. Change it** by asking in the same session, e.g. "make the board smaller" or "add another
+LED". Changes go through `board.py`, and the board is re-laid out and re-checked. If you edited
+the board in KiCad yourself, the agent asks before replacing your layout.
+
+After pulling a new version of Etchwork, run `etchwork build` again, then `etchwork init .` in
+each project that should use the new engine.
 
 ## Other clients
 
