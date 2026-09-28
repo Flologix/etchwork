@@ -7,8 +7,9 @@ is DONE, re-runs DRC itself and regenerates the Gerbers, on a copy of the
 board in a temp folder: check_done reads reports and Gerbers the agent wrote,
 and an agent can forge them. Only a board that is clean in that fresh DRC run
 is packaged, into <out>/deliverable.zip, and the zip ships the fresh report
-and Gerbers, not the agent's. It always writes <out>/result.json, and never
-writes into the workspace.
+and Gerbers, and a schematic re-checked against the netlist, not the agent's
+copies. It always writes <out>/result.json, and never writes into the
+workspace.
 
 The workspace is untrusted -- the agent controls every path in it -- so a
 required file that is a symlink or not a regular file is refused, and
@@ -29,7 +30,7 @@ import sys
 import tempfile
 import zipfile
 
-from circuit_mcp import done, paths, service, tools
+from circuit_mcp import done, paths, schematic, service, tools
 
 REDACTED = b"[redacted]"
 SVG_LAYERS = "F.Cu,B.Cu,F.Silkscreen,Edge.Cuts"
@@ -185,7 +186,33 @@ def _entries(workspace, board, netlist, secrets, result) -> tuple[list[tuple[str
                 f"(the workspace's {board.stem}.drc.json does not describe this board)")
         gerbers, total = _fresh_gerbers(copy, secrets, budget)
         svg = _svg(copy)
+        # The schematic is copied, never regenerated: that would run the
+        # agent's script, and this step runs no agent code. What it re-checks
+        # instead is that the drawing shows the delivered netlist's circuit;
+        # the PDF and ERC report are made fresh from the schematic shipped.
+        sch_name = schematic.files(netlist.stem)[0]
+        source_sch = workspace / sch_name
+        if not (_regular(source_sch) and SAFE_NAME.match(sch_name)):
+            raise _Refused(f"{sch_name} is missing, a symlink or not a regular file")
+        sch_bytes = _sized_bytes(source_sch, budget)
+        copied_sch = tmp / sch_name
+        copied_sch.write_bytes(sch_bytes)
+        mismatch = schematic.problems(copied_sch, netlist)
+        if mismatch:
+            raise _Refused("the schematic does not match the delivered netlist: "
+                           + "; ".join(mismatch[:5]))
+        try:
+            schematic.export_pdf(copied_sch, tmp / "schematic.pdf")
+            schematic.run_erc(copied_sch, tmp / "schematic-erc.json")
+        except RuntimeError as error:
+            raise _Refused(f"the packaging step could not process the schematic: {error}")
+        schematic_entries = [
+            (f"kicad/{sch_name}", sch_bytes),
+            ("schematic.pdf", _sized_bytes(tmp / "schematic.pdf", budget)),
+            ("schematic-erc.json", _sized_bytes(tmp / "schematic-erc.json", budget)),
+        ]
     entries = [("fab/gerbers.zip", gerbers), *kicad_files]
+    entries += schematic_entries
     entries += [(f"source/{f.name}", _sized_bytes(f, budget)) for f in sorted(workspace.glob("*.py"))
                 if _regular(f) and SAFE_NAME.match(f.name)]
     entries.append((f"source/{netlist.name}", _sized_bytes(netlist, budget)))

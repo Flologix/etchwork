@@ -10,7 +10,7 @@ import zipfile
 
 import pytest
 
-from circuit_mcp import package
+from circuit_mcp import package, paths, schematic
 from conftest import FIXTURES
 
 PROJECT = FIXTURES / "projects" / "backoff1"
@@ -22,14 +22,38 @@ def out(tmp_path_factory):
     return tmp_path_factory.mktemp("out")
 
 
+@pytest.fixture(scope="session")
+def backoff1_schematic(tmp_path_factory):
+    """backoff1 drawn once: generation runs its board.py and takes seconds."""
+    work = tmp_path_factory.mktemp("backoff1-schematic")
+    shutil.copytree(PROJECT, work, dirs_exist_ok=True)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(paths, "WORKSPACE", work.resolve())
+        answer = schematic.export_schematic("board.py", "board.net")
+    assert answer.startswith("EXPORTED"), answer
+    return {name: (work / name).read_bytes() for name in schematic.files("board")}
+
+
+SCHEMATIC_FILES = {}
+
+
+@pytest.fixture(autouse=True)
+def _schematic_files(backoff1_schematic):
+    SCHEMATIC_FILES.update(backoff1_schematic)
+
+
 def _finished(workspace):
     """The saved finished project, with mtimes in the order a real run leaves
     them: git checkouts don't keep mtimes, and check_done compares them."""
     shutil.copytree(PROJECT, workspace, dirs_exist_ok=True)
+    for name, data in SCHEMATIC_FILES.items():
+        (workspace / name).write_bytes(data)
     t = time.time() - 100
     os.utime(workspace / "board.kicad_pcb", (t, t))
+    os.utime(workspace / "board.net", (t, t))
     for f in [workspace / "board.drc.json", workspace / "README.md",
-              *(workspace / "gerbers").iterdir()]:
+              *(workspace / "gerbers").iterdir(),
+              *(workspace / name for name in SCHEMATIC_FILES)]:
         os.utime(f, (t + 50, t + 50))
 
 
@@ -46,7 +70,8 @@ def test_a_finished_project_is_packaged(workspace, out):
     assert (result["drc_errors"], result["unconnected"]) == (0, 0)
     assert {"fab/gerbers.zip", "kicad/board.kicad_pcb", "kicad/board.kicad_pro",
             "kicad/board.kicad_dru", "source/board.py", "source/board.net",
-            "README.md", "drc.json", "board.svg"} <= _names(out)
+            "README.md", "drc.json", "board.svg",
+            "kicad/board.kicad_sch", "schematic.pdf", "schematic-erc.json"} <= _names(out)
     with zipfile.ZipFile(out / "deliverable.zip") as z:
         inner = zipfile.ZipFile(io.BytesIO(z.read("fab/gerbers.zip"))).namelist()
     assert any(n.endswith(".gtl") for n in inner) and any(n.endswith(".drl") for n in inner)
@@ -202,10 +227,14 @@ def test_a_forged_drc_report_is_not_trusted(workspace, out):
                  "board.netclasses.json", "board.netclasses.applied.json"]:
         shutil.copy(PROJECT / name, workspace / name)
     shutil.copytree(PROJECT / "gerbers", workspace / "gerbers")
+    for name, data in SCHEMATIC_FILES.items():
+        (workspace / name).write_bytes(data)
     t = time.time() - 100
     os.utime(workspace / "board.kicad_pcb", (t, t))
+    os.utime(workspace / "board.net", (t, t))
     for f in [workspace / "board.drc.json", workspace / "README.md",
-              *(workspace / "gerbers").iterdir()]:
+              *(workspace / "gerbers").iterdir(),
+              *(workspace / name for name in SCHEMATIC_FILES)]:
         os.utime(f, (t + 50, t + 50))
     from circuit_mcp import done
     assert done.check_done("board.net", "board.kicad_pcb").startswith("DONE")  # the forgery fools the files
@@ -280,3 +309,43 @@ def test_a_long_reason_is_truncated(workspace, out, monkeypatch):
     assert len(result["reason"]) <= 4000 + len("…[truncated]")
     assert result["reason"].endswith("…[truncated]")
     assert json.loads((out / "result.json").read_text())["reason"].endswith("…[truncated]")
+
+
+# --- Task 4: packaging ships the schematic ------------------------------
+
+
+def test_the_shipped_schematic_pdf_is_regenerated(workspace, out):
+    _finished(workspace)
+    (workspace / "board-schematic.pdf").write_bytes(b"%PDF-1.4 forged")
+    os.utime(workspace / "board-schematic.pdf", (time.time(), time.time()))
+    result = package.package(workspace, out, [])
+    assert result["done"], result["reason"]
+    with zipfile.ZipFile(out / "deliverable.zip") as z:
+        assert z.read("schematic.pdf") != b"%PDF-1.4 forged"
+        assert z.read("schematic.pdf").startswith(b"%PDF")
+        assert z.read("kicad/board.kicad_sch") == SCHEMATIC_FILES["board.kicad_sch"]
+
+
+def test_a_mismatched_schematic_refuses_packaging(workspace, out, monkeypatch):
+    _finished(workspace)
+    calls = []
+
+    def after_the_gate(sch, netlist):
+        # check_done (the first gate) sees a match; the packaging re-check does not.
+        calls.append(sch)
+        return [] if len(calls) == 1 else ["parts missing from the schematic: R9"]
+    monkeypatch.setattr(schematic, "problems", after_the_gate)
+    result = package.package(workspace, out, [])
+    assert not result["done"]
+    assert "schematic" in result["reason"] and "R9" in result["reason"]
+    assert not (out / "deliverable.zip").exists()
+
+
+def test_an_unprocessable_schematic_refuses_packaging(workspace, out, monkeypatch):
+    _finished(workspace)
+
+    def broken(sch, pdf):
+        raise RuntimeError("schematic PDF export failed: boom")
+    monkeypatch.setattr(schematic, "export_pdf", broken)
+    result = package.package(workspace, out, [])
+    assert not result["done"] and "boom" in result["reason"]
