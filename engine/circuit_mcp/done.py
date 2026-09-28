@@ -56,9 +56,28 @@ def _readme(board: pathlib.Path) -> list[str]:
     return problems
 
 
+def _unavailable(netlist: pathlib.Path) -> pathlib.Path | None:
+    """The unavailable record, when it stands in for the drawing: it exists
+    and no schematic or PDF does (final review, Critical 1)."""
+    sch, pdf = (paths.WORKSPACE / name for name in schematic.files(netlist.stem)[:2])
+    record = paths.WORKSPACE / schematic.unavailable_file(netlist.stem)
+    if schematic.present(record) and not (schematic.present(sch) or schematic.present(pdf)):
+        return record
+    return None
+
+
 def _schematic(netlist: pathlib.Path) -> list[str]:
     """The drawing must exist, be newer than the netlist, and show its circuit
-    (schematic spec §6). ERC findings on it never block."""
+    (schematic spec §6) -- or, when export_schematic found SKiDL can't draw
+    this circuit, its record of that must be newer than the netlist. ERC
+    findings on the drawing never block."""
+    record = _unavailable(netlist)
+    if record is not None:
+        if schematic.unavailable_reason(record) is None:
+            return [f"{record.name} is not a readable record: run `export_schematic`"]
+        if record.stat().st_mtime < netlist.stat().st_mtime:
+            return [f"{record.name} older than {netlist.name}: run `export_schematic`"]
+        return []
     sch, pdf = (paths.WORKSPACE / name for name in schematic.files(netlist.stem)[:2])
     missing = [p.name for p in (sch, pdf) if not p.is_file()]
     if missing:
@@ -123,9 +142,19 @@ def check_done(netlist: str, board: str | None = None) -> str:
 
     if problems:
         return "NOT DONE:\n" + "\n".join(f"- {p}" for p in problems)
+    record = _unavailable(source)
+    if record is None:
+        head = (f"DONE: {paths.rel(path)} is DRC clean with its pours filled; gerbers/, README.md "
+                f"and the schematic ({schematic.files(source.stem)[0]}) are current.")
+        note = []
+    else:
+        head = (f"DONE: {paths.rel(path)} is DRC clean with its pours filled; gerbers/ and "
+                "README.md are current.")
+        note = [f"Schematic: not available ({schematic.unavailable_reason(record)}); "
+                "say so in your final answer."]
     return "\n".join([
-        f"DONE: {paths.rel(path)} is DRC clean with its pours filled; gerbers/, README.md and "
-        f"the schematic ({schematic.files(source.stem)[0]}) are current.",
+        head,
+        *note,
         "Board facts (state these in your final answer; do not re-derive them):",
         *_facts(path, text),
         "Nets awaiting the human's decision (put these in your final answer):",

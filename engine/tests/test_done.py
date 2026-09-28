@@ -253,3 +253,45 @@ def test_done_names_the_schematic(workspace):
     _done_project(workspace)
     out = done.check_done("blinker.net")
     assert out.startswith("DONE") and "blinker.kicad_sch" in out
+
+
+def _unavailable_project(workspace):
+    """A finished project whose schematic SKiDL could not draw: the record
+    stands in for the drawing (final review, Critical 1)."""
+    _done_project(workspace)
+    for name in schematic.files("blinker"):
+        (workspace / name).unlink(missing_ok=True)
+    record = workspace / "blinker.sch-unavailable.json"
+    record.write_text(json.dumps({"reason": "SKiDL's generator drew it wrongly",
+                                  "details": ["x"], "attempts": 5}))
+    return record
+
+
+def test_an_unavailable_record_in_place_of_the_schematic_is_done(workspace):
+    _unavailable_project(workspace)
+    out = done.check_done("blinker.net")
+    assert out.startswith("DONE"), out
+    assert ("Schematic: not available (SKiDL's generator drew it wrongly); "
+            "say so in your final answer.") in out.splitlines()
+    assert "blinker.kicad_sch" not in out
+
+
+def test_a_stale_unavailable_record_is_not_done(workspace):
+    record = _unavailable_project(workspace)
+    _age(record, 3600)
+    out = done.check_done("blinker.net")
+    assert out.startswith("NOT DONE") and "blinker.sch-unavailable.json older than blinker.net" in out
+
+
+def test_an_unreadable_unavailable_record_is_not_done(workspace):
+    record = _unavailable_project(workspace)
+    record.write_text("not json")
+    out = done.check_done("blinker.net")
+    assert out.startswith("NOT DONE") and "export_schematic" in out
+
+
+def test_a_record_does_not_excuse_a_schematic_that_is_there(workspace):
+    _unavailable_project(workspace)
+    (workspace / "blinker.kicad_sch").write_text("(kicad_sch)")
+    out = done.check_done("blinker.net")
+    assert out.startswith("NOT DONE") and "blinker-schematic.pdf" in out
