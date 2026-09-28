@@ -242,5 +242,81 @@ else
 fi
 [ "$before10" = "$after10" ] && pass "no docker: target dir has no new files" || fail "no docker: target dir has no new files" "before=[$before10] after=[$after10]"
 
+# --- 11: --client left out: init detects the agent ---
+# A PATH holding only the tools init needs, plus a stub for each agent CLI
+# named: the real PATH may already have claude on it, which would decide
+# every case below.
+agent_path() {
+  p="$scratch/path-${*:-none}"
+  p=$(printf '%s' "$p" | tr ' ' '-')
+  mkdir -p "$p"
+  for t in docker python3 git sha256sum shasum sort xargs cut grep id dirname \
+           readlink cat cp rm mkdir touch cmp mktemp tr sed; do
+    w=$(command -v "$t" 2>/dev/null) && ln -sf "$w" "$p/$t"
+  done
+  for a in "$@"; do
+    printf '#!/bin/sh\nexit 0\n' > "$p/$a"
+    chmod +x "$p/$a"
+  done
+  printf '%s' "$p"
+}
+
+d11a="$scratch/detect-only-codex"
+out11a=$(PATH=$(agent_path codex) "$etchwork" init "$d11a" </dev/null 2>&1)
+rc11a=$?
+if [ "$rc11a" = 0 ] && [ -f "$d11a/AGENTS.md" ] && [ ! -e "$d11a/.mcp.json" ] \
+   && printf '%s\n' "$out11a" | grep -q "^client: codex (the only supported agent on PATH)"; then
+  pass "detect: the only agent on PATH (codex)"
+else
+  fail "detect: the only agent on PATH (codex)" "exit $rc11a: $out11a"
+fi
+
+d11b="$scratch/detect-folder-wins"
+mkdir -p "$d11b/.claude"
+out11b=$(PATH=$(agent_path claude codex) "$etchwork" init "$d11b" </dev/null 2>&1)
+rc11b=$?
+if [ "$rc11b" = 0 ] && [ -f "$d11b/.mcp.json" ] && [ ! -e "$d11b/AGENTS.md" ] \
+   && printf '%s\n' "$out11b" | grep -q "^client: claude-code (this folder already has its config)"; then
+  pass "detect: the folder's own config beats PATH"
+else
+  fail "detect: the folder's own config beats PATH" "exit $rc11b: $out11b"
+fi
+
+d11c="$scratch/detect-ambiguous"
+out11c=$(PATH=$(agent_path claude codex) "$etchwork" init "$d11c" </dev/null 2>&1)
+rc11c=$?
+if [ "$rc11c" = 2 ] && [ ! -e "$d11c" ] \
+   && printf '%s\n' "$out11c" | grep -q -- "--client" \
+   && printf '%s\n' "$out11c" | grep -q "found claude-code, codex"; then
+  pass "detect: two agents and no terminal exits 2, names them, writes nothing"
+else
+  fail "detect: two agents and no terminal exits 2, names them, writes nothing" "exit $rc11c: $out11c"
+fi
+
+d11d="$scratch/detect-none"
+out11d=$(PATH=$(agent_path) "$etchwork" init "$d11d" </dev/null 2>&1)
+rc11d=$?
+if [ "$rc11d" = 2 ] && [ ! -e "$d11d" ] && printf '%s\n' "$out11d" | grep -q -- "--client" \
+   && printf '%s\n' "$out11d" | grep -q "no supported agent"; then
+  pass "detect: no agent found and no terminal exits 2"
+else
+  fail "detect: no agent found and no terminal exits 2" "exit $rc11d: $out11d"
+fi
+
+d11e="$scratch/detect-flag-wins"
+out11e=$(PATH=$(agent_path codex) "$etchwork" init "$d11e" --client claude-code </dev/null 2>&1)
+rc11e=$?
+if [ "$rc11e" = 0 ] && [ -f "$d11e/.mcp.json" ] && [ ! -e "$d11e/AGENTS.md" ] \
+   && ! printf '%s\n' "$out11e" | grep -q "^client:"; then
+  pass "detect: an explicit --client is used as given"
+else
+  fail "detect: an explicit --client is used as given" "exit $rc11e: $out11e"
+fi
+
+d11f="$scratch/detect-bad-flag"
+out11f=$("$etchwork" init "$d11f" --client vscode </dev/null 2>&1)
+rc11f=$?
+[ "$rc11f" = 2 ] && pass "detect: an unknown --client still exits 2" || fail "detect: an unknown --client still exits 2" "exit $rc11f: $out11f"
+
 echo "$fails failures"
 [ "$fails" -eq 0 ]

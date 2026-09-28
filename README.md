@@ -24,7 +24,9 @@ Then type:
 
 ## Other clients
 
-Pass `--client codex` or `--client flai` to `etchwork init`. See `docs/clients.md` for details.
+Pass `--client codex` or `--client flai` to `etchwork init`, or leave `--client` out and it
+picks the agent itself: the one whose config the folder already has, else the only supported
+agent installed, else it asks. See `docs/clients.md` for details.
 
 ## Where data goes
 
