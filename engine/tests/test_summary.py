@@ -218,3 +218,13 @@ def test_readme_has_a_schematic_line(workspace):
     summary.summarize_project("blinker.net")
     assert ("Schematic: blinker.kicad_sch (PDF: blinker-schematic.pdf); "
             "ERC: 1 warning (1 pin_not_connected)") in (workspace / "README.md").read_text()
+
+
+def test_readme_says_when_the_schematic_is_not_available(workspace):
+    import json as _json
+    shutil.copy(FIXTURES / "blinker.net", workspace / "blinker.net")
+    (workspace / "blinker.sch-unavailable.json").write_text(_json.dumps(
+        {"reason": "SKiDL's generator drew it wrongly", "details": [], "attempts": 5}))
+    summary.summarize_project("blinker.net")
+    assert ("Schematic: not available: SKiDL's generator drew it wrongly."
+            in (workspace / "README.md").read_text())

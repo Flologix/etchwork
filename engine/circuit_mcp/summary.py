@@ -97,6 +97,11 @@ def _status(board: str | None) -> str:
 def _schematic_line(stem: str) -> list[str]:
     sch, pdf, erc = schematic.files(stem)
     if not (paths.WORKSPACE / sch).is_file():
+        # export_schematic's record that SKiDL can't draw this circuit
+        # (final review, Critical 1): the README says so, and why.
+        reason = schematic.unavailable_reason(paths.WORKSPACE / schematic.unavailable_file(stem))
+        if reason is not None:
+            return [f"Schematic: not available: {reason}.", ""]
         return ["Schematic: not generated: run `export_schematic`.", ""]
     try:
         erc_text = schematic.erc_summary(json.loads((paths.WORKSPACE / erc).read_text()))
