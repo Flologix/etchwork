@@ -20,7 +20,10 @@ case "$cmd" in
           exec "$ETCHWORK_ROOT/libexec/runner-build.sh" "$@" ;;
   help|-h|--help)
     cat <<'EOF'
-etchwork init <dir> --client claude-code|codex|flai [--build]
+etchwork init <dir> [--client claude-code|codex|flai] [--build]
+                                     without --client: the agent whose config the
+                                     folder already has, else the only one on PATH,
+                                     else asks
 etchwork build                      build the engine image
 etchwork test                       run the engine test suite in the image
 etchwork runner build [--agent-bin <path>]

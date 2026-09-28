@@ -9,6 +9,14 @@ client among several, not a requirement.
 builds (or checks for) the engine image, tagged by a hash of `engine/`,
 and prints the tag as `IMAGE=<tag>` when it's done.
 
+Without `--client`, `init` picks the client itself and prints which and why:
+
+1. the one whose config the folder already has (`.claude/` → claude-code,
+   `AGENTS.md` → codex, `.flai-code/` → flai), if exactly one;
+2. otherwise the only supported agent on `PATH` (`claude`, `codex`, `flai`);
+3. otherwise it asks, in a terminal, and without one exits 2 naming the
+   candidates and writing nothing. Pass `--client` in scripts and CI.
+
 ## Claude Code
 
 ```sh

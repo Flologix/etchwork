@@ -1,9 +1,9 @@
 #!/bin/sh
 # Set a project folder up to use the etchwork engine, for a given client
 # (etchwork extraction design §4.1). Usage:
-#   etchwork init <dir> --client claude-code|codex|flai [--build]
+#   etchwork init <dir> [--client claude-code|codex|flai] [--build]
 set -eu
-dir="${1:?usage: etchwork init <dir> --client claude-code|codex|flai [--build]}"; shift
+dir="${1:?usage: etchwork init <dir> [--client claude-code|codex|flai] [--build]}"; shift
 client=""; build=0
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -12,6 +12,67 @@ while [ $# -gt 0 ]; do
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
+
+# Without --client, which agent the project is for. The folder's own config
+# is the strongest evidence -- someone already chose -- then the only
+# supported agent installed. Anything else is asked, never guessed: a wrong
+# pick writes config for an agent that will never read it. Decided before
+# the folder is created, so a refusal leaves nothing behind.
+agents_in_dir() {
+  [ -d "$1" ] || return 0
+  [ -d "$1/.claude" ] && printf ' claude-code'
+  [ -f "$1/AGENTS.md" ] && printf ' codex'
+  [ -d "$1/.flai-code" ] && printf ' flai'
+  return 0
+}
+agents_on_path() {
+  command -v claude >/dev/null 2>&1 && printf ' claude-code'
+  command -v codex >/dev/null 2>&1 && printf ' codex'
+  command -v flai >/dev/null 2>&1 && printf ' flai'
+  return 0
+}
+only_one() {
+  # shellcheck disable=SC2086
+  set -- $1
+  [ $# -eq 1 ] && printf '%s' "$1"
+  return 0
+}
+if [ -z "$client" ]; then
+  in_dir=$(agents_in_dir "$dir"); on_path=$(agents_on_path)
+  client=$(only_one "$in_dir"); why="this folder already has its config"
+  if [ -z "$client" ] && [ -z "$in_dir" ]; then
+    client=$(only_one "$on_path"); why="the only supported agent on PATH"
+  fi
+  if [ -z "$client" ]; then
+    candidates=${in_dir:-$on_path}
+    listed=""
+    for c in $candidates; do listed="${listed:+$listed, }$c"; done
+    if [ -n "$candidates" ]; then
+      found="found $listed"
+    else
+      found="no supported agent (claude, codex, flai) on PATH"
+      candidates="claude-code codex flai"
+    fi
+    if [ -t 0 ] && [ -t 2 ]; then
+      echo "Which agent is this project for? ($found)" >&2
+      n=0
+      for c in $candidates; do n=$((n + 1)); echo "  $n) $c" >&2; done
+      printf 'number: ' >&2
+      read -r choice || choice=""
+      case "$choice" in ''|*[!0-9]*) choice=0 ;; esac
+      if [ "$choice" -lt 1 ] || [ "$choice" -gt "$n" ]; then
+        echo "no agent chosen; pass --client claude-code|codex|flai" >&2; exit 2
+      fi
+      # shellcheck disable=SC2086
+      client=$(printf '%s\n' $candidates | sed -n "${choice}p"); why="chosen"
+    else
+      echo "can't tell which agent this project is for: $found. Pass --client claude-code|codex|flai" >&2
+      exit 2
+    fi
+  fi
+  echo "client: $client ($why)"
+fi
+
 case "$client" in
   claude-code|codex|flai) ;;
   *) echo "--client must be claude-code, codex or flai" >&2; exit 2 ;;
