@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import json
 import pathlib
+import shutil
 import subprocess
+import sys
 import tempfile
 from collections import Counter
 
-from circuit_mcp import kicad_lib, service
+from circuit_mcp import kicad_lib, paths, service
 
 # KiCad's library-configuration warnings: the container has no sym-lib-table
 # on KiCad's search path, so every symbol and footprint draws one. Noise on
@@ -128,3 +130,113 @@ def problems(sch: pathlib.Path, netlist: pathlib.Path) -> list[str]:
     except RuntimeError as error:
         return [str(error)]
     return compare(netlist.read_text(errors="replace"), text)
+
+
+# Runs in its own python3 process, in the workspace: argv is (script, stem,
+# seed). The agent's script builds the circuit; everything it would write is
+# switched off first, so its netlist is never touched and any drawing of its
+# own never happens. Then power flags, then SKiDL's generator with the fixed
+# settings (schematic spec §4). SKiDL finds the default circuit in builtins.
+#
+# seed: SKiDL's placer seeds Python's global `random` from `options.get
+# ("seed")`, which is None (i.e. system entropy) unless given. On a denser
+# board that can't be routed automatically, SKiDL falls back to a
+# labels-only drawing, and an unseeded run occasionally lands two unrelated
+# labels on the same point, which KiCad then reads back as one net --
+# verified against the backoff1 fixture: unseeded, 9 of 10 runs produced a
+# spurious mismatch (e.g. GND merged with PWR_LED). `export_schematic` below
+# tries a fixed list of seeds and keeps the first drawing that matches.
+DRIVER = r'''
+import builtins, os, runpy, sys
+import skidl
+from skidl import Part, Pin
+
+script, stem, seed = sys.argv[1], sys.argv[2], int(sys.argv[3])
+draw = skidl.generate_schematic
+for name in ("generate_netlist", "generate_schematic", "generate_pcb"):
+    setattr(skidl, name, lambda *args, **kwargs: None)
+sys.path.insert(0, os.getcwd())
+runpy.run_path(script, run_name="__main__")
+
+flagged = []
+for net in list(builtins.default_circuit.nets):
+    kinds = {pin.func for pin in net.pins}
+    if Pin.types.PWRIN in kinds and Pin.types.PWROUT not in kinds:
+        flag = Part("power", "PWR_FLAG")
+        flag[1] += net
+        flagged.append(net.name)
+print("power flags: " + (", ".join(sorted(flagged)) or "none"))
+draw(filepath=".", top_name=stem, title=stem, flatness=1.0, auto_stub=True, seed=seed)
+'''
+
+# Tried in order (see the note above DRIVER); any fixed values work, these
+# are not otherwise significant.
+SEEDS = (42, 7, 1234, 99, 2026)
+
+
+def _tidy(before: set[str], keep: set[str]) -> None:
+    """Remove what the run left in the workspace besides its outputs: SKiDL's
+    log and ERC files, and the auto-stub loop's report."""
+    for entry in paths.WORKSPACE.iterdir():
+        if entry.name in before or entry.name in keep:
+            continue
+        if entry.is_dir() and not entry.is_symlink():
+            shutil.rmtree(entry)
+        else:
+            entry.unlink()
+
+
+def export_schematic(script: str, netlist: str) -> str:
+    try:
+        script_path, netlist_path = paths.inside(script), paths.inside(netlist)
+    except ValueError as error:
+        return f"{script} / {netlist}: {error}"
+    if not script_path.is_file():
+        return f"no such script in the project: {script}"
+    if not netlist_path.is_file():
+        return f"no such netlist in the project: {netlist} (run `run_skidl` first)"
+    stem = netlist_path.stem
+    names = files(stem)
+    sch, pdf, erc = (paths.WORKSPACE / n for n in names)
+    before = {p.name for p in paths.WORKSPACE.iterdir()}
+    flags = "power flags: none"
+    mismatch: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        driver = pathlib.Path(tmp) / "_etchwork_schematic.py"
+        driver.write_text(DRIVER)
+        for attempt, seed in enumerate(SEEDS, start=1):
+            try:
+                done = subprocess.run(
+                    [sys.executable, str(driver), str(script_path), stem, str(seed)],
+                    cwd=paths.WORKSPACE, capture_output=True, text=True,
+                    timeout=service.TIMEOUT)
+            except subprocess.TimeoutExpired:
+                _tidy(before, set())
+                return f"{script} timed out after {service.TIMEOUT}s while drawing the schematic"
+            output = (done.stdout + done.stderr).strip()
+            if done.returncode != 0 or not sch.is_file():
+                _tidy(before, set())
+                return f"the schematic could not be drawn (exit {done.returncode}):\n{output[-1500:]}"
+            flags = next((line for line in output.splitlines() if line.startswith("power flags:")),
+                         "power flags: none")
+            mismatch = problems(sch, netlist_path)
+            if not mismatch:
+                break
+            if attempt < len(SEEDS):
+                _tidy(before, set())
+    _tidy(before, set(names))
+    try:
+        export_pdf(sch, pdf)
+        report = run_erc(sch, erc)
+    except RuntimeError as error:
+        return f"the schematic was drawn, but KiCad could not process it: {error}"
+    lines = [f"EXPORTED {sch.name}, {pdf.name} and {erc.name}",
+             f"  {flags}",
+             f"  drawn with seed {seed} (attempt {attempt} of {len(SEEDS)})",
+             f"  {erc_summary(report)}"]
+    if mismatch:
+        lines.append("  SCHEMATIC DOES NOT MATCH THE NETLIST (check_done will refuse):")
+        lines.extend(f"    - {p}" for p in mismatch)
+    else:
+        lines.append("  schematic matches the netlist")
+    return "\n".join(lines)
