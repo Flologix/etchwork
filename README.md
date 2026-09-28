@@ -54,12 +54,18 @@ from minutes to about an hour, and ends when the agent reports **DONE**.
 | File | What it is |
 |---|---|
 | `board.kicad_pcb` | The board; open it in KiCad |
+| `board.kicad_sch`, `board-schematic.pdf` | A schematic drawn from `board.py`, for reading and review |
 | `gerbers/` | Fabrication files; zip them and upload to your fab |
 | `board.py`, `board.net` | The circuit as a SKiDL script, and its netlist |
 | `README.md` | What the board is, its parts, and its trace widths |
 
 Read the **nets awaiting your decision** in the agent's final answer: they are the calls it left
 to you.
+
+The schematic is a reference drawing, generated from `board.py` and checked to match it. Change
+the circuit through the agent, not the schematic, and don't use KiCad's "Update PCB from
+Schematic" on an Etchwork project: KiCad doesn't know the schematic and board belong together, and
+it can rewrite the routed board.
 
 **5. Change it** by asking in the same session, e.g. "make the board smaller" or "add another
 LED". Changes go through `board.py`, and the board is re-laid out and re-checked. If you edited
