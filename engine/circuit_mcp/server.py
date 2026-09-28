@@ -35,7 +35,9 @@ def run_skidl(script: str) -> str:
 def export_schematic(script: str, netlist: str) -> str:
     """Draw a KiCad schematic (<netlist stem>.kicad_sch) and its PDF from the SKiDL script, run
     schematic ERC, and check the drawing matches the netlist. Run after run_skidl and
-    check_netlist pass, and again whenever the circuit changes. A reference drawing only."""
+    check_netlist pass, and again whenever the circuit changes. A reference drawing only. If
+    the generator can't draw the circuit correctly it answers SCHEMATIC NOT AVAILABLE: the
+    board can still be finished; don't change the circuit to get a drawing."""
     return schematic.export_schematic(script, netlist)
 
 

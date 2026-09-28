@@ -65,7 +65,8 @@ to you.
 The schematic is a reference drawing, generated from `board.py` and checked to match it. Change
 the circuit through the agent, not the schematic, and don't use KiCad's "Update PCB from
 Schematic" on an Etchwork project: KiCad doesn't know the schematic and board belong together, and
-it can rewrite the routed board.
+it can rewrite the routed board. Some boards (e.g. with multi-unit parts like op-amps) come without
+a schematic, when the generator can't draw them correctly; `README.md` then says so, and why.
 
 **5. Change it** by asking in the same session, e.g. "make the board smaller" or "add another
 LED". Changes go through `board.py`, and the board is re-laid out and re-checked. If you edited
