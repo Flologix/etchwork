@@ -100,11 +100,21 @@ def _check(done: subprocess.CompletedProcess, out: pathlib.Path, what: str) -> N
 
 
 def schematic_netlist(sch: pathlib.Path) -> str:
-    """The connectivity KiCad reads out of a schematic, as netlist text."""
+    """The connectivity KiCad reads out of a schematic, as netlist text.
+
+    Runs kicad-cli on a copy in a scratch folder, never on `sch` itself:
+    kicad-cli writes a .kicad_prl beside whatever file it opens, and
+    `problems` (so this) is what check_done calls to stay read-only."""
     with tempfile.TemporaryDirectory() as tmp:
-        out = pathlib.Path(tmp) / "schematic.net"
+        tmp = pathlib.Path(tmp)
+        copy = tmp / sch.name
+        if sch.is_file():
+            shutil.copy(sch, copy)
+        else:
+            copy = sch  # let kicad-cli's own error (or a stubbed subprocess) report this
+        out = tmp / "schematic.net"
         done = _kicad(["sch", "export", "netlist", "--format", "kicadsexpr",
-                       "-o", str(out), str(sch)], "schematic netlist export")
+                       "-o", str(out), str(copy)], "schematic netlist export")
         _check(done, out, "schematic netlist export")
         return out.read_text(errors="replace")
 
