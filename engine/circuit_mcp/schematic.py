@@ -30,6 +30,32 @@ def files(stem: str) -> tuple[str, str, str]:
     return f"{stem}.kicad_sch", f"{stem}-schematic.pdf", f"{stem}.sch-erc.json"
 
 
+def unavailable_file(stem: str) -> str:
+    """The record export_schematic writes instead of a drawing when SKiDL's
+    generator can't draw this circuit correctly (final review, Critical 1)."""
+    return f"{stem}.sch-unavailable.json"
+
+
+def unavailable_reason(path: pathlib.Path) -> str | None:
+    """The one-line reason in an unavailable record; None if it is missing,
+    not a regular file, or not a record export_schematic would write."""
+    if path.is_symlink() or not path.is_file():
+        return None
+    try:
+        record = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+    reason = record.get("reason") if isinstance(record, dict) else None
+    if not isinstance(reason, str) or not reason.strip():
+        return None
+    return " ".join(reason.split())
+
+
+def present(path: pathlib.Path) -> bool:
+    """Anything at `path`, a dangling symlink included."""
+    return path.is_symlink() or path.exists()
+
+
 def connectivity(netlist_text: str) -> tuple[set[str], set[frozenset[str]]]:
     """(references, pin groups). Power symbols and flags (#PWR, #FLG) are
     drawing-only, and a one-pin net joins nothing, so neither counts."""
@@ -104,14 +130,15 @@ def schematic_netlist(sch: pathlib.Path) -> str:
 
     Runs kicad-cli on a copy in a scratch folder, never on `sch` itself:
     kicad-cli writes a .kicad_prl beside whatever file it opens, and
-    `problems` (so this) is what check_done calls to stay read-only."""
+    `problems` (so this) is what check_done calls to stay read-only. A
+    path that is missing, a symlink or not a regular file is refused rather
+    than opened."""
+    if sch.is_symlink() or not sch.is_file():
+        raise RuntimeError(f"schematic netlist export failed: {sch.name} is not a regular file")
     with tempfile.TemporaryDirectory() as tmp:
         tmp = pathlib.Path(tmp)
         copy = tmp / sch.name
-        if sch.is_file():
-            shutil.copy(sch, copy)
-        else:
-            copy = sch  # let kicad-cli's own error (or a stubbed subprocess) report this
+        shutil.copy(sch, copy)
         out = tmp / "schematic.net"
         done = _kicad(["sch", "export", "netlist", "--format", "kicadsexpr",
                        "-o", str(out), str(copy)], "schematic netlist export")
@@ -145,11 +172,15 @@ def problems(sch: pathlib.Path, netlist: pathlib.Path) -> list[str]:
 
 # Runs in its own python3 process, in the workspace: argv is (script, stem,
 # seed). The agent's script builds the circuit; everything it would write is
-# switched off first, so its netlist is never touched and any drawing of its
-# own never happens. The "circuit built" marker is printed right after that
-# succeeds, so a caller can tell the agent's script failing (no marker) apart
-# from SKiDL's generator failing on an already-built circuit (marker, then a
-# non-zero exit or no schematic file). Then power flags, then SKiDL's
+# switched off first -- SKiDL's module-level generate_* functions and the
+# Circuit methods behind them, so `default_circuit.generate_netlist(...)` is
+# a no-op too -- so its netlist is never touched and any drawing of its own
+# never happens. The script's own folder goes on sys.path, as when run_skidl
+# runs it, so a sibling module it imports is found. The "circuit built"
+# marker is printed right after the script succeeds, so a caller can tell the
+# agent's script failing or exiting early (no marker) apart from SKiDL's
+# generator failing on an already-built circuit (marker, then a non-zero exit
+# or no schematic file). Then power flags, then SKiDL's
 # generator with the fixed settings (schematic spec §4). SKiDL finds the
 # default circuit in builtins.
 #
@@ -171,16 +202,18 @@ def problems(sch: pathlib.Path, netlist: pathlib.Path) -> list[str]:
 # code alongside the `random` seed. `export_schematic` fixes PYTHONHASHSEED
 # for the driver subprocess (below) so that order, and so the whole draw, is
 # the same across runs of the same seed.
-DRIVER = r'''
+DRIVER = r"""
 import builtins, os, runpy, sys
 import skidl
 from skidl import Part, Pin
 
 script, stem, seed = sys.argv[1], sys.argv[2], int(sys.argv[3])
-draw = skidl.generate_schematic
+draw = skidl.Circuit.generate_schematic
+noop = lambda *args, **kwargs: None
 for name in ("generate_netlist", "generate_schematic", "generate_pcb"):
-    setattr(skidl, name, lambda *args, **kwargs: None)
-sys.path.insert(0, os.getcwd())
+    setattr(skidl, name, noop)
+    setattr(skidl.Circuit, name, noop)
+sys.path.insert(0, os.path.dirname(os.path.abspath(script)))
 runpy.run_path(script, run_name="__main__")
 print("circuit built")
 
@@ -192,24 +225,52 @@ for net in list(builtins.default_circuit.nets):
         flag[1] += net
         flagged.append(net.name)
 print("power flags: " + (", ".join(sorted(flagged)) or "none"))
-draw(filepath=".", top_name=stem, title=stem, flatness=1.0, auto_stub=True, seed=seed)
-'''
+draw(builtins.default_circuit, filepath=".", top_name=stem, title=stem, flatness=1.0,
+     auto_stub=True, seed=seed)
+"""
 
 # Tried in order (see the note above DRIVER); any fixed values work, these
 # are not otherwise significant.
 SEEDS = (42, 7, 1234, 99, 2026)
 
+# The driver's file name: SKiDL names its log and ERC files after it.
+DRIVER_NAME = "_etchwork_schematic"
 
-def _tidy(before: set[str], keep: set[str]) -> None:
-    """Remove what the run left in the workspace besides its outputs: SKiDL's
-    log and ERC files, and the auto-stub loop's report."""
+
+def _tidy(stem: str, before: set[str]) -> None:
+    """Remove what a run leaves in the workspace besides its outputs, and
+    only that: SKiDL's log and ERC files (named after the driver), the
+    auto-stub loop's `<stem>-erc.rpt`, and a __pycache__ the run created.
+    Anything else new in the workspace -- a user's file, say -- stays."""
     for entry in paths.WORKSPACE.iterdir():
-        if entry.name in before or entry.name in keep:
-            continue
-        if entry.is_dir() and not entry.is_symlink():
+        name = entry.name
+        if name.startswith(DRIVER_NAME) or name == f"{stem}-erc.rpt":
+            if entry.is_dir() and not entry.is_symlink():
+                shutil.rmtree(entry)
+            else:
+                entry.unlink()
+        elif name == "__pycache__" and name not in before and entry.is_dir() and not entry.is_symlink():
             shutil.rmtree(entry)
-        else:
-            entry.unlink()
+
+
+def _clear(outputs) -> None:
+    """Unlink the run's three outputs, whatever is there (a symlink too)."""
+    for path in outputs:
+        if present(path):
+            path.unlink()
+
+
+def _not_available(stem: str, outputs, record: pathlib.Path, reason: str,
+                   details: list[str]) -> str:
+    """No drawing to keep: record why instead (final review, Critical 1)."""
+    _clear(outputs)
+    record.write_text(json.dumps({"reason": reason, "details": details,
+                                  "attempts": len(SEEDS)}, indent=2) + "\n")
+    return "\n".join([
+        f"SCHEMATIC NOT AVAILABLE: {reason} — the board can still be finished; "
+        "the README will say so",
+        f"  wrote {record.name} (check_done accepts it in place of the schematic)",
+        *(f"    - {d}" for d in details)])
 
 
 def export_schematic(script: str, netlist: str) -> str:
@@ -223,68 +284,79 @@ def export_schematic(script: str, netlist: str) -> str:
         return f"no such netlist in the project: {netlist} (run `run_skidl` first)"
     stem = netlist_path.stem
     names = files(stem)
-    sch, pdf, erc = (paths.WORKSPACE / n for n in names)
+    outputs = [paths.WORKSPACE / n for n in names]
+    sch, pdf, erc = outputs
+    record = paths.WORKSPACE / unavailable_file(stem)
     before = {p.name for p in paths.WORKSPACE.iterdir()}
+    # An earlier run's drawing must never pass for this run's: gone before
+    # the first attempt. The unavailable record is only replaced once this
+    # run has an outcome.
+    _clear(outputs)
     flags = "power flags: none"
     mismatch: list[str] = []
-    crashed = False
+    drawn_any = False
     crash_output = ""
     # See the note above DRIVER: fixing the hash seed makes the set/dict
     # iteration order SKiDL's placer depends on the same on every run.
     env = {**os.environ, "PYTHONHASHSEED": "0"}
     with tempfile.TemporaryDirectory() as tmp:
-        driver = pathlib.Path(tmp) / "_etchwork_schematic.py"
+        driver = pathlib.Path(tmp) / f"{DRIVER_NAME}.py"
         driver.write_text(DRIVER)
         for attempt, seed in enumerate(SEEDS, start=1):
+            if attempt > 1:
+                _tidy(stem, before)
+                _clear(outputs)
             try:
                 done = subprocess.run(
                     [sys.executable, str(driver), str(script_path), stem, str(seed)],
                     cwd=paths.WORKSPACE, capture_output=True, text=True,
                     timeout=service.TIMEOUT, env=env)
             except subprocess.TimeoutExpired:
-                _tidy(before, set())
+                _tidy(stem, before)
+                _clear(outputs)
                 return f"{script} timed out after {service.TIMEOUT}s while drawing the schematic"
             output = (done.stdout + done.stderr).strip()
-            built = "circuit built" in output
+            if "circuit built" not in output:
+                # The agent's script failed (or exited) before the circuit
+                # was built: nothing was drawn, and a different seed changes
+                # nothing, so don't retry.
+                _tidy(stem, before)
+                _clear(outputs)
+                return (f"the schematic could not be drawn: {script} failed or exited before "
+                        f"building the circuit (exit {done.returncode}):\n{output[-1500:]}")
             if done.returncode != 0 or not sch.is_file():
-                if not built:
-                    # The agent's script failed before the circuit was even
-                    # built: a different seed changes nothing, so don't retry.
-                    _tidy(before, set())
-                    return f"the schematic could not be drawn (exit {done.returncode}):\n{output[-1500:]}"
                 # The circuit built; SKiDL's generator crashed drawing it.
-                # Treat that like a mismatch and retry with the next seed.
-                crashed = True
+                # Retry with the next seed.
                 crash_output = output
-                if attempt < len(SEEDS):
-                    _tidy(before, set())
-                    continue
-                break
-            crashed = False
+                continue
+            drawn_any = True
             flags = next((line for line in output.splitlines() if line.startswith("power flags:")),
                          "power flags: none")
             mismatch = problems(sch, netlist_path)
             if not mismatch:
                 break
-            if attempt < len(SEEDS):
-                _tidy(before, set())
-    if crashed:
-        _tidy(before, set())
-        return (f"the schematic could not be drawn with any of {len(SEEDS)} seeds:\n"
-                f"{crash_output[-1500:]}")
-    _tidy(before, set(names))
+        else:
+            # No attempt drew a matching schematic: never keep a wrong
+            # drawing, and never block a correct board on the generator.
+            _tidy(stem, before)
+            if drawn_any:
+                reason = (f"SKiDL's schematic generator drew this circuit wrongly with every one "
+                          f"of {len(SEEDS)} seeds (its drawing does not match the netlist)")
+                details = mismatch
+            else:
+                reason = f"SKiDL's schematic generator crashed with every one of {len(SEEDS)} seeds"
+                details = crash_output[-1500:].splitlines()[-10:]
+            return _not_available(stem, outputs, record, reason, details)
+    _tidy(stem, before)
     try:
         export_pdf(sch, pdf)
         report = run_erc(sch, erc)
     except RuntimeError as error:
         return f"the schematic was drawn, but KiCad could not process it: {error}"
-    lines = [f"EXPORTED {sch.name}, {pdf.name} and {erc.name}",
-             f"  {flags}",
-             f"  drawn with seed {seed} (attempt {attempt} of {len(SEEDS)})",
-             f"  {erc_summary(report)}"]
-    if mismatch:
-        lines.append("  SCHEMATIC DOES NOT MATCH THE NETLIST (check_done will refuse):")
-        lines.extend(f"    - {p}" for p in mismatch)
-    else:
-        lines.append("  schematic matches the netlist")
-    return "\n".join(lines)
+    if present(record):
+        record.unlink()
+    return "\n".join([f"EXPORTED {sch.name}, {pdf.name} and {erc.name}",
+                      f"  {flags}",
+                      f"  drawn with seed {seed} (attempt {attempt} of {len(SEEDS)})",
+                      f"  {erc_summary(report)}",
+                      "  schematic matches the netlist"])
