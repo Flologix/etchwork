@@ -68,6 +68,8 @@ probes instead of a real job).
 - thermal and electrical margins
 - anything the prompt didn't say
 
+[CONTRACT](contract/README.md) measures how often delivered boards meet the
+requirements a prompt implied, the first slice of "not guaranteed".
 
 ## Licence
 
