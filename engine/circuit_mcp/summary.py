@@ -146,6 +146,11 @@ def summarize_project(netlist: str, board: str | None = None) -> str:
         return f"{netlist}: {error}"
     if not source.is_file():
         return f"no such netlist in the project: {netlist}"
+    if board:
+        try:
+            paths.inside(board)
+        except ValueError as error:
+            return f"{board}: {error}"
     stem = source.stem
     board = board or default_board(source)
     classes, review, flagged_count = _classes(source)
