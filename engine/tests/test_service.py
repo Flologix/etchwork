@@ -373,3 +373,19 @@ def test_pcbnew_snippets_do_not_import_modules_from_the_project(workspace, monke
     (workspace / "json.py").write_text("raise SystemExit('shadowed by the project')\n")
     monkeypatch.chdir(workspace)
     assert service.python("import json; print(json.dumps(1))") == (0, "1")
+
+
+def test_a_snippet_that_times_out_is_a_short_runtime_error(monkeypatch):
+    """Not subprocess.TimeoutExpired, whose message is the whole script."""
+    monkeypatch.setattr(service, "TIMEOUT", 1)
+    with pytest.raises(RuntimeError) as raised:
+        service.python("import time; time.sleep(5)")
+    assert "timed out after 1s" in str(raised.value)
+    assert "sleep" not in str(raised.value)
+
+
+def test_a_step_that_times_out_is_a_runtime_error(workspace, monkeypatch):
+    shutil.copy(FIXTURES / "boards" / "test.kicad_pcb", workspace / "b.kicad_pcb")
+    monkeypatch.setattr(service, "TIMEOUT", 0.01)
+    with pytest.raises(RuntimeError, match="the 'drc' step timed out"):
+        service.call("drc", {"board": "b.kicad_pcb"})

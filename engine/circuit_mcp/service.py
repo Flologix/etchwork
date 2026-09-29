@@ -372,8 +372,12 @@ def python(script: str, *args: str) -> tuple[int, str]:
     """
     # -P: `python3 -c` otherwise puts the working directory, the project,
     # first on sys.path, and a `json.py` there replaced the standard library.
-    done = subprocess.run(["python3", "-P", "-c", script, *args],
-                          capture_output=True, text=True, timeout=TIMEOUT)
+    try:
+        done = subprocess.run(["python3", "-P", "-c", script, *args],
+                              capture_output=True, text=True, timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        # Not re-raised as is: its message is the whole script.
+        raise RuntimeError(f"a pcbnew step timed out after {TIMEOUT}s") from None
     return done.returncode, (done.stdout + done.stderr).strip()
 
 
@@ -602,6 +606,10 @@ def call(kind: str, request: dict) -> dict:
         return _call(kind, request)
     except KeyError as exc:
         raise ValueError(f"missing field {exc}") from exc
+    except subprocess.TimeoutExpired:
+        # Callers catch RuntimeError; the exception's own message is the
+        # whole command line.
+        raise RuntimeError(f"the {kind!r} step timed out after {TIMEOUT}s") from None
 
 
 # The line fab.custom_rules() writes at the top of every `.kicad_dru` it
