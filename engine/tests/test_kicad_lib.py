@@ -455,3 +455,61 @@ def test_alternates_are_read_per_pin():
 def test_alternates_follow_extends():
     found = kicad_lib.read_symbol(SYMBOL, "CHIP_V2")
     assert {p.number: p.alternates for p in found.pins}["17"] == ("SPI1_MOSI", "TIM1_CH1N")
+
+
+# --- keepouts are not pours ---------------------------------------------------
+#
+# Cut from a real board (2026-09-28): RF_Module:ESP32-C6-MINI-1 carries an
+# "Antenna" rule area that forbids copper. It is a zone that can never hold a
+# fill, and it was counted as an unfilled pour: check_done answered NOT DONE
+# on a finished board, and the README said "Copper pours: 3, 1 NOT filled".
+ANTENNA_FOOTPRINT = """	(footprint "RF_Module:ESP32-C6-MINI-1"
+		(layer "F.Cu")
+		(zone
+			(layers "F.Cu" "B.Cu")
+			(uuid "a94efd2a-edb1-4fca-a8ec-97c835d6ddd8")
+			(name "Antenna (keep clear)")
+			(hatch full 0.508)
+			(connect_pads
+				(clearance 0)
+			)
+			(min_thickness 0.254)
+			(keepout
+				(tracks not_allowed)
+				(vias not_allowed)
+				(pads not_allowed)
+				(copperpour not_allowed)
+				(footprints not_allowed)
+			)
+			(fill
+				(thermal_gap 0.508)
+				(thermal_bridge_width 0.508)
+			)
+			(polygon
+				(pts
+					(xy 46.6 11.4) (xy 3.4 11.4) (xy 3.4 -9) (xy 46.6 -9)
+				)
+			)
+		)
+	)
+"""
+
+
+def _pour(filled: bool) -> str:
+    fill = '\t\t(filled_polygon\n\t\t\t(layer "F.Cu")\n\t\t\t(pts (xy 0 0))\n\t\t)\n' if filled else ""
+    return (f'\t(zone\n\t\t(net "GND")\n\t\t(layer "F.Cu")\n\t\t(hatch edge 0.5)\n'
+            f'\t\t(fill yes\n\t\t\t(thermal_gap 0.5)\n\t\t)\n{fill}\t)\n')
+
+
+def test_a_footprints_keepout_is_not_an_unfilled_pour():
+    board = "(kicad_pcb\n" + ANTENNA_FOOTPRINT + _pour(True) + _pour(True) + ")\n"
+    assert kicad_lib.unfilled_zones(board) == 0
+    found = kicad_lib.read_board(board)
+    assert (found.zones, found.unfilled) == (2, 0)
+
+
+def test_an_unfilled_pour_beside_a_keepout_is_still_counted():
+    board = "(kicad_pcb\n" + _pour(True) + ANTENNA_FOOTPRINT + _pour(False) + ")\n"
+    assert kicad_lib.unfilled_zones(board) == 1
+    found = kicad_lib.read_board(board)
+    assert (found.zones, found.unfilled) == (2, 1)

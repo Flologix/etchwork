@@ -295,3 +295,11 @@ def test_a_record_does_not_excuse_a_schematic_that_is_there(workspace):
     (workspace / "blinker.kicad_sch").write_text("(kicad_sch)")
     out = done.check_done("blinker.net")
     assert out.startswith("NOT DONE") and "blinker-schematic.pdf" in out
+
+
+def test_a_keepout_in_a_footprint_does_not_stop_done(workspace):
+    """A module's antenna keepout can never be filled; it is not a pour."""
+    keepout = "(footprint \"RF_Module:ESP32-C6-MINI-1\" (zone (name \"Antenna\") (keepout (copperpour not_allowed)) (polygon (pts))))"
+    _done_project(workspace, board_text=f"(kicad_pcb {keepout} (zone (net 1) (filled_polygon (pts))))")
+    out = done.check_done("blinker.net")
+    assert out.startswith("DONE"), out
