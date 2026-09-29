@@ -101,9 +101,57 @@ def pads(spec: dict) -> list[dict]:
     return sorted(out, key=lambda p: partspec._order(p["number"]))
 
 
+def _goals(package: dict) -> dict:
+    kind = ("no_lead" if package["leads"] == "no_lead" else
+            "gull_wing_large_pitch" if package["pitch_mm"] > 0.625 else "gull_wing_small_pitch")
+    return {"kind": kind, **_LAND["nominal"][kind]}
+
+
+def _round(value: float) -> float:
+    step = land("round_mm")
+    return round(round(value / step) * step, 4)
+
+
+def lead_lands(package: dict, axis: str = "x") -> dict:
+    """IPC-7351B's Z, G, X for one pair of opposite sides, from the leads.
+
+    `axis` "x" uses span_mm (the left and right rows), "y" span_y_mm (top and
+    bottom, defaulting to span_mm). G is widened to keep the exposed pad's
+    clearance from the pads that face it.
+    """
+    goals = _goals(package)
+    f, p = land("manufacturing_tolerance_mm"), land("placement_tolerance_mm")
+    outer = partspec.span(package["span_y_mm"] if axis == "y" and "span_y_mm" in package
+                          else package["span_mm"])
+    length = partspec.span(package["lead_length_mm"])
+    width = partspec.span(package["lead_width_mm"])
+    cl, ct, cw = outer[1] - outer[0], length[1] - length[0], width[1] - width[0]
+    z = outer[0] + 2 * goals["toe_mm"] + math.sqrt(cl ** 2 + f ** 2 + p ** 2)
+    s_min, s_max = outer[0] - 2 * length[1], outer[1] - 2 * length[0]
+    cs = math.sqrt(cl ** 2 + 2 * ct ** 2)
+    s_max_rms = s_max - ((s_max - s_min) - cs) / 2
+    g = s_max_rms - 2 * goals["heel_mm"] - math.sqrt(cs ** 2 + f ** 2 + p ** 2)
+    x = width[0] + 2 * goals["side_mm"] + math.sqrt(cw ** 2 + f ** 2 + p ** 2)
+    z, g, x = _round(z), _round(g), _round(x)
+    widened = False
+    if "thermal_pad_mm" in package:
+        facing = package["thermal_pad_mm"][0 if axis == "x" else 1]
+        least = facing + 2 * land("exposed_pad_clearance_mm")
+        if g < least - _EPS:
+            g, widened = round(least, 4), True
+    return {"z": z, "g": g, "x": x, "kind": goals["kind"], "widened": widened,
+            "length": round((z - g) / 2, 4), "spacing": round((z + g) / 2, 4)}
+
+
 def _row_pads(package: dict) -> list[dict]:
     """dual_row and quad_flat, KiCad's convention: pin 1 at the top of the left
     side, numbered counter-clockwise; each land's length runs across its side."""
+    if "leads" in package:
+        across, down = lead_lands(package, "x"), lead_lands(package, "y")
+        package = {**package, "row_spacing_mm": across["spacing"],
+                   "column_spacing_mm": down["spacing"],
+                   "pad_mm": [across["length"], across["x"]],
+                   "pad_y_mm": [down["length"], down["x"]]}
     count, pitch = package["count"], package["pitch_mm"]
     drill = package.get("drill_mm")
     size = package.get("pad_mm")
@@ -113,8 +161,10 @@ def _row_pads(package: dict) -> list[dict]:
     length, width = (size, size) if isinstance(size, (int, float)) else size
     shape = ("circle" if length == width else "oval") if drill else "roundrect"
 
+    length_y, width_y = package.get("pad_y_mm", (length, width))
+
     def pad(number, x, y, across):
-        w, h = (length, width) if across else (width, length)
+        w, h = (length, width) if across else (width_y, length_y)
         return {"number": str(number), "x": x, "y": y, "shape": shape, "size": (w, h),
                 "drill": drill, "ring": None, "defaulted": defaulted}
 
@@ -540,6 +590,13 @@ def make_part(spec_path: str) -> str:
     symbol_rendered = _render(["kicad-cli", "sym", "export", "svg", "--symbol", name,
                                str(symbols)], symbol_render)
 
+    package = spec["package"]
+    if "leads" in package:
+        lands = lead_lands(package)
+        notes.insert(0, f"lands computed from the leads, IPC-7351B nominal "
+                        f"({lands['kind'].replace('_', ' ')}): Z {_mm(lands['z'])}, G {_mm(lands['g'])}, "
+                        f"X {_mm(lands['x'])} mm"
+                        + (" -- G widened to keep the exposed pad's clearance" if lands["widened"] else ""))
     tht = [p for p in pads_ if p["drill"] is not None]
     x1, y1, x2, y2 = courtyard(spec, pads_)
     lines = [f"MADE {paths.rel(target)} and its symbol in {paths.rel(symbols)}",

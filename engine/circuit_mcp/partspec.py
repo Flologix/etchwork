@@ -154,9 +154,14 @@ def _rows(package: dict, family: str, out: list[str]) -> None:
         elif lr is not None and not (_whole(lr) and 2 * lr < count and (count - 2 * lr) % 2 == 0):
             out.append(f"package.pins_lr must be a whole number of pins per left/right side that "
                        f"leaves an even number, above 0, for top and bottom (got {lr!r} of {count})")
-    for field in ("pitch_mm", "row_spacing_mm"):
-        if not _number(package.get(field)):
-            out.append(f"package.{field} must be a number above 0 (got {package.get(field)!r})")
+    if not _number(package.get("pitch_mm")):
+        out.append(f"package.pitch_mm must be a number above 0 (got {package.get('pitch_mm')!r})")
+    if "leads" in package:
+        _leads(package, out)
+        return
+    if not _number(package.get("row_spacing_mm")):
+        out.append(f"package.row_spacing_mm must be a number above 0 "
+                   f"(got {package.get('row_spacing_mm')!r})")
     if "column_spacing_mm" in package and not _number(package["column_spacing_mm"]):
         out.append(f"package.column_spacing_mm must be a number above 0 "
                    f"(got {package['column_spacing_mm']!r})")
@@ -173,6 +178,40 @@ def _rows(package: dict, family: str, out: list[str]) -> None:
         out.append("package.thermal_pad_mm must be [width, height] in mm, both above 0")
     if "thermal_pin" in package and _pin(package["thermal_pin"]) is None:
         out.append("package.thermal_pin must be the exposed pad's pin number")
+
+
+LEADS = ("gull_wing", "no_lead")
+
+
+def span(value) -> tuple[float, float] | None:
+    """A toleranced dimension as `(min, max)`: one number, or [min, max]."""
+    if _number(value):
+        return (float(value), float(value))
+    if _pair(value, positive=True) and value[0] <= value[1]:
+        return (float(value[0]), float(value[1]))
+    return None
+
+
+def _leads(package: dict, out: list[str]) -> None:
+    """Lands computed from the package drawing (phase 4b): the lead type and
+    its dimensions, each one number or [min, max] as the drawing gives it."""
+    if "row_spacing_mm" in package or "pad_mm" in package:
+        out.append("package: give the recommended land pattern (row_spacing_mm, pad_mm) or the "
+                   "leads (leads, span_mm, lead_length_mm, lead_width_mm), not both")
+    if package["leads"] not in LEADS:
+        out.append(f"package.leads must be one of {', '.join(LEADS)} (got {package['leads']!r})")
+    fields = ["span_mm", "lead_length_mm", "lead_width_mm"] + (
+        ["span_y_mm"] if "span_y_mm" in package else [])
+    for field in fields:
+        if span(package.get(field)) is None:
+            out.append(f"package.{field} must be a number or [min, max] in mm, min <= max "
+                       f"(got {package.get(field)!r})")
+    length = span(package.get("lead_length_mm"))
+    for field in ("span_mm", "span_y_mm"):
+        outer = span(package.get(field))
+        if outer and length and outer[0] - 2 * length[1] <= 0:
+            out.append(f"package.lead_length_mm {list(length)} leaves nothing between the rows of "
+                       f"a {field} of {list(outer)}: a lead is at most half the span")
 
 
 def _raw_pads(data: dict) -> list[str]:
