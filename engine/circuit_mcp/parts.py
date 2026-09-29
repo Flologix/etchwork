@@ -15,8 +15,8 @@ Two guesses, not one: the footprint was `Diode_THT:DO-41`, which is really
 until something states them, and a wrong pin name is another round trip. A
 part is not usable from its name alone.
 
-Reads KiCad's own libraries inside the image; nothing is copied into the
-project.
+Reads KiCad's own libraries inside the image, plus any footprint libraries
+the project brings itself in `fp/<Library>.pretty/` (see fp_libraries).
 """
 import functools
 import pathlib
@@ -112,17 +112,67 @@ def _search_symbols(needle: str, words: list[str] | None = None) -> list[str]:
     return [line for _, _, line in sorted(scored)]
 
 
+# --- footprint libraries: KiCad's, and the project's own ---------------------
+#
+# A part KiCad has no footprint for (an ODU receptacle, on the live run of
+# 2026-09-28) needs one drawn from its datasheet, and the project is where it
+# lives: `fp/<Library>.pretty/<Name>.kicad_mod`, used as `<Library>:<Name>`.
+# Before this, the tools' refusal SAID "this project's symbols/ and fp/ are
+# the only places looked" -- text left from the harness this was extracted
+# from -- while nothing read fp/, and the agent spent two server restarts on
+# it before stopping.
+
+PROJECT_FP = "fp"
+
+
+def project_fp_libraries() -> list[pathlib.Path]:
+    """The project's own footprint libraries: every `fp/*.pretty` folder that
+    resolves inside the project. A symlink out of it -- the folder or one
+    library -- is not a library of this project, and is skipped."""
+    try:
+        folder = paths.inside(PROJECT_FP)
+    except ValueError:
+        return []
+    if not folder.is_dir():
+        return []
+    libraries = []
+    for library in sorted(folder.glob("*.pretty")):
+        try:
+            resolved = paths.inside(f"{PROJECT_FP}/{library.name}")
+        except ValueError:
+            continue
+        if resolved.is_dir():
+            libraries.append(resolved)
+    return libraries
+
+
+def fp_libraries() -> dict[str, pathlib.Path]:
+    """Every footprint library by name: KiCad's, then the project's.
+
+    A project library with the same name as one of KiCad's REPLACES it, as a
+    whole: that is what kinet2pcb does when run_layout hands it the project's
+    libraries, and describing a footprint the board builder cannot find would
+    be worse than not finding it.
+    """
+    libraries = {}
+    root = paths.FP_ROOT
+    for library in sorted(root.glob("*.pretty")) if root.is_dir() else []:
+        libraries[library.stem] = library
+    for library in project_fp_libraries():
+        libraries[library.stem] = library
+    return libraries
+
+
 def _search_footprints(needle: str, words: list[str] | None = None) -> list[str]:
     query, words = (needle, words) if words is not None else _terms(needle)
     scored = []
-    root = paths.FP_ROOT
-    for library in sorted(root.glob("*.pretty")) if root.is_dir() else []:
+    for name, library in sorted(fp_libraries().items()):
         for path in sorted(library.glob("*.kicad_mod")):
-            haystack = f"{library.stem} {path.stem}".lower()
+            haystack = f"{name} {path.stem}".lower()
             score = _score(query, words, haystack)
             if score:
-                scored.append((-score, f"{library.stem}:{path.stem}",
-                               f"  {library.stem}:{path.stem}"))
+                scored.append((-score, f"{name}:{path.stem}",
+                               f"  {name}:{path.stem}"))
     return [line for _, _, line in sorted(scored)]
 
 
@@ -178,7 +228,7 @@ def find_part(query: str) -> str:
         # netlist was written, so the run looked like it had got somewhere.
         # Saying "cannot be used as a footprint" out loud is the point: the
         # silence is what reads as permission.
-        libraries = sorted(d.stem for d in paths.FP_ROOT.glob("*.pretty"))
+        libraries = sorted(fp_libraries())
         if not libraries:
             have = "none"
         elif len(libraries) > MAX_HITS:
@@ -192,38 +242,41 @@ def find_part(query: str) -> str:
     return "\n".join(out)
 
 
-# A netlist's footprint field: `(footprint "LIB:NAME")`, LIB being a .pretty
-# directory under fp/ and NAME a .kicad_mod inside it.
+# A netlist's footprint field: `(footprint "LIB:NAME")`, LIB naming a footprint
+# library (fp_libraries) and NAME a .kicad_mod inside it.
 _FOOTPRINT_FIELD = re.compile(r'\(footprint "([^":]+):([^"]+)"')
 
 
-def unresolved_footprints(netlist_text: str, fp_root) -> list[str]:
+def unresolved_footprints(netlist_text: str, libraries) -> list[str]:
     """Every `LIB:NAME` in a netlist that this project cannot resolve.
 
-    Two distinct faults with one consequence: the library is not in fp/ at
-    all, or it is and the footprint is not in it. Both end the same way --
+    Two distinct faults with one consequence: no library has that name, or
+    one does and the footprint is not in it. Both end the same way --
     kinet2pcb raising `KeyError: '<LIB>'` from inside a dependency, behind a
     pcbnew assertion about register_action() that has nothing to do with it.
     A live model read that twice and called the tool again unchanged.
 
-    Pure: takes the text and the directory, so the check costs no Docker and
+    `libraries` is fp_libraries()'s map, or a folder of `.pretty` libraries.
+    Pure: takes the text and the libraries, so the check costs no Docker and
     is tested without one. Ordered and de-duplicated, because a netlist names
     the same footprint once per component and a list of forty identical lines
     is not a better answer than one.
     """
-    libraries = sorted(d.stem for d in fp_root.glob("*.pretty")) \
-        if fp_root.is_dir() else []
-    known = set(libraries)
+    if not isinstance(libraries, dict):
+        root = pathlib.Path(libraries)
+        libraries = {d.stem: d for d in root.glob("*.pretty")} if root.is_dir() else {}
+    names = sorted(libraries)
     out, seen = [], set()
     for library, name in _FOOTPRINT_FIELD.findall(netlist_text):
         pair = f"{library}:{name}"
         if pair in seen:
             continue
         seen.add(pair)
-        if library not in known:
-            out.append(f"  {pair} -- no library {library!r} in fp/ "
-                       f"(here: {', '.join(libraries) or 'none'})")
-        elif not (fp_root / f"{library}.pretty" / f"{name}.kicad_mod").is_file():
+        if library not in libraries:
+            out.append(f"  {pair} -- no footprint library {library!r} in KiCad's libraries "
+                       f"or the project's fp/<Library>.pretty/ "
+                       f"(here: {', '.join(names) or 'none'})")
+        elif not (libraries[library] / f"{name}.kicad_mod").is_file():
             out.append(f"  {pair} -- {library!r} is here but has no {name!r}")
     return out
 
@@ -243,8 +296,8 @@ def _symbol_root():
 def _not_a_name(wanted: str) -> str | None:
     """Why `wanted` cannot be a `Library:Part`, or None when it can.
 
-    These two questions are answered by globbing under symbols/ and fp/, and a
-    glob takes `..` as a path component like any other: describe_part
+    These two questions are answered by globbing under the library folders,
+    and a glob takes `..` as a path component like any other: describe_part
     ("../../elsewhere/Secret:S") read a .kicad_sym outside the workspace and
     printed its pins. The agent process is not itself under Landlock -- the
     file tools ARE the read boundary -- so this refusal happens here, before
@@ -253,8 +306,9 @@ def _not_a_name(wanted: str) -> str | None:
     resolved match against them.
     """
     if "/" in wanted or "\\" in wanted or wanted.startswith("."):
-        return (f"{wanted!r} is a path, not a name. Give Library:Part; this "
-                f"project's symbols/ and fp/ are the only places looked.")
+        return (f"{wanted!r} is a path, not a name. Give Library:Name. Symbols come "
+                f"from KiCad's libraries; footprints from the project's "
+                f"fp/<Library>.pretty/ folders, then KiCad's.")
     return None
 
 
@@ -267,10 +321,6 @@ def _inside(found):
         if any(resolved == r or r in resolved.parents for r in roots):
             kept.append(path)
     return kept
-
-
-def _fp_root_path():
-    return paths.FP_ROOT
 
 
 def describe_part(symbol: str) -> str:
@@ -379,16 +429,18 @@ def describe_footprint(footprint: str) -> str:
     if refused := _not_a_name(wanted):
         return refused
     library, _, name = wanted.rpartition(":")
-    root = _fp_root_path()
-    if not root.is_dir():
-        return "no footprint libraries found in the image."
-    pattern = f"{library}.pretty/{name}.kicad_mod" if library \
-        else f"*.pretty/{name}.kicad_mod"
-    matches = _inside(sorted(root.glob(pattern)))
+    libraries = fp_libraries()
+    if not libraries:
+        return "no footprint libraries found in the image or the project."
+    searched = [libraries[library]] if library in libraries else [] if library \
+        else list(libraries.values())
+    matches = _inside([d / f"{name}.kicad_mod" for d in searched
+                       if (d / f"{name}.kicad_mod").is_file()])
     if not matches:
-        libraries = ", ".join(sorted(d.stem for d in root.glob("*.pretty")))
         return (f"no footprint {wanted!r} here. Libraries: "
-                f"{libraries or 'none'}. find_part searches them by name.")
+                f"{', '.join(sorted(libraries))}. find_part searches them by name; "
+                f"a footprint KiCad lacks goes in the project's "
+                f"fp/<Library>.pretty/<Name>.kicad_mod.")
 
     path = matches[0]
     found = kicad_lib.read_footprint(path.read_text(errors="replace"),
