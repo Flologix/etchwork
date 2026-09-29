@@ -12,7 +12,7 @@ EXPECTED = {
     "find_part", "describe_part", "describe_footprint", "run_skidl", "check_netlist",
     "netlist_nets", "run_layout", "run_drc", "describe_board", "fill_zones",
     "export_gerbers", "summarize_project", "check_done", "net_evidence", "set_net_classes",
-    "export_schematic", "read_datasheet",
+    "export_schematic", "read_datasheet", "make_part",
 }
 
 

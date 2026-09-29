@@ -1,0 +1,30 @@
+# Land-pattern rules make_part sizes pads by, at IPC density level B
+# ("nominal"; datasheet-parts design, section 10.2, decided 2026-09-29).
+#
+# A datasheet's own recommended land pattern wins whenever the spec gives it
+# (drill_mm, pad_mm, an explicit pad list): these fill in what it leaves out
+# and say when the datasheet's values are tighter than nominal. Each value
+# carries where it came from; checked 2026-09-29.
+
+[nominal]
+name = "IPC-7251 / IPC-7351 density level B (nominal)"
+
+[nominal.hole_allowance_mm]
+value = 0.20
+source = "https://www.pcb-3d.com/wordpress/tutorials/how-to-calculate-pth-hole-and-pad-diameter-sizes-according-to-ipc-7251-ipc-2222-and-ipc-2221-standards/"
+quote = "Level B: Maximum Lead Diameter + 0.20mm (minimum hole size, IPC-7251)"
+
+[nominal.annular_ring_mm]
+value = 0.05
+source = "https://www.pcb-3d.com/wordpress/tutorials/how-to-calculate-pth-hole-and-pad-diameter-sizes-according-to-ipc-7251-ipc-2222-and-ipc-2221-standards/"
+quote = "the Minimum Annular Ring is 0.05mm (50um)"
+
+[nominal.fabrication_allowance_mm]
+value = 0.50
+source = "https://www.pcb-3d.com/wordpress/tutorials/how-to-calculate-pth-hole-and-pad-diameter-sizes-according-to-ipc-7251-ipc-2222-and-ipc-2221-standards/"
+quote = "According to IPC-2221 the Minimum Fabrication Allowance is ... 0.5mm for Level B"
+
+[nominal.courtyard_excess_mm]
+value = 0.25
+source = "https://pcbsync.com/ipc-7351/"
+quote = "IPC-7351 ... Level B (Nominal) at 0.25 mm courtyard excess"
