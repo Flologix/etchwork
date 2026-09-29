@@ -28,3 +28,55 @@ quote = "According to IPC-2221 the Minimum Fabrication Allowance is ... 0.5mm fo
 value = 0.25
 source = "https://pcbsync.com/ipc-7351/"
 quote = "IPC-7351 ... Level B (Nominal) at 0.25 mm courtyard excess"
+
+# --- lands from lead dimensions (datasheet-parts design, phase 4b) -----------
+#
+# IPC-7351B's calculation, for a datasheet that gives the package drawing but
+# no recommended land pattern. These are the values KiCad's footprint
+# generator uses for its own library at density "nominal"; make_part is
+# checked against KiCad's SOIC-8, TSSOP-16, LQFP-48 and QFN-16 built from the
+# same lead dimensions (engine/tests/test_lead_lands.py). Checked 2026-09-29.
+
+[nominal.gull_wing_large_pitch]
+name = "gull-wing leads, pitch > 0.625 mm"
+toe_mm = 0.35
+heel_mm = 0.35
+side_mm = 0.03
+source = "https://github.com/pointhi/kicad-footprint-generator/blob/master/scripts/Packages/ipc_definitions.yaml"
+quote = "ipc_spec_gw_large_pitch, nominal: toe 0.35, heel 0.35, side 0.03, courtyard 0.25"
+
+[nominal.gull_wing_small_pitch]
+name = "gull-wing leads, pitch <= 0.625 mm"
+toe_mm = 0.35
+heel_mm = 0.35
+side_mm = -0.02
+source = "https://github.com/pointhi/kicad-footprint-generator/blob/master/scripts/Packages/ipc_definitions.yaml"
+quote = "ipc_spec_gw_small_pitch, nominal: toe 0.35, heel 0.35, side -0.02, courtyard 0.25"
+
+[nominal.no_lead]
+name = "flat no-lead terminations (QFN, DFN)"
+toe_mm = 0.30
+heel_mm = 0.0
+side_mm = -0.04
+source = "https://github.com/pointhi/kicad-footprint-generator/blob/master/scripts/Packages/ipc_definitions.yaml"
+quote = "ipc_spec_flat_no_lead, nominal: toe 0.3, heel 0.0, side -0.04, courtyard 0.25"
+
+[nominal.manufacturing_tolerance_mm]
+value = 0.10
+source = "https://github.com/pointhi/kicad-footprint-generator/blob/master/scripts/tools/ipc_pad_size_calculators.py"
+quote = "F = manf_tol.get('manufacturing_tolerance', 0.1)"
+
+[nominal.placement_tolerance_mm]
+value = 0.05
+source = "https://github.com/pointhi/kicad-footprint-generator/blob/master/scripts/tools/ipc_pad_size_calculators.py"
+quote = "P = manf_tol.get('placement_tolerance', 0.05)"
+
+[nominal.round_mm]
+value = 0.05
+source = "https://github.com/pointhi/kicad-footprint-generator/blob/master/scripts/Packages/ipc_definitions.yaml"
+quote = "round_base: toe 0.05, heel 0.05, side 0.05 (every IPC spec entry)"
+
+[nominal.exposed_pad_clearance_mm]
+value = 0.20
+source = "https://github.com/pointhi/kicad-footprint-generator/blob/master/scripts/Packages/ipc_definitions.yaml"
+quote = "ipc_generic_rules: min_ep_to_pad_clearance: 0.2"
