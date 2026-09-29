@@ -55,6 +55,12 @@ RUN grep -q 'if type_\.lower() != "kicad":' \
 COPY patches/skidl_flattened_wires.py /tmp/skidl_flattened_wires.py
 RUN python3 /tmp/skidl_flattened_wires.py && rm /tmp/skidl_flattened_wires.py
 
+# read_datasheet: pypdfium2 renders datasheet pages and extracts their text
+# (PDFium: Apache-2.0 / BSD-3; the datasheet-parts design, section 8, keeps GPL
+# and AGPL PDF libraries out). Page images are saved through Pillow, which
+# the image already has from Debian (python3-pil).
+RUN pip install --no-cache-dir --break-system-packages pypdfium2==5.13.0
+
 RUN curl -fsSL -o /opt/freerouting.jar \
     "https://github.com/freerouting/freerouting/releases/download/v${FREEROUTING_VERSION}/freerouting-${FREEROUTING_VERSION}.jar" \
  && echo "${FREEROUTING_SHA256}  /opt/freerouting.jar" | sha256sum -c -

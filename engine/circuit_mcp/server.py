@@ -3,7 +3,7 @@ returns text; the deterministic work lives in parts, tools, summary. Every
 call is recorded in the project's local event log (circuit_mcp.events)."""
 from mcp.server.fastmcp import FastMCP
 
-from circuit_mcp import done, events, parts, schematic, summary, tools
+from circuit_mcp import datasheet, done, events, parts, schematic, summary, tools
 
 mcp = FastMCP("etchwork")
 
@@ -27,6 +27,16 @@ def describe_part(symbol: str) -> str:
 def describe_footprint(footprint: str) -> str:
     """Pads, pad sizes and courtyard size of a footprint ('Library:Name')."""
     return parts.describe_footprint(footprint)
+
+
+@mcp.tool()
+@events.logged
+def read_datasheet(pdf: str, pages: str | None = None) -> str:
+    """Render a datasheet PDF in the project to page images (datasheets/<name>/page-<n>.png)
+    and extract its text (text.txt), then list what is on each page. Open the pages you need
+    as images: pin tables, land patterns and mechanical drawings are read from the picture.
+    Renders the first 40 pages unless `pages` says which (e.g. "1-3,12")."""
+    return datasheet.read_datasheet(pdf, pages)
 
 
 @mcp.tool()

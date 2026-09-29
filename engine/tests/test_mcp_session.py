@@ -15,6 +15,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from conftest import FIXTURES
+from test_datasheet import make_pdf
 from test_server import EXPECTED
 
 # Each tool's valid arguments, and which of them are paths. find_part takes
@@ -36,6 +37,7 @@ VALID = {
     "check_done": {"netlist": "board.net", "board": "board.kicad_pcb"},
     "net_evidence": {"netlist": "board.net"},
     "set_net_classes": {"netlist": "board.net", "picks": []},
+    "read_datasheet": {"pdf": "datasheet.pdf"},
 }
 PATH_ARGS = {
     "describe_part": ["symbol"], "describe_footprint": ["footprint"],
@@ -45,12 +47,13 @@ PATH_ARGS = {
     "fill_zones": ["board"], "export_gerbers": ["board", "out"],
     "summarize_project": ["netlist", "board"], "check_done": ["netlist", "board"],
     "net_evidence": ["netlist"], "set_net_classes": ["netlist"],
+    "read_datasheet": ["pdf"],
 }
 REFUSALS = ("outside the project folder", "is absolute", "is a path, not a name")
 # What a bad path looks like for each kind of argument: library ids are
 # `Library:Name`, the rest are files.
 SUFFIX = {"symbol": ":R", "footprint": ":R", "script": ".py", "netlist": ".net",
-          "expected": ".toml", "board": ".kicad_pcb", "out": ""}
+          "expected": ".toml", "board": ".kicad_pcb", "out": "", "pdf": ".pdf"}
 
 
 def _project(tmp_path):
@@ -64,6 +67,7 @@ def _project(tmp_path):
         shutil.copy(FIXTURES / "boards" / "test.kicad_pcb", folder / "board.kicad_pcb")
         (folder / "board.py").write_text("print('the script ran')\n")
         (folder / "expected.netlist.toml").write_text("[nets]\n")
+        (folder / "datasheet.pdf").write_bytes(make_pdf(["Datasheet"]))
     for suffix in {s for s in SUFFIX.values() if s.startswith(".")}:
         (outside / f"outside{suffix}").write_text("")
     return workspace, outside

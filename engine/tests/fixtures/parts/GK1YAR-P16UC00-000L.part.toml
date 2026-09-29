@@ -1,0 +1,131 @@
+# The ODU receptacle from the live run of 2026-09-28 (datasheet-parts design
+# section 4). Values as that run read them from ODU's drawing; the pin
+# numbering is not on the drawing, so it is marked unknown.
+mpn = "GK1YAR-P16UC00-000L"
+manufacturer = "ODU"
+description = "ODU AMC size 1 receptacle, 16 contacts, PCB pins, coding A"
+datasheet = "datasheets/GK1YAR-P16UC00-000L.pdf"
+library = "ODU"
+pins_source = "p.1, contact table"
+
+[package]
+family = "circular"
+view = "bottom"
+source = "p.2, PCB layout drawing"
+
+[[package.rings]]
+diameter_mm = 4.37
+count = 11
+start_deg = 90
+direction = "cw"
+first_pin = 1
+drill_mm = 0.6
+source = "p.2: '11x Ø0.6 on Ø4.37'"
+
+[[package.rings]]
+diameter_mm = 2.0
+count = 5
+start_deg = 90
+direction = "cw"
+first_pin = 12
+drill_mm = 0.6
+source = "p.2: '5x Ø0.6 on Ø2'"
+
+[[package.slots]]
+pin = "17"
+at_mm = [0, -3.875]
+size_mm = [1.9, 0.65]
+source = "p.2: slot 1.9 x 0.65, top edge 4.2 from centre"
+
+[numbering]
+unknown = true
+note = "outer ring numbered 1-11 clockwise from the keyway side, inner 12-16; assumed"
+
+[[pins]]
+number = "1"
+name = "1"
+type = "passive"
+
+[[pins]]
+number = "2"
+name = "2"
+type = "passive"
+
+[[pins]]
+number = "3"
+name = "3"
+type = "passive"
+
+[[pins]]
+number = "4"
+name = "4"
+type = "passive"
+
+[[pins]]
+number = "5"
+name = "5"
+type = "passive"
+
+[[pins]]
+number = "6"
+name = "6"
+type = "passive"
+
+[[pins]]
+number = "7"
+name = "7"
+type = "passive"
+
+[[pins]]
+number = "8"
+name = "8"
+type = "passive"
+
+[[pins]]
+number = "9"
+name = "9"
+type = "passive"
+
+[[pins]]
+number = "10"
+name = "10"
+type = "passive"
+
+[[pins]]
+number = "11"
+name = "11"
+type = "passive"
+
+[[pins]]
+number = "12"
+name = "12"
+type = "passive"
+
+[[pins]]
+number = "13"
+name = "13"
+type = "passive"
+
+[[pins]]
+number = "14"
+name = "14"
+type = "passive"
+
+[[pins]]
+number = "15"
+name = "15"
+type = "passive"
+
+[[pins]]
+number = "16"
+name = "16"
+type = "passive"
+
+[[pins]]
+number = "17"
+name = "SHIELD"
+type = "passive"
+
+[fab]
+min_lead_mm = 0.5
+source = "p.1: contact Ø0.5"
