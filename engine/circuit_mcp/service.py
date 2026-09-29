@@ -8,6 +8,7 @@ not the server.
 import json
 import os
 import pathlib
+import re
 import subprocess
 
 from circuit_mcp import fab, paths
@@ -391,6 +392,21 @@ def last_json(code: int, out: str, step: str) -> dict:
     if answer is None:
         raise RuntimeError(f"{step} printed no result: {out[-400:]}")
     return json.loads(answer)
+
+
+# Environment variables a script the agent wrote must not see. In a hosted job
+# the server holds the model provider's key, and the proxy is the way out.
+_SECRET_NAME = re.compile(r"KEY|TOKEN|SECRET|PASSW|CREDENTIAL|AUTH", re.I)
+_PROXY_NAME = re.compile(r"^(https?|ftp|all|no)_proxy$", re.I)
+
+
+def script_env(env=os.environ) -> dict:
+    """The environment for running the agent's own SKiDL script: this one,
+    less anything named like a secret, the CIRCUIT_REDACT list and the proxy."""
+    named = {n.strip() for n in env.get("CIRCUIT_REDACT", "OPENROUTER_API_KEY").split(",")}
+    return {k: v for k, v in env.items()
+            if k not in named and k != "CIRCUIT_REDACT"
+            and not _SECRET_NAME.search(k) and not _PROXY_NAME.match(k)}
 
 
 def build_board(netlist: str, out: str, fp_libs: list[str]) -> dict:

@@ -395,3 +395,18 @@ def test_the_zone_step_reads_its_answer_past_kicads_chatter(workspace, monkeypat
     monkeypatch.setattr(service, "python",
                         lambda *a: (0, '{"zones": 2}\nsome KiCad chatter on stderr'))
     assert service.call("zone", {"board": "b.kicad_pcb"})["zones"] == 2
+
+
+def test_scripts_the_agent_wrote_get_no_secrets_or_proxy(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-very-secret")
+    monkeypatch.setenv("CIRCUIT_REDACT", "OPENROUTER_API_KEY,MY_VENDOR_CRED")
+    monkeypatch.setenv("MY_VENDOR_CRED", "vendor-secret")
+    monkeypatch.setenv("GITHUB_TOKEN", "ghp-secret")
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:8888")
+    monkeypatch.setenv("http_proxy", "http://proxy.invalid:8888")
+    monkeypatch.setenv("KICAD_SYMBOL_DIR", "/syms")
+    env = service.script_env()
+    for name in ("OPENROUTER_API_KEY", "MY_VENDOR_CRED", "GITHUB_TOKEN", "HTTPS_PROXY",
+                 "http_proxy", "CIRCUIT_REDACT"):
+        assert name not in env, name
+    assert env["KICAD_SYMBOL_DIR"] == "/syms"
