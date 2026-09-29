@@ -78,18 +78,20 @@ fi
 rm -rf "$out" && mkdir "$out" || exit 2
 [ "$(id -u)" = 0 ] && chown -R 10001:10001 "$job" "$out"
 name="etchwork-job-$(date +%s)-$$"
+# An interrupted script must never leave the agent container -- and the
+# OPENROUTER_API_KEY it's holding -- running, AND must never fall through into
+# packaging: a Ctrl-C mid-job is not "the job finished," so INT/TERM get their
+# own trap that removes the container and then exits 130 outright, rather than
+# just returning control to the line after `docker wait`. Set before `docker
+# run`, so a signal while it starts still removes the container (`rm -f` of a
+# name that was never created is harmless).
+trap 'docker rm -f "$name" >/dev/null 2>&1' EXIT
+trap 'docker rm -f "$name" >/dev/null 2>&1; echo "interrupted" >> "$out/job.log"; exit 130' INT TERM
 # The model is an operator setting (spec §3): passed through only if set, so
 # etchwork-job's defaults (openrouter, qwen/qwen3.8-flash) apply otherwise. A
 # new model must pass a live board run before it is supported.
 docker run -d --name "$name" "$@" -e CIRCUIT_PROVIDER -e CIRCUIT_MODEL \
   "$runner" /workspace/prompt.txt >/dev/null || exit 2
-# An interrupted script must never leave the agent container -- and the
-# OPENROUTER_API_KEY it's holding -- running, AND must never fall through into
-# packaging: a Ctrl-C mid-job is not "the job finished," so INT/TERM get their
-# own trap that removes the container and then exits 130 outright, rather than
-# just returning control to the line after `docker wait`.
-trap 'docker rm -f "$name" >/dev/null 2>&1' EXIT
-trap 'docker rm -f "$name" >/dev/null 2>&1; echo "interrupted" >> "$out/job.log"; exit 130' INT TERM
 # `docker logs -f`'s own exit status would otherwise be swallowed by the pipe
 # (only python3's status reaches `wait`); capture it to a dot-file in $out,
 # which never collides with a packaging output, and remove it once read.

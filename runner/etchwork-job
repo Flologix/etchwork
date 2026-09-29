@@ -10,7 +10,7 @@ mkdir -p /workspace/.flai-code/skills/etchwork || exit 3
 { cat /opt/etchwork/skill/SKILL.md; printf '\n'; cat /opt/etchwork/skill/flai-addendum.md; } \
   > /workspace/.flai-code/skills/etchwork/SKILL.md || exit 3
 cat > /workspace/.mcp.json <<'EOF' || exit 3
-{"mcpServers": {"etchwork": {"command": "python3", "args": ["-m", "circuit_mcp.server"],
+{"mcpServers": {"etchwork": {"command": "python3", "args": ["-P", "-m", "circuit_mcp.server"],
  "env": {"CIRCUIT_WORKSPACE": "/workspace"}, "shared": false}}}
 EOF
 exec flai run --no-update \

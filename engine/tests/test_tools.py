@@ -993,6 +993,19 @@ def test_run_skidl_reports_a_timeout(workspace, monkeypatch):
     assert tools.run_skidl("slow.py") == "slow.py timed out after 1s"
 
 
+def test_run_skidl_does_not_hand_secrets_to_the_script(workspace, monkeypatch):
+    """In a hosted job the server holds the model provider's key; the agent's
+    script is arbitrary code with a proxy to the internet."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-very-secret")
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:8888")
+    monkeypatch.setenv("KICAD_SYMBOL_DIR", "/syms")
+    (workspace / "peek.py").write_text(
+        "import os\nprint([os.environ.get(n) for n in "
+        "('OPENROUTER_API_KEY', 'HTTPS_PROXY', 'KICAD_SYMBOL_DIR')])\n")
+    out = tools.run_skidl("peek.py")
+    assert "[None, None, '/syms']" in out, out
+
+
 def test_hole_clearance_is_an_accepted_rule():
     assert "hole_clearance_mm" in tools.RULES
     assert tools.check_rules({"hole_clearance_mm": 0.2}) is None

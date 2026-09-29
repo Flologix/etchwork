@@ -76,4 +76,6 @@ ENV FREEROUTING_JAR=/opt/freerouting.jar \
 COPY circuit_mcp /opt/etchwork/circuit_mcp
 COPY tests /opt/etchwork/tests
 WORKDIR /workspace
-ENTRYPOINT ["python3", "-m", "circuit_mcp.server"]
+# -P: the working directory is the project, and `python3 -m` would otherwise
+# put it first on sys.path, where a folder named `mcp` replaced the MCP library.
+ENTRYPOINT ["python3", "-P", "-m", "circuit_mcp.server"]

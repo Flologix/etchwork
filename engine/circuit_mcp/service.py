@@ -8,6 +8,7 @@ not the server.
 import json
 import os
 import pathlib
+import re
 import subprocess
 
 from circuit_mcp import fab, paths
@@ -370,9 +371,42 @@ def python(script: str, *args: str) -> tuple[int, str]:
     import in a headless container; it is harmless and would otherwise look
     like a failure, so the exit code decides and the text is only reported.
     """
-    done = subprocess.run(["python3", "-c", script, *args],
-                          capture_output=True, text=True, timeout=TIMEOUT)
+    # -P: `python3 -c` otherwise puts the working directory, the project,
+    # first on sys.path, and a `json.py` there replaced the standard library.
+    try:
+        done = subprocess.run(["python3", "-P", "-c", script, *args],
+                              capture_output=True, text=True, timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        # Not re-raised as is: its message is the whole script.
+        raise RuntimeError(f"a pcbnew step timed out after {TIMEOUT}s") from None
     return done.returncode, (done.stdout + done.stderr).strip()
+
+
+def last_json(code: int, out: str, step: str) -> dict:
+    """The JSON answer a snippet printed, read past KiCad's chatter."""
+    if code != 0:
+        raise RuntimeError(f"{step} failed: {out[-400:]}")
+    # stdout comes first and KiCad's stderr chatter after it, so the answer is
+    # the last line that is a JSON object, not simply the last line.
+    answer = next((line for line in reversed(out.splitlines()) if line.startswith("{")), None)
+    if answer is None:
+        raise RuntimeError(f"{step} printed no result: {out[-400:]}")
+    return json.loads(answer)
+
+
+# Environment variables a script the agent wrote must not see. In a hosted job
+# the server holds the model provider's key, and the proxy is the way out.
+_SECRET_NAME = re.compile(r"KEY|TOKEN|SECRET|PASSW|CREDENTIAL|AUTH", re.I)
+_PROXY_NAME = re.compile(r"^(https?|ftp|all|no)_proxy$", re.I)
+
+
+def script_env(env=os.environ) -> dict:
+    """The environment for running the agent's own SKiDL script: this one,
+    less anything named like a secret, the CIRCUIT_REDACT list and the proxy."""
+    named = {n.strip() for n in env.get("CIRCUIT_REDACT", "OPENROUTER_API_KEY").split(",")}
+    return {k: v for k, v in env.items()
+            if k not in named and k != "CIRCUIT_REDACT"
+            and not _SECRET_NAME.search(k) and not _PROXY_NAME.match(k)}
 
 
 def build_board(netlist: str, out: str, fp_libs: list[str]) -> dict:
@@ -600,6 +634,10 @@ def call(kind: str, request: dict) -> dict:
         return _call(kind, request)
     except KeyError as exc:
         raise ValueError(f"missing field {exc}") from exc
+    except subprocess.TimeoutExpired:
+        # Callers catch RuntimeError; the exception's own message is the
+        # whole command line.
+        raise RuntimeError(f"the {kind!r} step timed out after {TIMEOUT}s") from None
 
 
 # The line fab.custom_rules() writes at the top of every `.kicad_dru` it
@@ -669,7 +707,7 @@ def _call(kind: str, request: dict) -> dict:
             str(request.get("inset_mm", 0.5)))
         if code != 0:
             raise ValueError(out.strip().splitlines()[-1])
-        return {"board": request["board"], **json.loads(out.strip().splitlines()[-1])}
+        return {"board": request["board"], **last_json(code, out, "the pour")}
     if kind == "fab":
         return export_fab(
             request["board"],

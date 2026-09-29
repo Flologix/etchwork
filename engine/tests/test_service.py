@@ -362,3 +362,51 @@ def test_an_agents_rules_still_win_over_the_profile(workspace):
     assert (after["clearance"], after["edge"]) == (0.15, 0.4)
     # An agent-given clearance is a fab's, so it reaches every class (release check 2).
     assert set(after["classes"].values()) == {0.15}
+
+
+# --- subprocess hygiene --------------------------------------------------------
+
+def test_pcbnew_snippets_do_not_import_modules_from_the_project(workspace, monkeypatch):
+    """The snippets run with the project as the working directory, and
+    `python3 -c` puts that directory first on sys.path: a `json.py` beside
+    the board replaced the standard library in every pcbnew step."""
+    (workspace / "json.py").write_text("raise SystemExit('shadowed by the project')\n")
+    monkeypatch.chdir(workspace)
+    assert service.python("import json; print(json.dumps(1))") == (0, "1")
+
+
+def test_a_snippet_that_times_out_is_a_short_runtime_error(monkeypatch):
+    """Not subprocess.TimeoutExpired, whose message is the whole script."""
+    monkeypatch.setattr(service, "TIMEOUT", 1)
+    with pytest.raises(RuntimeError) as raised:
+        service.python("import time; time.sleep(5)")
+    assert "timed out after 1s" in str(raised.value)
+    assert "sleep" not in str(raised.value)
+
+
+def test_a_step_that_times_out_is_a_runtime_error(workspace, monkeypatch):
+    shutil.copy(FIXTURES / "boards" / "test.kicad_pcb", workspace / "b.kicad_pcb")
+    monkeypatch.setattr(service, "TIMEOUT", 0.01)
+    with pytest.raises(RuntimeError, match="the 'drc' step timed out"):
+        service.call("drc", {"board": "b.kicad_pcb"})
+
+
+def test_the_zone_step_reads_its_answer_past_kicads_chatter(workspace, monkeypatch):
+    monkeypatch.setattr(service, "python",
+                        lambda *a: (0, '{"zones": 2}\nsome KiCad chatter on stderr'))
+    assert service.call("zone", {"board": "b.kicad_pcb"})["zones"] == 2
+
+
+def test_scripts_the_agent_wrote_get_no_secrets_or_proxy(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-very-secret")
+    monkeypatch.setenv("CIRCUIT_REDACT", "OPENROUTER_API_KEY,MY_VENDOR_CRED")
+    monkeypatch.setenv("MY_VENDOR_CRED", "vendor-secret")
+    monkeypatch.setenv("GITHUB_TOKEN", "ghp-secret")
+    monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:8888")
+    monkeypatch.setenv("http_proxy", "http://proxy.invalid:8888")
+    monkeypatch.setenv("KICAD_SYMBOL_DIR", "/syms")
+    env = service.script_env()
+    for name in ("OPENROUTER_API_KEY", "MY_VENDOR_CRED", "GITHUB_TOKEN", "HTTPS_PROXY",
+                 "http_proxy", "CIRCUIT_REDACT"):
+        assert name not in env, name
+    assert env["KICAD_SYMBOL_DIR"] == "/syms"

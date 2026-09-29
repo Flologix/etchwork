@@ -741,7 +741,8 @@ def run_skidl(script: str) -> str:
     before = {p: p.stat().st_mtime for p in paths.WORKSPACE.glob("*.net")}
     try:
         done = subprocess.run(["python3", str(target)], cwd=paths.WORKSPACE,
-                              capture_output=True, text=True, timeout=service.TIMEOUT)
+                              capture_output=True, text=True, timeout=service.TIMEOUT,
+                              env=service.script_env())
     except subprocess.TimeoutExpired:
         return f"{script} timed out after {service.TIMEOUT}s"
     output = (done.stdout + done.stderr).strip()

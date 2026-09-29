@@ -55,7 +55,7 @@ also prints the MCP server stanza to add to `~/.codex/config.toml`:
 ```toml
 [mcp_servers.etchwork]
 command = "docker"
-args = ["run", "-i", "--rm", "--network", "none", "--user", "<uid>:<gid>", "-v", "<project-dir>:/workspace", "<IMAGE>"]
+args = ["run", "-i", "--rm", "--pull", "never", "--network", "none", "--user", "<uid>:<gid>", "-v", "<project-dir>:/workspace", "<IMAGE>"]
 startup_timeout_sec = 120
 tool_timeout_sec = 1800
 ```
@@ -97,7 +97,7 @@ Then type:
 Start the engine the same way `etchwork init` does:
 
 ```sh
-docker run -i --rm --network none --user "$(id -u):$(id -g)" \
+docker run -i --rm --pull never --network none --user "$(id -u):$(id -g)" \
   -v "<project-dir>:/workspace" <IMAGE>
 ```
 

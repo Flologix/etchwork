@@ -70,6 +70,12 @@ has_etchwork=$(json_get "$d3/.mcp.json" "'etchwork' in d.get('mcpServers', {})")
 [ "$has_etchwork" = True ] && pass "cc fresh: mcpServers.etchwork present" || fail "cc fresh: mcpServers.etchwork present" "$has_etchwork"
 last_arg=$(json_get "$d3/.mcp.json" "d['mcpServers']['etchwork']['args'][-1]")
 [ "$last_arg" = "$image" ] && pass "cc fresh: args ends with the IMAGE tag" || fail "cc fresh: args ends with the IMAGE tag" "$last_arg != $image"
+# A missing image must fail at once, not become a Docker Hub pull that times out.
+pull3=$(json_get "$d3/.mcp.json" "' '.join(d['mcpServers']['etchwork']['args'])")
+case "$pull3" in
+  *"--pull never"*) pass "cc fresh: docker run never pulls" ;;
+  *) fail "cc fresh: docker run never pulls" "$pull3" ;;
+esac
 skill_name=$(grep -m1 '^name:' "$d3/.claude/skills/etchwork/SKILL.md" 2>/dev/null)
 [ "$skill_name" = "name: etchwork" ] && pass "cc fresh: skill has name: etchwork" || fail "cc fresh: skill has name: etchwork" "$skill_name"
 allow_has=$(json_get "$d3/.claude/settings.json" "'mcp__etchwork__*' in d.get('permissions', {}).get('allow', [])")
@@ -193,6 +199,14 @@ mkdir -p "$d8"
 "$etchwork" init "$d8" --client codex >/dev/null 2>&1
 count8=$(grep -c '<!-- etchwork-skill:begin -->' "$d8/AGENTS.md" 2>/dev/null || echo 0)
 [ "$count8" = 1 ] && pass "codex twice: exactly one etchwork-skill:begin" || fail "codex twice: exactly one etchwork-skill:begin" "count=$count8"
+
+out8=$("$etchwork" init "$d8" --client codex 2>&1)
+stanza8=$(printf '%s\n' "$out8" | sed -n '/^\[mcp_servers.etchwork\]/,/^tool_timeout_sec/p')
+args8=$(printf '%s\n' "$stanza8" | python3 -c "import sys, tomllib; print(' '.join(tomllib.loads(sys.stdin.read())['mcp_servers']['etchwork']['args']))" 2>&1)
+case "$args8" in
+  *"--pull never"*) pass "codex: the printed stanza parses and never pulls" ;;
+  *) fail "codex: the printed stanza parses and never pulls" "$args8" ;;
+esac
 
 # --- 9: flai client ---
 d9="$scratch/flai-dir"

@@ -341,7 +341,7 @@ def _export(script: str, script_path: pathlib.Path, netlist: str,
     crash_output = ""
     # See the note above DRIVER: fixing the hash seed makes the set/dict
     # iteration order SKiDL's placer depends on the same on every run.
-    env = {**os.environ, "PYTHONHASHSEED": "0"}
+    env = {**service.script_env(), "PYTHONHASHSEED": "0"}
     nonce = secrets.token_hex(16)
     built, written = f"circuit built {nonce}", f"netlist written {nonce}"
     with tempfile.TemporaryDirectory() as tmp:
