@@ -22,9 +22,9 @@ import tomllib
 
 from circuit_mcp import paths
 
-FAMILIES = ("circular", "pads")
-# In the design (§6.1), built in a later phase.
-LATER = ("dual_row", "quad_flat")
+FAMILIES = ("circular", "pads", "dual_row", "quad_flat")
+# In the design (§6.1) but not built yet: none, since phase 4.
+LATER = ()
 VIEWS = ("top", "bottom")
 DIRECTIONS = ("cw", "ccw")
 SHAPES = ("circle", "rect", "oval", "roundrect")
@@ -137,6 +137,44 @@ def _pad(pad: dict, name: str, out: list[str]) -> None:
     _sourced(pad, name, out)
 
 
+def _rows(package: dict, family: str, out: list[str]) -> None:
+    """dual_row (SOIC, TSSOP, DIP, headers) and quad_flat (QFN, QFP), from
+    the datasheet's recommended land pattern."""
+    count = package.get("count")
+    if not _whole(count, 2):
+        out.append(f"package.count must be the number of terminals, a whole number of at least 2 "
+                   f"(got {count!r})")
+    elif family == "dual_row" and count % 2:
+        out.append(f"package.count must be even for dual_row: two rows of the same length (got {count})")
+    elif family == "quad_flat":
+        lr = package.get("pins_lr")
+        if lr is None and count % 4:
+            out.append(f"package.count must be a multiple of 4 for quad_flat, unless pins_lr says "
+                       f"how many are on the left and right sides (got {count})")
+        elif lr is not None and not (_whole(lr) and 2 * lr < count and (count - 2 * lr) % 2 == 0):
+            out.append(f"package.pins_lr must be a whole number of pins per left/right side that "
+                       f"leaves an even number, above 0, for top and bottom (got {lr!r} of {count})")
+    for field in ("pitch_mm", "row_spacing_mm"):
+        if not _number(package.get(field)):
+            out.append(f"package.{field} must be a number above 0 (got {package.get(field)!r})")
+    if "column_spacing_mm" in package and not _number(package["column_spacing_mm"]):
+        out.append(f"package.column_spacing_mm must be a number above 0 "
+                   f"(got {package['column_spacing_mm']!r})")
+    if "drill_mm" in package and not _number(package["drill_mm"]):
+        out.append(f"package.drill_mm must be a number above 0 (got {package['drill_mm']!r})")
+    pad = package.get("pad_mm")
+    if pad is None:
+        if "drill_mm" not in package:
+            out.append("package.pad_mm must be [length, width] in mm: the land's size, from the "
+                       "recommended land pattern")
+    elif not (_pair(pad, positive=True) or ("drill_mm" in package and _number(pad))):
+        out.append(f"package.pad_mm must be [length, width] in mm, both above 0 (got {pad!r})")
+    if "thermal_pad_mm" in package and not _pair(package["thermal_pad_mm"], positive=True):
+        out.append("package.thermal_pad_mm must be [width, height] in mm, both above 0")
+    if "thermal_pin" in package and _pin(package["thermal_pin"]) is None:
+        out.append("package.thermal_pin must be the exposed pad's pin number")
+
+
 def _raw_pads(data: dict) -> list[str]:
     """Every pad number the package makes, duplicates included."""
     package = data.get("package") if isinstance(data.get("package"), dict) else {}
@@ -148,6 +186,10 @@ def _raw_pads(data: dict) -> list[str]:
         for slot in package.get("slots") or []:
             if isinstance(slot, dict) and _pin(slot.get("pin")):
                 numbers.append(_pin(slot["pin"]))
+    elif package.get("family") in ("dual_row", "quad_flat") and _whole(package.get("count"), 1):
+        numbers += [str(n) for n in range(1, package["count"] + 1)]
+        if "thermal_pad_mm" in package:
+            numbers.append(_pin(package.get("thermal_pin", package["count"] + 1)) or "?")
     elif package.get("family") == "pads":
         for pad in data.get("pads") or []:
             if isinstance(pad, dict) and _pin(pad.get("number")):
@@ -208,8 +250,8 @@ def problems(data: dict) -> list[str]:
             out.append(f"package.family {family!r} is not supported yet "
                        f"({' and '.join(LATER)} come in a later phase); use 'pads' for now")
         elif family not in FAMILIES:
-            out.append(f"package.family {family!r} is not one of {', '.join(FAMILIES)} "
-                       f"({', '.join(LATER)} later)")
+            out.append(f"package.family {family!r} is not one of {', '.join(FAMILIES)}"
+                       + (f" ({', '.join(LATER)} later)" if LATER else ""))
         if package.get("view") not in VIEWS:
             out.append("package.view must be 'top' or 'bottom': the view the drawing is in, "
                        "since top and bottom views are mirror images")
@@ -229,6 +271,8 @@ def problems(data: dict) -> list[str]:
                 if not _pair(slot.get("size_mm"), positive=True):
                     out.append(f"{name}: size_mm must be [width, height] in mm, both above 0")
                 _sourced(slot, name, out)
+        elif family in ("dual_row", "quad_flat"):
+            _rows(package, family, out)
         elif family == "pads":
             pads = data.get("pads")
             if not (isinstance(pads, list) and pads):

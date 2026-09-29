@@ -115,16 +115,10 @@ def test_the_drawings_view_is_required(odu):
     assert any("view" in p and "top" in p and "bottom" in p for p in problems), problems
 
 
-def test_a_family_not_built_yet_says_so(odu):
-    _edit(odu, lambda d: d["package"].update(family="quad_flat"))
-    _, problems = partspec.load("parts/GK1YAR-P16UC00-000L.part.toml")
-    assert any("quad_flat" in p and "not supported yet" in p for p in problems), problems
-
-
 def test_an_unknown_family_names_the_ones_that_exist(odu):
     _edit(odu, lambda d: d["package"].update(family="blob"))
     _, problems = partspec.load("parts/GK1YAR-P16UC00-000L.part.toml")
-    assert any("blob" in p and "circular" in p and "pads" in p for p in problems), problems
+    assert any("blob" in p and "circular" in p and "quad_flat" in p for p in problems), problems
 
 
 def test_pins_and_pads_must_agree(odu):

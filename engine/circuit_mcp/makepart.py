@@ -82,6 +82,8 @@ def pads(spec: dict) -> list[dict]:
                         "shape": "oval", "drill": (w, h),
                         "size": (w + pad_allowance(), h + pad_allowance()),
                         "ring": None, "defaulted": True})
+    elif package["family"] in ("dual_row", "quad_flat"):
+        out += _row_pads(package)
     else:
         for pad in spec.get("pads") or []:
             w, h = pad["size_mm"]
@@ -97,6 +99,74 @@ def pads(spec: dict) -> list[dict]:
         if pad["number"] == "1" and pad["shape"] == "circle":
             pad["shape"] = "rect"           # KiCad's convention: pin 1 is the square pad
     return sorted(out, key=lambda p: partspec._order(p["number"]))
+
+
+def _row_pads(package: dict) -> list[dict]:
+    """dual_row and quad_flat, KiCad's convention: pin 1 at the top of the left
+    side, numbered counter-clockwise; each land's length runs across its side."""
+    count, pitch = package["count"], package["pitch_mm"]
+    drill = package.get("drill_mm")
+    size = package.get("pad_mm")
+    defaulted = size is None
+    if defaulted:
+        size = drill + pad_allowance()
+    length, width = (size, size) if isinstance(size, (int, float)) else size
+    shape = ("circle" if length == width else "oval") if drill else "roundrect"
+
+    def pad(number, x, y, across):
+        w, h = (length, width) if across else (width, length)
+        return {"number": str(number), "x": x, "y": y, "shape": shape, "size": (w, h),
+                "drill": drill, "ring": None, "defaulted": defaulted}
+
+    def along(n, i):
+        return (i - (n - 1) / 2) * pitch
+
+    cx = package["row_spacing_mm"] / 2
+    out = []
+    if package["family"] == "dual_row":
+        half = count // 2
+        out += [pad(1 + i, -cx, along(half, i), True) for i in range(half)]
+        out += [pad(half + 1 + i, cx, -along(half, i), True) for i in range(half)]
+    else:
+        lr = package.get("pins_lr") or count // 4
+        tb = (count - 2 * lr) // 2
+        cy = package.get("column_spacing_mm", package["row_spacing_mm"]) / 2
+        out += [pad(1 + i, -cx, along(lr, i), True) for i in range(lr)]
+        out += [pad(lr + 1 + i, along(tb, i), cy, False) for i in range(tb)]
+        out += [pad(lr + tb + 1 + i, cx, -along(lr, i), True) for i in range(lr)]
+        out += [pad(2 * lr + tb + 1 + i, -along(tb, i), -cy, False) for i in range(tb)]
+    if "thermal_pad_mm" in package:
+        w, h = package["thermal_pad_mm"]
+        out.append({"number": str(package.get("thermal_pin", count + 1)), "x": 0.0, "y": 0.0,
+                    "shape": "rect", "size": (w, h), "drill": None, "ring": None,
+                    "defaulted": False, "thermal": True})
+    return out
+
+
+# An exposed pad's paste, as KiCad's own QFN footprints have it: cells of at
+# most PASTE_CELL mm each way, each opening PASTE_COVERAGE of its cell's area
+# -- less solder under the pad, so the part does not float and voids stay
+# small. Matched pad for pad against QFN-16-1EP_3x3mm_P0.5mm_EP1.7x1.7mm.
+PASTE_CELL = 1.2
+PASTE_COVERAGE = 0.66
+
+
+def paste(spec: dict) -> list[dict]:
+    """The paste-only openings over each exposed pad."""
+    out = []
+    for pad in pads(spec):
+        if not pad.get("thermal"):
+            continue
+        w, h = pad["size"]
+        nx, ny = math.ceil(w / PASTE_CELL - _EPS), math.ceil(h / PASTE_CELL - _EPS)
+        cw, ch = w / nx, h / ny
+        side = math.sqrt(PASTE_COVERAGE)
+        for i in range(nx):
+            for j in range(ny):
+                out.append({"x": round(pad["x"] - w / 2 + cw * (i + 0.5), 4) + 0.0,
+                            "y": round(pad["y"] - h / 2 + ch * (j + 0.5), 4) + 0.0,
+                            "size": (round(cw * side, 2), round(ch * side, 2))})
+    return out
 
 
 def _box(pad) -> tuple[float, float, float, float]:
@@ -387,7 +457,10 @@ def footprint_text(spec: dict, name: str, pads_: list[dict], source: str) -> str
     ]
     for p in pads_:
         at, size = f'(at {_f(p["x"])} {_f(p["y"])})', f'(size {_f(p["size"][0])} {_f(p["size"][1])})'
-        if p["drill"] is None:
+        if p.get("thermal"):
+            # Copper and mask; its paste is the openings below.
+            lines.append(f'  (pad "{p["number"]}" smd rect {at} {size} (layers "F.Cu" "F.Mask"))')
+        elif p["drill"] is None:
             extra = " (roundrect_rratio 0.25)" if p["shape"] == "roundrect" else ""
             lines.append(f'  (pad "{p["number"]}" smd {p["shape"]} {at} {size} '
                          f'(layers "F.Cu" "F.Paste" "F.Mask"){extra})')
@@ -397,6 +470,10 @@ def footprint_text(spec: dict, name: str, pads_: list[dict], source: str) -> str
             extra = " (roundrect_rratio 0.25)" if p["shape"] == "roundrect" else ""
             lines.append(f'  (pad "{p["number"]}" thru_hole {p["shape"]} {at} {size} {drill} '
                          f'(layers "*.Cu" "*.Mask"){extra})')
+    for opening in paste(spec):
+        lines.append(f'  (pad "" smd roundrect (at {_f(opening["x"])} {_f(opening["y"])}) '
+                     f'(size {_f(opening["size"][0])} {_f(opening["size"][1])}) (layers "F.Paste") '
+                     f'(roundrect_rratio 0.25))')
     return "\n".join(lines) + "\n)\n"
 
 
