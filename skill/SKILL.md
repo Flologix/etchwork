@@ -5,6 +5,8 @@ description: Design a printed circuit board in this project with the etchwork to
 
 # Designing a board
 
+One board per project folder: the tools keep one board, its netlist, DRC report, README and `gerbers/` at the folder's top level. For a second board, ask the human to make a new folder and run `etchwork init` in it; never start a board in a subfolder.
+
 You design; the tools do everything algorithmic. The etchwork tools appear as
 `mcp__etchwork__<name>`. Never copy libraries,
 start containers, or write your own toolchain scripts: if a tool is missing
@@ -13,6 +15,7 @@ or the etchwork server did not start, stop and say so.
 ## Order of work
 1. Write `expected.netlist.toml`: the wiring you intend (`[nets]`, `NAME = ["U1:3", "R1:2"]`, pins as numbers).
 2. Find parts with `find_part`, check pins with `describe_part` and sizes with `describe_footprint`. `describe_part` lists each pin's functions (MOSI, SCK, SDA…); wire by those, never from memory.
+   A part KiCad has no footprint for: draw its footprint from the datasheet into `fp/<Library>.pretty/<Name>.kicad_mod` in the project folder and use it as `<Library>:<Name>`; `describe_footprint` then finds it. Tell the human in the final answer that it is hand-drawn, and list what the datasheet did not state (pin numbering, say) for them to check before ordering.
 3. Write the SKiDL script (e.g. `board.py`) with named nets and real footprints, grouped into `@subcircuit` functions by role — power input, regulator, MCU, each connector or header, indicators — each taking the nets it connects to as arguments; the schematic is drawn one block per subcircuit. End with `generate_netlist(file_="board.net")`.
 4. `run_skidl`, then `check_netlist` against `expected.netlist.toml`. Fix wiring until it matches. `check_netlist` also fails when a net's name (`ISP_SCK`) or a named header pin says a function that no MCU pin on it can carry. Fix the wiring; only if the net is meant to be a plain GPIO (a bit-banged bus, a button), drop the function word from its name.
 5. `export_schematic` (script, netlist): draws `board.kicad_sch` and `board-schematic.pdf` and checks the drawing matches the netlist. Run it again whenever the circuit changes. It is a reference drawing; never edit it to change the circuit. If it reports `SCHEMATIC NOT AVAILABLE`, continue: don't redesign the circuit to get a drawing, and say in the final answer that the board has no schematic, and why.

@@ -373,7 +373,7 @@ def run_layout(netlist: str, width_mm: float, height_mm: float,
     # model took the symbol ids it had just been given and put them in the
     # footprint field, which is a guess that type-checks and cannot work.
     unresolved = parts.unresolved_footprints(
-        (workspace / netlist).read_text(errors="replace"), paths.FP_ROOT)
+        (workspace / netlist).read_text(errors="replace"), parts.fp_libraries())
     if unresolved:
         return ("these footprints cannot be resolved, so the board cannot be "
                 "built:\n" + "\n".join(unresolved) +
@@ -384,7 +384,10 @@ def run_layout(netlist: str, width_mm: float, height_mm: float,
 
     placing = "arrange" if arrange else "place"
     bodies = {
-        "pcb": {"netlist": netlist, "out": board},
+        # The project's own footprint libraries (fp/<Library>.pretty/), which
+        # kinet2pcb reads alongside KiCad's, and in place of any of the same name.
+        "pcb": {"netlist": netlist, "out": board,
+                "fp_libs": [paths.rel(d) for d in parts.project_fp_libraries()]},
         "outline": {"board": board, "width_mm": width_mm, "height_mm": height_mm},
         "rules": {"board": board, "rules": rules},
         "place": {"board": board, "positions": positions},
