@@ -58,6 +58,31 @@ def test_calls_are_numbered_within_a_session(workspace):
     ("NOT DONE:\n- DRC not run", "not_done"),
     ("DONE\nBoard: 34 x 22 mm", "done"),
     ("netlist: board.net\nERC: clean", "ok"),
+    ("Status: NOT READY: no board yet\nREADME.md updated: parts", "ok"),
+    # Refused: the tool declined the request and did nothing. Each is a tool's
+    # real wording; a test run on 2026-09-28 logged three of them as "ok".
+    ("nothing to place: give either positions ({ref: [x, y, rotation]}) or arrange", "refused"),
+    ("arrange op 1 ({\"op\": \"help\"}) is invalid: op must be one of rotate, align", "refused"),
+    ("arrange must be a list of ops. {\"op\": \"rotate\"}", "refused"),
+    ("unknown design rule(s): clearance. The rules are: clearance_mm", "refused"),
+    ("clearance_mm must be a length in millimetres greater than zero, got -1", "refused"),
+    ("these footprints cannot be resolved, so the board cannot be built:", "refused"),
+    ("../x.net: '../x.net' is outside the project folder", "refused"),
+    ("/etc/x: '/etc/x' is absolute; give a path relative to the project", "refused"),
+    ("'../x:y' is a path, not a name. Give Library:Part", "refused"),
+    ("no such netlist in the workspace: board.net", "refused"),
+    ("board.kicad_pcb changed since the tools last wrote it (edited in KiCad?).", "refused"),
+    ("give something to search for, e.g. find_part('diode')", "refused"),
+    # Failed: the tool tried, and a step of it failed.
+    ("layout failed at the 'arrange' step: U1 does not fit between 2 and 58", "failed"),
+    ("DRC could not run: the 'drc' step timed out after 300s", "failed"),
+    ("kicad-cli failed (exit 3): cannot load board", "failed"),
+    ("the pour failed: Expecting value", "failed"),
+    ("board.py failed (exit 1):\nTraceback", "failed"),
+    ("board.py timed out after 300s", "failed"),
+    ("board.py ran but wrote no netlist; call generate_netlist(file_=...).", "failed"),
+    ("the schematic could not be drawn: board.py failed or exited before building", "failed"),
+    ("SCHEMATIC NOT AVAILABLE: SKiDL's schematic generator drew this circuit wrongly", "unavailable"),
 ])
 def test_the_outcome_is_read_from_the_answer(answer, outcome):
     assert events.outcome(answer) == outcome
@@ -159,3 +184,18 @@ def test_the_wrapper_keeps_the_signature_fastmcp_builds_the_schema_from():
     wrapped = events.logged(run_layout)
     assert inspect.signature(wrapped) == inspect.signature(run_layout)
     assert (wrapped.__name__, wrapped.__doc__) == ("run_layout", "Lay out.")
+
+
+def test_an_answer_that_is_not_a_success_keeps_its_first_line(workspace):
+    """Without it, 'refused' says that something was refused, not what."""
+    _tool("layout failed at the 'arrange' step: U1 does not fit\nmore detail")("b.kicad_pcb")
+    _tool("PASS — DRC clean, 0 unconnected\nsummary")("b.kicad_pcb")
+    failed, passed = _lines(workspace)
+    assert failed["headline"] == "layout failed at the 'arrange' step: U1 does not fit"
+    assert "headline" not in passed
+
+
+def test_a_first_line_is_kept_short(workspace):
+    _tool("REFUSED: " + "x" * 1000)("b.kicad_pcb")
+    [event] = _lines(workspace)
+    assert len(event["headline"]) == events.HEADLINE

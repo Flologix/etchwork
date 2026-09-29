@@ -10,7 +10,8 @@ nothing anywhere, and nothing here changes that.
 **Derived facts, not designs.** Arguments are summarised (paths and scalars
 as they are, `arrange` as counts per op, net-class picks as counts, never
 their reasons) and the answer is kept only as its outcome, its DRC counts
-and its length.
+and its length -- plus, when it is not a success, the tool's own first line
+(at most HEADLINE characters), which says what was refused or failed.
 
 **Never at the cost of the answer.** A log that cannot be written -- a
 `.etchwork` that is a file, or a symlink out of the project -- is reported
@@ -40,9 +41,30 @@ SESSION = uuid.uuid4().hex[:12]
 _seq = 0
 _warned = False
 
-# Checked in this order: "NOT DONE" before "DONE".
+# The verdicts a tool states up front. Checked in this order: "NOT DONE"
+# before "DONE".
 _OUTCOMES = (("NOT DONE", "not_done"), ("DONE", "done"), ("PASS", "pass"),
-             ("FAIL", "fail"), ("REFUSED", "refused"))
+             ("FAIL", "fail"), ("REFUSED", "refused"),
+             ("SCHEMATIC NOT AVAILABLE", "unavailable"))
+# Most refusals and failures are not prefixed, so their wording is matched on
+# the answer's first line. `refused`: the tool declined the request and did
+# nothing. `failed`: it tried, and a step of it failed. A test run on
+# 2026-09-28 logged three layout refusals and failures as "ok" before these.
+_REFUSED = re.compile("|".join([
+    r"^nothing to place", r"^these footprints cannot be resolved", r"^unknown design rule",
+    r"must be a length in millimetres", r"^arrange (must be|op \d+)", r"^each op must be",
+    r"is outside the project folder", r"is absolute; give a path", r"is a path, not a name",
+    r"^no such ", r"changed since the tools last wrote it", r"^give something to search for",
+]))
+_FAILED = re.compile("|".join([
+    r"^layout failed at", r"^DRC failed", r"^DRC could not run", r"^kicad-cli (failed|wrote)",
+    r"^the pour failed", r"^the fabrication export failed", r"^the DRC report could not be read",
+    r"^the schematic (could not|was drawn, but)", r" failed \(exit -?\d+\):?$",
+    r"timed out after", r"ran but wrote no netlist",
+]))
+# The first line kept for an answer that is not a success.
+HEADLINE = 160
+_SUCCESS = {"ok", "pass", "done"}
 # tools._verdict's headline: "NOT DONE: 3 DRC error(s) (clearance), 1 unconnected".
 _DRC = re.compile(r"(\d+) DRC error\(s\)(?: \(([^)]*)\))?, (\d+) unconnected")
 
@@ -50,7 +72,15 @@ _DRC = re.compile(r"(\d+) DRC error\(s\)(?: \(([^)]*)\))?, (\d+) unconnected")
 def outcome(answer: str) -> str:
     """What the answer says happened, read from how it starts."""
     head = answer.lstrip()
-    return next((name for prefix, name in _OUTCOMES if head.startswith(prefix)), "ok")
+    stated = next((name for prefix, name in _OUTCOMES if head.startswith(prefix)), None)
+    if stated:
+        return stated
+    first = head.split("\n", 1)[0]
+    if _REFUSED.search(first):
+        return "refused"
+    if _FAILED.search(first):
+        return "failed"
+    return "ok"
 
 
 def metrics(answer: str) -> dict:
@@ -137,6 +167,9 @@ def record(tool: str, arguments: dict, ms: int, answer: str | None = None,
             event.update(outcome="error", error=type(error).__name__)
         else:
             event.update(outcome=outcome(answer), chars=len(answer))
+            if event["outcome"] not in _SUCCESS:
+                # What was refused or failed: the tool's own first line.
+                event["headline"] = answer.lstrip().split("\n", 1)[0][:HEADLINE]
             found = metrics(answer)
             if found:
                 event["metrics"] = found
