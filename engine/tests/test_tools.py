@@ -745,6 +745,24 @@ def test_run_skidl_reports_the_netlist_it_wrote(workspace):
     assert text.startswith("netlist: tiny.net"), text
 
 
+def test_run_skidl_names_skidls_files_after_the_script_and_reports_its_erc(workspace):
+    """Found on a live run (2026-09-29): run_skidl's launcher (python3 -c)
+    imported SKiDL before the script ran, SKiDL found no __main__.__file__
+    and named its files skidl_REPL.*, and run_skidl -- which reads
+    <script>*.erc -- answered "no ERC file" for every board."""
+    (workspace / "tiny.py").write_text(
+        "from skidl import Part, Net, generate_netlist, ERC\n"
+        "r = Part('Device', 'R', footprint='Resistor_SMD:R_0805_2012Metric')\n"
+        "a, b = Net('A'), Net('B')\n"
+        "a += r[1]; b += r[2]\n"
+        "ERC()\n"
+        "generate_netlist(file_='tiny.net')\n")
+    text = tools.run_skidl("tiny.py")
+    assert "no ERC file" not in text, text
+    assert (workspace / "tiny.erc").is_file()
+    assert not list(workspace.glob("skidl_REPL*")), sorted(p.name for p in workspace.iterdir())
+
+
 def test_run_skidl_reports_a_failing_script(workspace):
     (workspace / "bad.py").write_text("raise SystemExit('boom')\n")
     assert "failed" in tools.run_skidl("bad.py")
