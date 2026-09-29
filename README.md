@@ -85,6 +85,12 @@ agent installed, else it asks. See `docs/clients.md` for details.
 
 The engine container runs with no network. Your design files go only to your AI client's model provider—never anywhere else.
 
+The engine keeps a local log of its tool calls in `.etchwork/events.jsonl` in the project folder:
+which tool ran, how long it took, whether it passed, and DRC counts. It does not hold your
+circuit, and it never leaves your machine unless you send it. Set `CIRCUIT_EVENTS=0` in the
+engine's environment to turn it off, and add `.etchwork/` to `.gitignore` if you don't want it
+committed.
+
 ## The isolated runner
 
 For self-hosted, unattended production jobs, build a runner image that includes the engine and an agent:

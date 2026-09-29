@@ -124,3 +124,9 @@ Board files, netlists and part data leave the container only through your MCP
 client, which sends them (as tool calls and results) to whichever model
 provider that client is configured to use. The engine itself sends nothing
 anywhere.
+
+The engine also appends one line per tool call to `.etchwork/events.jsonl` in
+the project folder: the tool, its duration, its outcome and DRC counts, with
+arguments summarised (paths and numbers, never script contents or net-class
+reasons). It is local only; `-e CIRCUIT_EVENTS=0` in the `docker run` args
+turns it off. See `docs/superpowers/specs/2026-09-28-flywheel-design.md`.
