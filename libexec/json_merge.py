@@ -73,7 +73,7 @@ def cmd_mcp(argv):
     entry = {
         "command": "docker",
         "args": [
-            "run", "-i", "--rm", "--network", "none",
+            "run", "-i", "--rm", "--pull", "never", "--network", "none",
             "--user", f"{uid}:{gid}",
             "-v", f"{project}:/workspace",
             image,

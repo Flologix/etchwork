@@ -159,7 +159,7 @@ PY
     python3 - "$uid" "$gid" "$dir" "$image" <<'PY'
 import json, sys
 uid, gid, dir_, image = sys.argv[1:5]
-args = ["run", "-i", "--rm", "--network", "none", "--user", f"{uid}:{gid}",
+args = ["run", "-i", "--rm", "--pull", "never", "--network", "none", "--user", f"{uid}:{gid}",
         "-v", f"{dir_}:/workspace", image]
 print("[mcp_servers.etchwork]")
 print(f"command = {json.dumps('docker')}")
