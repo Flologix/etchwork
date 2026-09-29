@@ -131,6 +131,7 @@ from conftest import FIXTURES
 GROUPED = FIXTURES / "projects" / "grouped"
 BACKOFF1 = FIXTURES / "projects" / "backoff1"
 MULTIUNIT = FIXTURES / "projects" / "multiunit"
+DECOUPLED = FIXTURES / "projects" / "decoupled"
 # The DRIVER line right after the script's circuit has been written out for
 # the netlist check: a crash injected after it is a generator crash.
 CHECKED = 'print("netlist written " + nonce, flush=True)\n'
@@ -185,6 +186,22 @@ def test_export_schematic_on_a_real_project(workspace):
     shutil.copytree(BACKOFF1, workspace, dirs_exist_ok=True)
     out = schematic.export_schematic("board.py", "board.net")
     assert out.startswith("EXPORTED") and "schematic matches the netlist" in out, out
+
+
+def test_decoupling_caps_snapped_inside_a_subcircuit_stay_wired(workspace):
+    """SKiDL snaps a subcircuit's decoupling caps to the IC's supply pin and
+    draws wires to them instead of power labels. SKiDL 2.3.0 then purged those
+    wires as dangling on the top sheet, whose anchor list holds only its own
+    parts, so the caps' supply pins were drawn connected to nothing -- with
+    every seed. Found on the first live run (2026-09-28)."""
+    shutil.copy(DECOUPLED / "board.py", workspace / "board.py")
+    ran = tools.run_skidl("board.py")
+    assert ran.startswith("netlist: board.net"), ran
+
+    out = schematic.export_schematic("board.py", "board.net")
+
+    assert out.startswith("EXPORTED") and "schematic matches the netlist" in out, out
+    assert "(wire" in (workspace / "board.kicad_sch").read_text()
 
 
 def test_export_schematic_reports_a_failing_script(workspace, monkeypatch):

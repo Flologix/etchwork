@@ -13,6 +13,7 @@ case "$cmd" in
   init)   exec "$ETCHWORK_ROOT/libexec/init.sh" "$@" ;;
   build)  exec "$ETCHWORK_ROOT/libexec/build.sh" "$@" ;;
   test)   exec "$ETCHWORK_ROOT/libexec/test.sh" "$@" ;;
+  check)  exec "$ETCHWORK_ROOT/libexec/check.sh" "$@" ;;
   job)    exec "$ETCHWORK_ROOT/libexec/job.sh" "$@" ;;
   contract) exec "$ETCHWORK_ROOT/libexec/contract.sh" "$@" ;;
   runner) sub="${1:-}"; [ $# -gt 0 ] && shift
@@ -26,6 +27,8 @@ etchwork init <dir> [--client claude-code|codex|flai] [--build]
                                      else asks
 etchwork build                      build the engine image
 etchwork test                       run the engine test suite in the image
+etchwork check                      build, then run every test suite (engine,
+                                     CONTRACT, CLI, export, job)
 etchwork runner build [--agent-bin <path>]
                                      needs a Linux flai binary (no other agent yet)
 etchwork job <runner tag> <job dir> [--probes]

@@ -160,13 +160,15 @@ def test_pipe_in_a_net_name_is_escaped_in_the_table_cell(workspace):
     assert "A|B |" not in readme
 
 
-def test_a_board_path_outside_the_workspace_is_not_read(workspace):
+def test_a_board_path_outside_the_workspace_is_refused_before_anything_is_written(workspace):
+    """Like every other tool: a refusal, not a README whose board section is
+    the refusal."""
     shutil.copy(FIXTURES / "blinker.net", workspace / "blinker.net")
-    text = summary.summarize_project("blinker.net", board="/etc/hostname")
-    readme = (workspace / "README.md").read_text()
-    assert "/etc/hostname" in readme and "absolute" in readme
-    assert "- File:" not in readme
-    assert "Status: NOT READY" in text
+    for board in ("/etc/hostname", "../outside.kicad_pcb"):
+        text = summary.summarize_project("blinker.net", board=board)
+        assert text.startswith(f"{board}: "), text
+        assert "absolute" in text or "outside the project folder" in text, text
+        assert not (workspace / "README.md").exists()
 
 
 # --- Status: NOT READY must be impossible to miss ---------------------------

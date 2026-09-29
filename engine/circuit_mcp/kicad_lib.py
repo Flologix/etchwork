@@ -350,7 +350,8 @@ class Board:
     # Copper pours, and how many of them carry no copper yet. A zone that
     # exists and is not filled is the dangerous state: DRC reads the board on
     # disk and so checks copper that is not there, while a gerber export
-    # refills for the plot and looks right. See unfilled_zones below.
+    # refills for the plot and looks right. A keepout is not a pour and is
+    # not counted. See unfilled_zones below.
     zones: int = 0
     unfilled: int = 0
 
@@ -376,7 +377,7 @@ def read_board(text: str) -> Board:
         if layer:
             found.segments[layer.group(1)] = found.segments.get(layer.group(1), 0) + 1
     found.has_outline = OUTLINE_LAYER in text
-    found.zones = len(_ZONE_OPEN.findall(text))
+    found.zones = len(_pours(text))
     found.unfilled = unfilled_zones(text)
     return found
 
@@ -413,22 +414,55 @@ _ZONE_OPEN = re.compile(r"\(zone\b")
 _FILLED = "filled_polygon"
 
 
+def _zone_blocks(text: str) -> list[str]:
+    """Each zone's own `(zone ...)` block, read to its closing parenthesis.
+
+    Not simply split on the opener, as this once was: a zone's block is where
+    its `(keepout ...)` lives, and the rest of the file -- a footprint's pads,
+    the next footprint -- must not be read as part of it. Quoted strings are
+    skipped, so a parenthesis in a zone's name does not end it early.
+    """
+    blocks = []
+    for opener in _ZONE_OPEN.finditer(text):
+        depth, i, quoted = 0, opener.start(), False
+        while i < len(text):
+            c = text[i]
+            if quoted:
+                if c == "\\":
+                    i += 1
+                elif c == '"':
+                    quoted = False
+            elif c == '"':
+                quoted = True
+            elif c == "(":
+                depth += 1
+            elif c == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        blocks.append(text[opener.start():i + 1])
+    return blocks
+
+
+def _pours(text: str) -> list[str]:
+    """The zones that are copper pours: every zone but a keepout (a rule
+    area), which forbids copper and so can never be filled -- such as the
+    antenna keepout inside RF_Module:ESP32-C6-MINI-1, which on 2026-09-28
+    made check_done answer NOT DONE on a finished board."""
+    return [block for block in _zone_blocks(text) if "(keepout" not in block]
+
+
 def unfilled_zones(text: str) -> int:
     """How many copper pours on this board carry no copper yet.
 
     A zone's fill lives inside it as one or more `filled_polygon` blocks, so a
-    zone with none has never been filled -- measured on KiCad 10.0.5, where a
+    pour with none has never been filled -- measured on KiCad 10.0.5, where a
     freshly poured board had 2 zones and 7 filled_polygon blocks and the same
-    board before filling had 1 and 0.
-
-    Split on the zone opener rather than parsed: each chunk runs to the next
-    zone, so it contains exactly that zone's own fill, and `filled_polygon`
-    appears nowhere else in a board file. That is an approximation in the same
-    spirit as _SEGMENT above, and it is enough for the question being asked --
-    "is any pour empty" -- which is a warning rather than a verdict.
+    board before filling had 1 and 0. It is enough for the question being
+    asked -- "is any pour empty" -- which is a warning rather than a verdict.
     """
-    chunks = _ZONE_OPEN.split(text)[1:]
-    return sum(1 for chunk in chunks if _FILLED not in chunk)
+    return sum(1 for block in _pours(text) if _FILLED not in block)
 
 
 # --- the gate ---------------------------------------------------------------

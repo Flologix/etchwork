@@ -48,6 +48,13 @@ RUN grep -q 'if type_\.lower() != "kicad":' \
     sed -i 's/if type_\.lower() != "kicad":/if rmv_quotes(type_).lower() != "kicad":/' \
         /usr/local/lib/python3.13/dist-packages/kinet2pcb/kinet2pcb.py
 
+# SKiDL 2.3.0's KiCad 10 emitter purges a subcircuit's own wires as dangling
+# on the top sheet, cutting decoupling caps off their supply in the drawing
+# (see the patch's docstring). Exact-text edits that fail the build if SKiDL
+# moves the code, like the kinet2pcb patch above.
+COPY patches/skidl_flattened_wires.py /tmp/skidl_flattened_wires.py
+RUN python3 /tmp/skidl_flattened_wires.py && rm /tmp/skidl_flattened_wires.py
+
 RUN curl -fsSL -o /opt/freerouting.jar \
     "https://github.com/freerouting/freerouting/releases/download/v${FREEROUTING_VERSION}/freerouting-${FREEROUTING_VERSION}.jar" \
  && echo "${FREEROUTING_SHA256}  /opt/freerouting.jar" | sha256sum -c -
