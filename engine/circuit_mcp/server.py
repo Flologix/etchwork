@@ -3,7 +3,7 @@ returns text; the deterministic work lives in parts, tools, summary. Every
 call is recorded in the project's local event log (circuit_mcp.events)."""
 from mcp.server.fastmcp import FastMCP
 
-from circuit_mcp import datasheet, done, events, parts, schematic, summary, tools
+from circuit_mcp import datasheet, done, events, makepart, parts, schematic, summary, tools
 
 mcp = FastMCP("etchwork")
 
@@ -37,6 +37,17 @@ def read_datasheet(pdf: str, pages: str | None = None) -> str:
     as images: pin tables, land patterns and mechanical drawings are read from the picture.
     Renders the first 40 pages unless `pages` says which (e.g. "1-3,12")."""
     return datasheet.read_datasheet(pdf, pages)
+
+
+@mcp.tool()
+@events.logged
+def make_part(spec: str) -> str:
+    """Build a footprint from a part spec (parts/<MPN>.part.toml, read from the datasheet):
+    pads, holes, courtyard and outlines are computed, then checked against IPC nominal and the
+    fab (drills, annular rings, clearances, whether inner pads can be routed out). MADE writes
+    fp/<library>.pretty/<name>.kicad_mod and a render to compare with the datasheet; REFUSED
+    lists every problem and writes nothing. Never replaces a footprint it did not make."""
+    return makepart.make_part(spec)
 
 
 @mcp.tool()

@@ -38,6 +38,7 @@ VALID = {
     "net_evidence": {"netlist": "board.net"},
     "set_net_classes": {"netlist": "board.net", "picks": []},
     "read_datasheet": {"pdf": "datasheet.pdf"},
+    "make_part": {"spec": "part.part.toml"},
 }
 PATH_ARGS = {
     "describe_part": ["symbol"], "describe_footprint": ["footprint"],
@@ -47,13 +48,13 @@ PATH_ARGS = {
     "fill_zones": ["board"], "export_gerbers": ["board", "out"],
     "summarize_project": ["netlist", "board"], "check_done": ["netlist", "board"],
     "net_evidence": ["netlist"], "set_net_classes": ["netlist"],
-    "read_datasheet": ["pdf"],
+    "read_datasheet": ["pdf"], "make_part": ["spec"],
 }
 REFUSALS = ("outside the project folder", "is absolute", "is a path, not a name")
 # What a bad path looks like for each kind of argument: library ids are
 # `Library:Name`, the rest are files.
 SUFFIX = {"symbol": ":R", "footprint": ":R", "script": ".py", "netlist": ".net",
-          "expected": ".toml", "board": ".kicad_pcb", "out": "", "pdf": ".pdf"}
+          "expected": ".toml", "board": ".kicad_pcb", "out": "", "pdf": ".pdf", "spec": ".part.toml"}
 
 
 def _project(tmp_path):
@@ -68,6 +69,7 @@ def _project(tmp_path):
         (folder / "board.py").write_text("print('the script ran')\n")
         (folder / "expected.netlist.toml").write_text("[nets]\n")
         (folder / "datasheet.pdf").write_bytes(make_pdf(["Datasheet"]))
+        (folder / "part.part.toml").write_text('mpn = "X"\n')
     for suffix in {s for s in SUFFIX.values() if s.startswith(".")}:
         (outside / f"outside{suffix}").write_text("")
     return workspace, outside

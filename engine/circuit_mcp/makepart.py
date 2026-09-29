@@ -1,0 +1,357 @@
+"""make_part: a footprint computed from a part spec, and checked before it is
+written.
+
+The datasheet-parts design (§5.2, §6). The model has read the datasheet and
+written the spec (circuit_mcp.partspec); this does the rest, and none of it
+is the model's: pad positions, pad and hole sizes, courtyard, silkscreen and
+fab outlines, and every check -- the fab's drills, annular rings and
+clearances, and whether the pads can be routed out at all.
+
+**Why routability is checked here.** On the live run of 2026-09-28 the ODU
+receptacle's footprint was hand-drawn, placed and routed, and only then did
+DRC report its five inner contacts unconnected. Between two outer drills
+there is 0.631 mm; one track needs 0.10 + 2 x 0.28 mm there (JLCPCB's PTH
+hole-to-copper clearance). That is arithmetic on the spec, so it is refused
+here, with the numbers, before any layout.
+
+**Sizes.** A datasheet's recommended land pattern wins wherever the spec
+gives it (drill_mm, pad_mm, an explicit pad list). What it leaves out is
+IPC nominal (density level B; land_patterns.toml), and a datasheet value
+tighter than nominal is reported, not overridden.
+
+Writes only on success, and only over a footprint make_part wrote itself: a
+hand-drawn one (the live run's) is never replaced.
+"""
+import math
+import os
+import pathlib
+import re
+import shutil
+import subprocess
+import tempfile
+import tomllib
+
+from circuit_mcp import fab, partspec, paths, service
+
+GENERATOR = "etchwork-make-part"
+_NAME = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*$")
+_LAND = tomllib.loads(pathlib.Path(__file__).with_name("land_patterns.toml").read_text())
+_EPS = 1e-9
+
+
+def land(key: str) -> float:
+    return _LAND["nominal"][key]["value"]
+
+
+def pad_allowance() -> float:
+    """Pad diameter over hole diameter at IPC nominal: two minimum annular
+    rings plus the fabrication allowance (hole + 0.60 mm)."""
+    return 2 * land("annular_ring_mm") + land("fabrication_allowance_mm")
+
+
+# --- geometry --------------------------------------------------------------------
+
+def pads(spec: dict) -> list[dict]:
+    """Every pad, in footprint coordinates: mm, y down, seen from the top.
+
+    A drawing in bottom view is mirrored (x -> -x): top and bottom views are
+    mirror images, and a footprint is always drawn from the top.
+    """
+    package = spec["package"]
+    out = []
+    if package["family"] == "circular":
+        for index, ring in enumerate(package.get("rings") or [], start=1):
+            radius, count = ring["diameter_mm"] / 2, ring["count"]
+            step = 360 / count * (-1 if ring["direction"] == "cw" else 1)
+            drill = ring.get("drill_mm")
+            size = ring.get("pad_mm") or (drill + pad_allowance())
+            for k in range(count):
+                angle = math.radians(ring["start_deg"] + k * step)
+                out.append({"number": str(ring["first_pin"] + k),
+                            "x": radius * math.cos(angle), "y": -radius * math.sin(angle),
+                            "shape": "circle", "size": (size, size), "drill": drill,
+                            "ring": index, "defaulted": "pad_mm" not in ring})
+        for slot in package.get("slots") or []:
+            w, h = slot["size_mm"]
+            out.append({"number": str(slot["pin"]), "x": slot["at_mm"][0], "y": slot["at_mm"][1],
+                        "shape": "oval", "drill": (w, h),
+                        "size": (w + pad_allowance(), h + pad_allowance()),
+                        "ring": None, "defaulted": True})
+    else:
+        for pad in spec.get("pads") or []:
+            w, h = pad["size_mm"]
+            drill = pad.get("drill_mm")
+            shape = pad.get("shape") or ("circle" if drill and w == h else "rect")
+            out.append({"number": str(pad["number"]), "x": pad["at_mm"][0], "y": pad["at_mm"][1],
+                        "shape": shape, "size": (w, h), "drill": drill,
+                        "ring": None, "defaulted": False})
+    for pad in out:
+        if package["view"] == "bottom":
+            pad["x"] = -pad["x"]
+        pad["x"], pad["y"] = round(pad["x"], 4) + 0.0, round(pad["y"], 4) + 0.0
+        if pad["number"] == "1" and pad["shape"] == "circle":
+            pad["shape"] = "rect"           # KiCad's convention: pin 1 is the square pad
+    return sorted(out, key=lambda p: partspec._order(p["number"]))
+
+
+def _box(pad) -> tuple[float, float, float, float]:
+    w, h = pad["size"]
+    return pad["x"] - w / 2, pad["y"] - h / 2, pad["x"] + w / 2, pad["y"] + h / 2
+
+
+def courtyard(spec: dict, pads_: list[dict]) -> tuple[float, float, float, float]:
+    """The pads' extent plus IPC-7351's nominal courtyard excess."""
+    boxes = [_box(p) for p in pads_]
+    excess = land("courtyard_excess_mm")
+    return (min(b[0] for b in boxes) - excess, min(b[1] for b in boxes) - excess,
+            max(b[2] for b in boxes) + excess, max(b[3] for b in boxes) + excess)
+
+
+def _gap(a, b) -> float:
+    """Edge-to-edge distance between two pads' copper: circles as circles,
+    everything else as its bounding rectangle (never smaller than the pad)."""
+    if a["shape"] == "circle" and b["shape"] == "circle":
+        return math.hypot(a["x"] - b["x"], a["y"] - b["y"]) - (a["size"][0] + b["size"][0]) / 2
+    if a["shape"] == "circle" or b["shape"] == "circle":
+        circle, other = (a, b) if a["shape"] == "circle" else (b, a)
+        x1, y1, x2, y2 = _box(other)
+        dx = max(x1 - circle["x"], 0, circle["x"] - x2)
+        dy = max(y1 - circle["y"], 0, circle["y"] - y2)
+        return math.hypot(dx, dy) - circle["size"][0] / 2
+    ax1, ay1, ax2, ay2 = _box(a)
+    bx1, by1, bx2, by2 = _box(b)
+    dx, dy = max(bx1 - ax2, ax1 - bx2, 0), max(by1 - ay2, ay1 - by2, 0)
+    return math.hypot(dx, dy) if dx or dy else -min(ax2 - bx1, bx2 - ax1, ay2 - by1, by2 - ay1)
+
+
+def _drill_gap(a, b) -> float:
+    def reach(pad):
+        d = pad["drill"]
+        return (max(d) if isinstance(d, tuple) else d) / 2
+    return math.hypot(a["x"] - b["x"], a["y"] - b["y"]) - reach(a) - reach(b)
+
+
+# --- checks ----------------------------------------------------------------------
+
+def _mm(value: float) -> str:
+    return f"{value:.3f}".rstrip("0").rstrip(".") if abs(value - round(value, 2)) > 1e-6 \
+        else f"{value:.2f}"
+
+
+def check(spec: dict, pads_: list[dict], profile: str = fab.PROFILE) -> tuple[list[str], list[str]]:
+    """`(problems, notes)`: a problem refuses the part; a note is reported."""
+    problems, notes = [], []
+    clearance, track = fab.value("clearance_mm", profile), fab.value("track_width_mm", profile)
+    hole_clearance = fab.value("pth_hole_clearance_mm", profile)
+    min_drill, ring_min = fab.value("via_drill_mm", profile), fab.value("annular_ring_mm", profile)
+    hole_to_hole = fab.value("hole_to_hole_mm", profile)
+    lead = (spec.get("fab") or {}).get("min_lead_mm")
+    tht = [p for p in pads_ if p["drill"] is not None]
+
+    for drill in sorted({p["drill"] for p in tht if not isinstance(p["drill"], tuple)}):
+        numbers = [p["number"] for p in tht if p["drill"] == drill]
+        which = f"pads {numbers[0]}–{numbers[-1]}" if len(numbers) > 1 else f"pad {numbers[0]}"
+        if drill < min_drill - _EPS:
+            problems.append(f"{which}: drill {_mm(drill)} mm is below {_mm(min_drill)} mm, the "
+                            f"smallest {profile} drills at the standard price")
+        if lead is not None:
+            nominal = lead + land("hole_allowance_mm")
+            if drill <= lead + _EPS:
+                problems.append(f"{which}: drill {_mm(drill)} mm is no wider than the {_mm(lead)} mm "
+                                f"lead; the pin will not go in")
+            elif drill < nominal - _EPS:
+                notes.append(f"{which}: drill {_mm(drill)} mm is tighter than IPC-7251 nominal for a "
+                             f"{_mm(lead)} mm lead ({_mm(nominal)} mm); the datasheet's value is used")
+    for pad in tht:
+        d = pad["drill"] if isinstance(pad["drill"], tuple) else (pad["drill"], pad["drill"])
+        ring = min(pad["size"][0] - d[0], pad["size"][1] - d[1]) / 2
+        if ring < ring_min - _EPS:
+            problems.append(f"pad {pad['number']}: annular ring {_mm(ring)} mm is below the fab's "
+                            f"{_mm(ring_min)} mm")
+
+    crowded, close = [], []
+    for i, a in enumerate(pads_):
+        for b in pads_[i + 1:]:
+            gap = _gap(a, b)
+            if gap < clearance - _EPS:
+                crowded.append((a, b, gap))
+            if a["drill"] is not None and b["drill"] is not None:
+                holes = _drill_gap(a, b)
+                if holes < hole_to_hole - _EPS:
+                    close.append((a, b, holes))
+    for a, b, gap in crowded[:5]:
+        why = (f"; their size is IPC-7251 nominal (drill + {_mm(pad_allowance())}): give pad_mm "
+               f"from the datasheet's recommended land pattern") if a["defaulted"] or b["defaulted"] else ""
+        apart = "overlap" if gap <= _EPS else f"are {_mm(gap)} mm apart"
+        problems.append(f"pads {a['number']} and {b['number']} {apart}; the fab needs "
+                        f"{_mm(clearance)} between them{why}")
+    if len(crowded) > 5:
+        problems.append(f"... and {len(crowded) - 5} more pad pairs closer than {_mm(clearance)} mm")
+    for a, b, holes in close[:5]:
+        apart = "their drills overlap" if holes <= _EPS else f"{_mm(holes)} mm from drill to drill"
+        problems.append(f"pads {a['number']} and {b['number']}: {apart}; the fab needs "
+                        f"{_mm(hole_to_hole)} from drill to drill")
+
+    problems += _routability(spec, pads_, track, clearance, hole_clearance)
+    return problems, notes
+
+
+def _routability(spec, pads_, track, clearance, hole_clearance) -> list[str]:
+    """Can the pads inside a through-hole ring be routed out between its pads?
+
+    A through-hole pad blocks every copper layer, so on a 2-layer board a pad
+    inside a ring leaves only through the gaps between the ring's pads. Per
+    gap, k tracks fit when both hold:
+
+        copper:  k*track + (k+1)*clearance      <= pitch - pad
+        holes:   k*track + (k-1)*clearance + 2*hole_clearance <= pitch - drill
+    """
+    package = spec["package"]
+    if package["family"] != "circular":
+        return []
+    rings = sorted(enumerate(package.get("rings") or [], start=1),
+                   key=lambda r: r[1]["diameter_mm"], reverse=True)
+    out = []
+    for index, ring in rings:
+        if ring.get("drill_mm") is None or ring["count"] < 2:
+            continue
+        inside = sum(r["count"] for _, r in rings if r["diameter_mm"] < ring["diameter_mm"])
+        if not inside:
+            continue
+        pad = next(p for p in pads_ if p["ring"] == index)
+        pitch = ring["diameter_mm"] * math.sin(math.pi / ring["count"])
+        drill, size = ring["drill_mm"], pad["size"][0]
+        by_copper = math.floor((pitch - size - clearance) / (track + clearance) + _EPS)
+        by_holes = math.floor((pitch - drill - 2 * hole_clearance + clearance) / (track + clearance) + _EPS)
+        capacity = max(0, min(by_copper, by_holes)) * ring["count"]
+        if capacity >= inside:
+            continue
+        if by_holes <= by_copper:
+            limit = (f"{_mm(pitch - drill)} mm drill to drill; one {_mm(track)} mm track needs "
+                     f"{_mm(track)} + 2 × {_mm(hole_clearance)} (the fab's hole-to-copper clearance) "
+                     f"= {_mm(track + 2 * hole_clearance)} mm there")
+        else:
+            limit = (f"{_mm(pitch - size)} mm pad to pad; one {_mm(track)} mm track needs "
+                     f"{_mm(track)} + 2 × {_mm(clearance)} (clearance) = {_mm(track + 2 * clearance)} mm")
+        out.append(f"the {inside} pads inside ring {index} (Ø{_mm(ring['diameter_mm'])} mm) cannot be "
+                   f"routed out: its neighbouring pads are {_mm(pitch)} mm apart centre to centre, "
+                   f"{limit}. Room for {capacity} track(s), {inside} needed. The ways out are the "
+                   f"human's call: smaller pads or holes if the datasheet allows them, via-in-pad, "
+                   f"more layers, or a finer fab tier -- never loosened rules")
+    return out
+
+
+# --- the footprint file ------------------------------------------------------------
+
+def _f(value: float) -> str:
+    return f"{value:.4f}".rstrip("0").rstrip(".") or "0"
+
+
+def footprint_text(spec: dict, name: str, pads_: list[dict], source: str) -> str:
+    x1, y1, x2, y2 = courtyard(spec, pads_)
+    excess = land("courtyard_excess_mm")
+    fx1, fy1, fx2, fy2 = x1 + excess, y1 + excess, x2 - excess, y2 - excess
+    sx1, sy1, sx2, sy2 = fx1 - 0.12, fy1 - 0.12, fx2 + 0.12, fy2 + 0.12
+    smd_only = all(p["drill"] is None for p in pads_)
+    font = "(effects (font (size 1 1) (thickness 0.15)))"
+    first = next((p for p in pads_ if p["number"] == "1"), pads_[0])
+    mark_y = sy1 - 0.5 if first["y"] <= (fy1 + fy2) / 2 else sy2 + 0.5
+    lines = [
+        f'(footprint "{name}" (version 20240108) (generator "{GENERATOR}") (layer "F.Cu")',
+        f'  (descr "{spec.get("description", spec["mpn"])}; {spec.get("manufacturer", "")} '
+        f'{spec["mpn"]}; made by make_part from {source}")',
+        f'  (attr {"smd" if smd_only else "through_hole"})',
+        f'  (fp_text reference "REF**" (at 0 {_f(sy1 - 1.5)}) (layer "F.SilkS") {font})',
+        f'  (fp_text value "{spec["mpn"]}" (at 0 {_f(sy2 + 1.5)}) (layer "F.Fab") {font})',
+        f'  (fp_text user "${{REFERENCE}}" (at 0 0) (layer "F.Fab") {font})',
+        f'  (fp_rect (start {_f(x1)} {_f(y1)}) (end {_f(x2)} {_f(y2)}) '
+        f'(stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))',
+        f'  (fp_rect (start {_f(fx1)} {_f(fy1)}) (end {_f(fx2)} {_f(fy2)}) '
+        f'(stroke (width 0.1) (type solid)) (fill none) (layer "F.Fab"))',
+        f'  (fp_rect (start {_f(sx1)} {_f(sy1)}) (end {_f(sx2)} {_f(sy2)}) '
+        f'(stroke (width 0.12) (type solid)) (fill none) (layer "F.SilkS"))',
+        f'  (fp_circle (center {_f(first["x"])} {_f(mark_y)}) (end {_f(first["x"] + 0.25)} {_f(mark_y)}) '
+        f'(stroke (width 0.12) (type solid)) (fill solid) (layer "F.SilkS"))',
+    ]
+    for p in pads_:
+        at, size = f'(at {_f(p["x"])} {_f(p["y"])})', f'(size {_f(p["size"][0])} {_f(p["size"][1])})'
+        if p["drill"] is None:
+            extra = " (roundrect_rratio 0.25)" if p["shape"] == "roundrect" else ""
+            lines.append(f'  (pad "{p["number"]}" smd {p["shape"]} {at} {size} '
+                         f'(layers "F.Cu" "F.Paste" "F.Mask"){extra})')
+        else:
+            drill = (f'(drill oval {_f(p["drill"][0])} {_f(p["drill"][1])})'
+                     if isinstance(p["drill"], tuple) else f'(drill {_f(p["drill"])})')
+            extra = " (roundrect_rratio 0.25)" if p["shape"] == "roundrect" else ""
+            lines.append(f'  (pad "{p["number"]}" thru_hole {p["shape"]} {at} {size} {drill} '
+                         f'(layers "*.Cu" "*.Mask"){extra})')
+    return "\n".join(lines) + "\n)\n"
+
+
+def _render(library: pathlib.Path, name: str, target: pathlib.Path) -> str | None:
+    """`<name>.footprint.svg` beside the spec, pad numbers drawn; why not, or None."""
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            done = subprocess.run(
+                ["kicad-cli", "fp", "export", "svg", "--footprint", name, "--sketch-pads-on-fab-layers",
+                 "--layers", "F.Cu,F.SilkS,F.Fab,F.CrtYd", "-o", tmp, str(library)],
+                capture_output=True, text=True, timeout=service.TIMEOUT)
+        except subprocess.TimeoutExpired:
+            return "the render timed out"
+        made = pathlib.Path(tmp) / f"{name}.svg"
+        if done.returncode != 0 or not made.is_file():
+            return f"the render failed: {(done.stdout + done.stderr).strip()[-200:]}"
+        if target.is_symlink():
+            target.unlink()
+        shutil.copyfile(made, target)
+    return None
+
+
+def make_part(spec_path: str) -> str:
+    spec, problems = partspec.load(spec_path)
+    if spec is None or problems:
+        return "REFUSED:\n" + "\n".join(f"- {p}" for p in problems)
+    name = spec.get("name") or re.sub(r"[^A-Za-z0-9_.-]", "_", spec["mpn"])
+    if not _NAME.match(name):
+        return f"REFUSED:\n- name {name!r} must be a plain name (letters, digits, _ . -)"
+    try:
+        library = paths.inside(f"fp/{spec['library']}.pretty")
+        target = library / f"{name}.kicad_mod"
+        spec_file = paths.inside(spec_path)
+        render = paths.inside(paths.rel(spec_file.parent) + f"/{name}.footprint.svg"
+                              if spec_file.parent != paths.WORKSPACE else f"{name}.footprint.svg")
+    except ValueError as error:
+        return f"REFUSED:\n- {error}"
+
+    pads_ = pads(spec)
+    problems, notes = check(spec, pads_)
+    if target.is_symlink() or (target.exists() and GENERATOR not in target.read_text(errors="replace")):
+        problems.append(f"{paths.rel(target)} exists and was not made by make_part; move it or "
+                        f"give the spec another name")
+    if problems:
+        return "REFUSED:\n" + "\n".join(f"- {p}" for p in problems)
+
+    library.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=library, suffix=".tmp")
+    with os.fdopen(fd, "w") as f:
+        f.write(footprint_text(spec, name, pads_, paths.rel(spec_file)))
+    os.replace(tmp, target)
+    rendered = _render(library, name, render)
+
+    tht = [p for p in pads_ if p["drill"] is not None]
+    x1, y1, x2, y2 = courtyard(spec, pads_)
+    lines = [f"MADE {paths.rel(target)} (use footprint=\"{spec['library']}:{name}\")",
+             f"  {len(pads_)} pads: {len(tht)} through-hole, {len(pads_) - len(tht)} SMD",
+             f"  courtyard {_mm(x2 - x1)} x {_mm(y2 - y1)} mm (IPC-7351 nominal excess "
+             f"{_mm(land('courtyard_excess_mm'))} mm)",
+             f"  checked against {fab.PROFILE}: drills, annular rings, pad and hole clearances"
+             + (", routability" if spec["package"]["family"] == "circular" else "")]
+    lines.append(f"  render: {paths.rel(render)} -- compare it with the datasheet page, pad numbers "
+                 f"and pin 1 included" if rendered is None else f"  no render: {rendered}")
+    if notes:
+        lines += ["Notes:"] + [f"  - {n}" for n in notes]
+    unknown = partspec.unknowns(spec)
+    if unknown or not spec.get("verified"):
+        lines.append("Parts awaiting your verification (tell the human in the final answer):")
+        lines += [f"  - {u}" for u in unknown] or ["  - not yet checked against the datasheet by a person"]
+    return "\n".join(lines)
