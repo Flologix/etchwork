@@ -389,3 +389,9 @@ def test_a_step_that_times_out_is_a_runtime_error(workspace, monkeypatch):
     monkeypatch.setattr(service, "TIMEOUT", 0.01)
     with pytest.raises(RuntimeError, match="the 'drc' step timed out"):
         service.call("drc", {"board": "b.kicad_pcb"})
+
+
+def test_the_zone_step_reads_its_answer_past_kicads_chatter(workspace, monkeypatch):
+    monkeypatch.setattr(service, "python",
+                        lambda *a: (0, '{"zones": 2}\nsome KiCad chatter on stderr'))
+    assert service.call("zone", {"board": "b.kicad_pcb"})["zones"] == 2

@@ -381,6 +381,18 @@ def python(script: str, *args: str) -> tuple[int, str]:
     return done.returncode, (done.stdout + done.stderr).strip()
 
 
+def last_json(code: int, out: str, step: str) -> dict:
+    """The JSON answer a snippet printed, read past KiCad's chatter."""
+    if code != 0:
+        raise RuntimeError(f"{step} failed: {out[-400:]}")
+    # stdout comes first and KiCad's stderr chatter after it, so the answer is
+    # the last line that is a JSON object, not simply the last line.
+    answer = next((line for line in reversed(out.splitlines()) if line.startswith("{")), None)
+    if answer is None:
+        raise RuntimeError(f"{step} printed no result: {out[-400:]}")
+    return json.loads(answer)
+
+
 def build_board(netlist: str, out: str, fp_libs: list[str]) -> dict:
     """A KiCad netlist becomes a board with every footprint on it, unplaced.
 
@@ -679,7 +691,7 @@ def _call(kind: str, request: dict) -> dict:
             str(request.get("inset_mm", 0.5)))
         if code != 0:
             raise ValueError(out.strip().splitlines()[-1])
-        return {"board": request["board"], **json.loads(out.strip().splitlines()[-1])}
+        return {"board": request["board"], **last_json(code, out, "the pour")}
     if kind == "fab":
         return export_fab(
             request["board"],

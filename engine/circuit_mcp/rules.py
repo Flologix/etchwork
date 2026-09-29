@@ -115,17 +115,6 @@ print(json.dumps({"widened": widened, "solid": solid}))
 """
 
 
-def _last_json(code: int, out: str, step: str) -> dict:
-    if code != 0:
-        raise RuntimeError(f"{step} failed: {out[-400:]}")
-    # stdout comes first and KiCad's stderr chatter after it, so the answer is
-    # the last line that is a JSON object, not simply the last line.
-    answer = next((line for line in reversed(out.splitlines()) if line.startswith("{")), None)
-    if answer is None:
-        raise RuntimeError(f"{step} printed no result: {out[-400:]}")
-    return json.loads(answer)
-
-
 def applied_path(netclasses: pathlib.Path) -> pathlib.Path:
     """`<stem>.netclasses.applied.json`, beside the netclasses file."""
     return netclasses.with_suffix(".applied.json")
@@ -146,7 +135,7 @@ def apply_netclasses(board: str, netclasses: str) -> dict:
     source = paths.inside(netclasses)
     code, out = service.python(
         _NETCLASSES, str(paths.inside(board)), str(source), str(NECK_FLOOR_MM))
-    result = _last_json(code, out, "applying net classes")
+    result = service.last_json(code, out, "applying net classes")
     applied = result.pop("applied", {})
     applied_path(source).write_text(json.dumps(applied, indent=2, sort_keys=True) + "\n")
     return result
@@ -154,7 +143,7 @@ def apply_netclasses(board: str, netclasses: str) -> dict:
 
 def finish(board: str, pour_net: str = "GND") -> dict:
     code, out = service.python(_FINISH, str(paths.inside(board)), pour_net, str(NECK_FLOOR_MM))
-    return _last_json(code, out, "finishing the board")
+    return service.last_json(code, out, "finishing the board")
 
 
 # Exactly the pads named, by uuid -- a pad's KIID is what KiCad's DRC report
@@ -188,4 +177,4 @@ def solid_pads(board: str, uuids: list[str]) -> dict:
     it easy to hand-solder.
     """
     code, out = service.python(_SOLID_PADS, str(paths.inside(board)), json.dumps(list(uuids)))
-    return _last_json(code, out, "making pads solid")
+    return service.last_json(code, out, "making pads solid")
