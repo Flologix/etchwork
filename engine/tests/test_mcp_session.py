@@ -134,3 +134,23 @@ def test_malformed_arguments_are_protocol_errors(tmp_path):
         assert result.isError, (tool, args, result.content[0].text[:200])
         assert "validation error" in result.content[0].text, (tool, args)
     assert after == EXPECTED
+
+
+def test_every_call_through_the_server_is_one_event(tmp_path):
+    """The local event log (flywheel design §5), end to end: the server
+    records every tool it runs, in the project, and the answers are unchanged."""
+    import json
+
+    workspace, _ = _project(tmp_path)
+    calls = [("netlist_nets", {"netlist": "board.net"}),
+             ("describe_board", {"board": "board.kicad_pcb"}),
+             ("run_drc", {"board": "../outside.kicad_pcb"})]
+
+    results, _ = _session(workspace, calls)
+
+    lines = (workspace / ".etchwork" / "events.jsonl").read_text().splitlines()
+    logged = [json.loads(line) for line in lines]
+    assert [e["tool"] for e in logged] == [name for name, _ in calls]
+    assert [e["seq"] for e in logged] == [1, 2, 3]
+    assert len({e["session"] for e in logged}) == 1
+    assert [e["chars"] for e in logged] == [len(r.content[0].text) for r in results]
