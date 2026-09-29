@@ -33,6 +33,19 @@ PIN_TYPES = ("input", "output", "bidirectional", "tri_state", "passive", "free",
              "unspecified", "power_in", "power_out", "open_collector", "open_emitter",
              "no_connect")
 _LIBRARY = re.compile(r"^[A-Za-z0-9_-][A-Za-z0-9_.-]*$")
+_NAME = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*$")
+# The symbol's reference prefix: J for a connector, U for an IC, and so on.
+_REFERENCE = re.compile(r"^[A-Z]{1,4}$")
+
+
+def footprint_name(data: dict) -> str:
+    """The footprint's and symbol's name: `name`, or the MPN made file-safe."""
+    return data.get("name") or re.sub(r"[^A-Za-z0-9_.-]", "_", str(data.get("mpn", "")))
+
+
+def footprint_id(data: dict) -> str:
+    """`<library>:<name>`, as a netlist names the footprint."""
+    return f"{data.get('library')}:{footprint_name(data)}"
 
 
 def load(spec: str) -> tuple[dict | None, list[str]]:
@@ -167,6 +180,13 @@ def problems(data: dict) -> list[str]:
             and not _LIBRARY.match(data["library"]):
         out.append(f"library {data['library']!r} must be a plain name (letters, digits, _ . -); "
                    f"it becomes fp/<library>.pretty/")
+    if "name" in data and not (isinstance(data["name"], str) and _NAME.match(data["name"])):
+        out.append(f"name {data['name']!r} must be a plain name (letters, digits, _ . -)")
+    if "reference" in data and not (isinstance(data["reference"], str)
+                                    and _REFERENCE.match(data["reference"])):
+        out.append(f"reference {data['reference']!r} must be 1-4 capital letters, like J or U")
+    if "verified" in data and not (isinstance(data["verified"], str) and data["verified"].strip()):
+        out.append("verified must say who checked the part against the datasheet, and when")
     if isinstance(data.get("datasheet"), str) and data["datasheet"].strip():
         try:
             if not paths.inside(data["datasheet"]).is_file():
@@ -253,4 +273,29 @@ def problems(data: dict) -> list[str]:
             out.append(f"pad {number} has no pin")
         for number in sorted(pinset - pads, key=_order):
             out.append(f"pin {number} has no pad")
+    return out
+
+
+def awaiting(netlist_text: str) -> list[str]:
+    """The parts on this board that make_part built and no human has verified,
+    one Markdown line each, with what the datasheet did not state.
+
+    Datasheet-parts design §5.4. Listed by check_done and the README next to
+    the nets awaiting a decision; they do not block DONE (§10.3), and a human
+    clears one by setting `verified = "<name>, <date>"` in its spec.
+    """
+    try:
+        folder = paths.inside("parts")
+    except ValueError:
+        return []
+    out = []
+    for path in sorted(folder.glob("*.part.toml")) if folder.is_dir() else []:
+        spec, problems = load(paths.rel(path)) if path.is_file() else (None, ["?"])
+        if spec is None or problems or spec.get("verified"):
+            continue
+        used = footprint_id(spec)
+        if f'(footprint "{used}")' not in netlist_text:
+            continue
+        doubts = unknowns(spec) or ["not yet checked against the datasheet by a person"]
+        out.append(f"- **{used}** ({paths.rel(path)}): " + "; ".join(doubts))
     return out

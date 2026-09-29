@@ -19,8 +19,13 @@ gives it (drill_mm, pad_mm, an explicit pad list). What it leaves out is
 IPC nominal (density level B; land_patterns.toml), and a datasheet value
 tighter than nominal is reported, not overridden.
 
-Writes only on success, and only over a footprint make_part wrote itself: a
-hand-drawn one (the live run's) is never replaced.
+It writes the part's symbol too (§5.2, step 3), into symbols/<library>.kicad_sym
+beside the footprint: supply pins on top, ground at the bottom, the rest down
+the sides in pin order.
+
+Writes only on success, and only over files make_part wrote itself: a
+hand-drawn footprint (the live run's) or a symbol library someone else made is
+never replaced.
 """
 import math
 import os
@@ -241,6 +246,113 @@ def _routability(spec, pads_, track, clearance, hole_clearance) -> list[str]:
     return out
 
 
+# --- the symbol --------------------------------------------------------------------
+
+_GROUND = re.compile(r"^(A|D|P|S)?GND\d*$|^VSS\w*$|^GROUND$|^0V$|^VEE$", re.I)
+_GRID = 2.54
+
+
+def _pin_line(pin, x, y, angle) -> str:
+    font = "(effects (font (size 1.27 1.27)))"
+    return (f'\t\t\t(pin {pin["type"]} line (at {_f(x)} {_f(y)} {angle}) (length {_GRID}) '
+            f'(name "{pin["name"]}" {font}) (number "{partspec._pin(pin["number"])}" {font}))')
+
+
+def symbol_text(spec: dict, name: str) -> str:
+    """The part's symbol as one top-level block of a `.kicad_sym`."""
+    pins = sorted(spec["pins"], key=lambda p: partspec._order(partspec._pin(p["number"])))
+    ground = [p for p in pins if _GROUND.match(p["name"])]
+    supply = [p for p in pins if p["type"] in ("power_in", "power_out") and p not in ground]
+    rest = [p for p in pins if p not in ground and p not in supply]
+    half = math.ceil(len(rest) / 2)
+    left, right = rest[:half], rest[half:]
+    rows = max(len(left), len(right), 1)
+    # Top and bottom pins' names are drawn inside the body, running down from
+    # the edge: the side pins start below them, so the two never overlap.
+    def room(row):
+        return math.ceil((max(len(p["name"]) for p in row) * 1.0 + 1.5) / _GRID) if row else 0
+    above, below = room(supply), room(ground)
+    total = above + rows + below
+    top_y = math.ceil((total + 1) / 2) * _GRID
+    bottom_y = top_y - (total + 1) * _GRID
+    longest = max([len(p["name"]) for p in left] + [0]) + max([len(p["name"]) for p in right] + [0])
+    across = max(len(supply), len(ground), 1) * _GRID
+    width = max(3 * _GRID, math.ceil((longest * 1.0 + 2 * _GRID) / (2 * _GRID)) * 2 * _GRID,
+                math.ceil((across + _GRID) / (2 * _GRID)) * 2 * _GRID)
+    edge = width / 2
+    font = "(effects (font (size 1.27 1.27)))"
+    hidden = "(effects (font (size 1.27 1.27)) (hide yes))"
+    out = [f'\t(symbol "{name}"',
+           '\t\t(pin_names (offset 1.016))',
+           '\t\t(exclude_from_sim no) (in_bom yes) (on_board yes)',
+           f'\t\t(property "Reference" "{spec.get("reference", "U")}" (at 0 {_f(top_y + 2 * _GRID)} 0) {font})',
+           f'\t\t(property "Value" "{spec["mpn"]}" (at 0 {_f(bottom_y - 2 * _GRID)} 0) {font})',
+           f'\t\t(property "Footprint" "{spec["library"]}:{name}" (at 0 0 0) {hidden})',
+           f'\t\t(property "Datasheet" "{spec.get("datasheet", "")}" (at 0 0 0) {hidden})',
+           f'\t\t(property "Description" "{spec.get("description", spec["mpn"])}" (at 0 0 0) {hidden})',
+           f'\t\t(symbol "{name}_0_1"',
+           f'\t\t\t(rectangle (start {_f(-edge)} {_f(top_y)}) (end {_f(edge)} {_f(bottom_y)}) '
+           f'(stroke (width 0.254) (type default)) (fill (type background)))',
+           '\t\t)',
+           f'\t\t(symbol "{name}_1_1"']
+    for i, pin in enumerate(left):
+        out.append(_pin_line(pin, -edge - _GRID, top_y - (above + i + 1) * _GRID, 0))
+    for i, pin in enumerate(right):
+        out.append(_pin_line(pin, edge + _GRID, top_y - (above + i + 1) * _GRID, 180))
+    for row, y, angle in ((supply, top_y + _GRID, 270), (ground, bottom_y - _GRID, 90)):
+        for i, pin in enumerate(row):
+            out.append(_pin_line(pin, (i - (len(row) - 1) / 2) * _GRID, y, angle))
+    out += ['\t\t)', '\t)']
+    return "\n".join(out)
+
+
+def _top_level_symbols(text: str) -> list[tuple[str, str]]:
+    """`(name, block)` for each top-level `(symbol ...)` of a library file,
+    read to its closing parenthesis (quoted strings skipped)."""
+    out = []
+    for opener in re.finditer(r'^\t\(symbol "([^"]+)"', text, re.M):
+        depth, i, quoted = 0, opener.start() + 1, False
+        while i < len(text):
+            c = text[i]
+            if quoted:
+                if c == "\\":
+                    i += 1
+                elif c == '"':
+                    quoted = False
+            elif c == '"':
+                quoted = True
+            elif c == "(":
+                depth += 1
+            elif c == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        out.append((opener.group(1), text[opener.start():i + 1]))
+    return out
+
+
+def library_text(existing: str | None, name: str, block: str) -> str:
+    """The library with `block` in place of `name`'s symbol, or added."""
+    symbols = _top_level_symbols(existing) if existing else []
+    if any(n == name for n, _ in symbols):
+        symbols = [(n, block if n == name else b) for n, b in symbols]
+    else:
+        symbols.append((name, block))
+    return "\n".join(["(kicad_symbol_lib", "\t(version 20241209)", f'\t(generator "{GENERATOR}")',
+                      '\t(generator_version "1")', *(b for _, b in symbols), ")"]) + "\n"
+
+
+def _ours(path: pathlib.Path) -> str | None:
+    """None when make_part may write `path`, else why not."""
+    if path.is_symlink():
+        return f"{paths.rel(path.parent)}/{path.name} is a symlink; make_part never writes through one"
+    if path.exists() and f'generator "{GENERATOR}"' not in path.read_text(errors="replace")[:400]:
+        return (f"{paths.rel(path)} exists and was not made by make_part; move it or give the "
+                f"spec another library")
+    return None
+
+
 # --- the footprint file ------------------------------------------------------------
 
 def _f(value: float) -> str:
@@ -288,18 +400,17 @@ def footprint_text(spec: dict, name: str, pads_: list[dict], source: str) -> str
     return "\n".join(lines) + "\n)\n"
 
 
-def _render(library: pathlib.Path, name: str, target: pathlib.Path) -> str | None:
-    """`<name>.footprint.svg` beside the spec, pad numbers drawn; why not, or None."""
+def _render(command: list[str], target: pathlib.Path) -> str | None:
+    """Run a kicad-cli export into a temp folder and keep its SVG as `target`;
+    why not, or None."""
     with tempfile.TemporaryDirectory() as tmp:
         try:
-            done = subprocess.run(
-                ["kicad-cli", "fp", "export", "svg", "--footprint", name, "--sketch-pads-on-fab-layers",
-                 "--layers", "F.Cu,F.SilkS,F.Fab,F.CrtYd", "-o", tmp, str(library)],
-                capture_output=True, text=True, timeout=service.TIMEOUT)
+            done = subprocess.run([*command[:-1], "-o", tmp, command[-1]],
+                                  capture_output=True, text=True, timeout=service.TIMEOUT)
         except subprocess.TimeoutExpired:
             return "the render timed out"
-        made = pathlib.Path(tmp) / f"{name}.svg"
-        if done.returncode != 0 or not made.is_file():
+        made = next(iter(sorted(pathlib.Path(tmp).glob("*.svg"))), None)
+        if done.returncode != 0 or made is None:
             return f"the render failed: {(done.stdout + done.stderr).strip()[-200:]}"
         if target.is_symlink():
             target.unlink()
@@ -311,15 +422,17 @@ def make_part(spec_path: str) -> str:
     spec, problems = partspec.load(spec_path)
     if spec is None or problems:
         return "REFUSED:\n" + "\n".join(f"- {p}" for p in problems)
-    name = spec.get("name") or re.sub(r"[^A-Za-z0-9_.-]", "_", spec["mpn"])
+    name = partspec.footprint_name(spec)
     if not _NAME.match(name):
         return f"REFUSED:\n- name {name!r} must be a plain name (letters, digits, _ . -)"
     try:
         library = paths.inside(f"fp/{spec['library']}.pretty")
         target = library / f"{name}.kicad_mod"
+        symbols = paths.inside(f"symbols/{spec['library']}.kicad_sym")
         spec_file = paths.inside(spec_path)
-        render = paths.inside(paths.rel(spec_file.parent) + f"/{name}.footprint.svg"
-                              if spec_file.parent != paths.WORKSPACE else f"{name}.footprint.svg")
+        beside = "" if spec_file.parent == paths.WORKSPACE else paths.rel(spec_file.parent) + "/"
+        render = paths.inside(f"{beside}{name}.footprint.svg")
+        symbol_render = paths.inside(f"{beside}{name}.symbol.svg")
     except ValueError as error:
         return f"REFUSED:\n- {error}"
 
@@ -328,6 +441,8 @@ def make_part(spec_path: str) -> str:
     if target.is_symlink() or (target.exists() and GENERATOR not in target.read_text(errors="replace")):
         problems.append(f"{paths.rel(target)} exists and was not made by make_part; move it or "
                         f"give the spec another name")
+    if (why := _ours(symbols)) is not None:
+        problems.append(why)
     if problems:
         return "REFUSED:\n" + "\n".join(f"- {p}" for p in problems)
 
@@ -336,11 +451,22 @@ def make_part(spec_path: str) -> str:
     with os.fdopen(fd, "w") as f:
         f.write(footprint_text(spec, name, pads_, paths.rel(spec_file)))
     os.replace(tmp, target)
-    rendered = _render(library, name, render)
+    symbols.parent.mkdir(parents=True, exist_ok=True)
+    existing = symbols.read_text(errors="replace") if symbols.is_file() else None
+    fd, tmp = tempfile.mkstemp(dir=symbols.parent, suffix=".tmp")
+    with os.fdopen(fd, "w") as f:
+        f.write(library_text(existing, name, symbol_text(spec, name)))
+    os.replace(tmp, symbols)
+    rendered = _render(["kicad-cli", "fp", "export", "svg", "--footprint", name,
+                        "--sketch-pads-on-fab-layers", "--layers", "F.Cu,F.SilkS,F.Fab,F.CrtYd",
+                        str(library)], render)
+    symbol_rendered = _render(["kicad-cli", "sym", "export", "svg", "--symbol", name,
+                               str(symbols)], symbol_render)
 
     tht = [p for p in pads_ if p["drill"] is not None]
     x1, y1, x2, y2 = courtyard(spec, pads_)
-    lines = [f"MADE {paths.rel(target)} (use footprint=\"{spec['library']}:{name}\")",
+    lines = [f"MADE {paths.rel(target)} and its symbol in {paths.rel(symbols)}",
+             f"  use it as Part(\"{spec['library']}\", \"{name}\", footprint=\"{spec['library']}:{name}\")",
              f"  {len(pads_)} pads: {len(tht)} through-hole, {len(pads_) - len(tht)} SMD",
              f"  courtyard {_mm(x2 - x1)} x {_mm(y2 - y1)} mm (IPC-7351 nominal excess "
              f"{_mm(land('courtyard_excess_mm'))} mm)",
@@ -348,6 +474,8 @@ def make_part(spec_path: str) -> str:
              + (", routability" if spec["package"]["family"] == "circular" else "")]
     lines.append(f"  render: {paths.rel(render)} -- compare it with the datasheet page, pad numbers "
                  f"and pin 1 included" if rendered is None else f"  no render: {rendered}")
+    lines.append(f"  symbol render: {paths.rel(symbol_render)}" if symbol_rendered is None
+                 else f"  no symbol render: {symbol_rendered}")
     if notes:
         lines += ["Notes:"] + [f"  - {n}" for n in notes]
     unknown = partspec.unknowns(spec)

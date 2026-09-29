@@ -729,6 +729,17 @@ def export_gerbers(board: str, out: str | None = None) -> str:
     return "\n".join(lines)
 
 
+# The agent's script as `python3 <script>` would run it -- itself as __main__,
+# its own folder first on sys.path -- after parts.SKIDL_PRELUDE has put the
+# project's symbols/ on SKiDL's search path.
+_RUN_SCRIPT = parts.SKIDL_PRELUDE + r"""
+import runpy as _runpy, sys as _sys
+_sys.argv = _sys.argv[1:]
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(_sys.argv[0])))
+_runpy.run_path(_sys.argv[0], run_name="__main__")
+"""
+
+
 def run_skidl(script: str) -> str:
     """Run a SKiDL design script in the project folder and report what it produced."""
     try:
@@ -743,7 +754,7 @@ def run_skidl(script: str) -> str:
     # what this container's overlay filesystem provides.
     before = {p: p.stat().st_mtime for p in paths.WORKSPACE.glob("*.net")}
     try:
-        done = subprocess.run(["python3", str(target)], cwd=paths.WORKSPACE,
+        done = subprocess.run(["python3", "-c", _RUN_SCRIPT, str(target)], cwd=paths.WORKSPACE,
                               capture_output=True, text=True, timeout=service.TIMEOUT,
                               env=service.script_env())
     except subprocess.TimeoutExpired:

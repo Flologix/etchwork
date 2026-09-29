@@ -13,7 +13,7 @@ an auto-poke is always safe.
 import json
 import pathlib
 
-from circuit_mcp import kicad, kicad_lib, paths, schematic, summary, tools
+from circuit_mcp import kicad, kicad_lib, partspec, paths, schematic, summary, tools
 
 
 def _older(path: pathlib.Path, board: pathlib.Path) -> bool:
@@ -92,6 +92,15 @@ def _schematic(netlist: pathlib.Path) -> list[str]:
     return []
 
 
+def _parts_awaiting(source: pathlib.Path) -> list[str]:
+    """Parts make_part built for this board that no human has verified."""
+    lines = partspec.awaiting(source.read_text(errors="replace"))
+    if not lines:
+        return []
+    return ["Parts awaiting your verification (made from a datasheet; put these in your "
+            "final answer):", *lines]
+
+
 def _flagged(source: pathlib.Path) -> list[str]:
     _, review, _ = summary._classes(source)
     if not review:
@@ -159,4 +168,5 @@ def check_done(netlist: str, board: str | None = None) -> str:
         *_facts(path, text),
         "Nets awaiting the human's decision (put these in your final answer):",
         *_flagged(source),
+        *_parts_awaiting(source),
     ])

@@ -18,7 +18,7 @@ import sys
 import tempfile
 from collections import Counter
 
-from circuit_mcp import kicad_lib, paths, service
+from circuit_mcp import kicad_lib, parts, paths, service
 
 # KiCad's library-configuration warnings: the container has no sym-lib-table
 # on KiCad's search path, so every symbol and footprint draws one. Noise on
@@ -216,6 +216,7 @@ def problems(sch: pathlib.Path, netlist: pathlib.Path) -> list[str]:
 # the same across runs of the same seed.
 DRIVER = r"""
 import builtins, os, runpy, sys
+SKIDL_PRELUDE = __SKIDL_PRELUDE__
 import skidl
 from skidl import Part, Pin
 
@@ -227,6 +228,7 @@ for name in ("generate_netlist", "generate_schematic", "generate_pcb"):
     setattr(skidl, name, noop)
     setattr(skidl.Circuit, name, noop)
 sys.path.insert(0, os.path.dirname(os.path.abspath(script)))
+exec(SKIDL_PRELUDE)
 runpy.run_path(script, run_name="__main__")
 print("\ncircuit built " + nonce, flush=True)
 
@@ -246,6 +248,9 @@ print("power flags: " + (", ".join(sorted(flagged)) or "none"))
 draw(builtins.default_circuit, filepath=".", top_name=stem, title=stem, flatness=1.0,
      auto_stub=True, seed=seed)
 """
+
+# The project's symbols/ on SKiDL's search path, as run_skidl has it.
+DRIVER = DRIVER.replace("__SKIDL_PRELUDE__", repr(parts.SKIDL_PRELUDE))
 
 # Tried in order (see the note above DRIVER); any fixed values work, these
 # are not otherwise significant.

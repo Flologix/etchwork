@@ -94,11 +94,65 @@ def _terms(needle: str) -> tuple[str, list[str]]:
     return needle, [w for w in needle.split() if len(w) > 1]
 
 
+# --- symbol libraries: KiCad's, and the project's own --------------------------
+#
+# The datasheet-parts design, section 5.3: a part make_part builds gets its own
+# symbol in `symbols/<Library>.kicad_sym`, used as Part("<Library>", "<Name>").
+# The same rules as fp/ for footprints: the project's library is found first
+# and replaces KiCad's of the same name, and a symlink out of the project is
+# not a library of this project.
+
+PROJECT_SYMBOLS = "symbols"
+
+
+def project_symbol_libraries() -> list[pathlib.Path]:
+    """The project's own symbol libraries: `symbols/*.kicad_sym` inside it."""
+    try:
+        folder = paths.inside(PROJECT_SYMBOLS)
+    except ValueError:
+        return []
+    if not folder.is_dir():
+        return []
+    libraries = []
+    for library in sorted(folder.glob("*.kicad_sym")):
+        try:
+            resolved = paths.inside(f"{PROJECT_SYMBOLS}/{library.name}")
+        except ValueError:
+            continue
+        if resolved.is_file():
+            libraries.append(resolved)
+    return libraries
+
+
+def symbol_libraries() -> dict[str, pathlib.Path]:
+    """Every symbol library by name: KiCad's, then the project's, which
+    replaces one of KiCad's with the same name (SKiDL searches it first)."""
+    libraries = {}
+    root = paths.SYMBOL_ROOT
+    for library in sorted(root.glob("*.kicad_sym")) if root.is_dir() else []:
+        libraries[library.stem] = library
+    for library in project_symbol_libraries():
+        libraries[library.stem] = library
+    return libraries
+
+
+# Run before the agent's own script (run_skidl, export_schematic's driver):
+# SKiDL searches ['.', KiCad's symbols], and the project's symbols/ goes
+# right after '.', ahead of KiCad's -- the order symbol_libraries() answers in.
+SKIDL_PRELUDE = r"""
+import os as _os, skidl as _skidl
+_symbols = _os.path.realpath("symbols")
+if _os.path.isdir(_symbols) and _symbols.startswith(_os.path.realpath(".") + _os.sep):
+    for _tool, _paths in _skidl.lib_search_paths.items():
+        if _tool.startswith("kicad") and _symbols not in _paths:
+            _paths.insert(1 if _paths[:1] == ["."] else 0, _symbols)
+"""
+
+
 def _search_symbols(needle: str, words: list[str] | None = None) -> list[str]:
     query, words = (needle, words) if words is not None else _terms(needle)
     scored = []
-    root = paths.SYMBOL_ROOT
-    for path in sorted(root.glob("*.kicad_sym")) if root.is_dir() else []:
+    for path in sorted(symbol_libraries().values(), key=lambda p: p.stem):
         text = path.read_text(errors="replace")
         for name, block in _symbol_blocks(text):
             keywords = re.search(_PROPERTY.format("ki_keywords"), block)
@@ -289,10 +343,6 @@ def unresolved_footprints(netlist_text: str, libraries) -> list[str]:
 # wrong.
 
 
-def _symbol_root():
-    return paths.SYMBOL_ROOT
-
-
 def _not_a_name(wanted: str) -> str | None:
     """Why `wanted` cannot be a `Library:Part`, or None when it can.
 
@@ -329,13 +379,14 @@ def describe_part(symbol: str) -> str:
     if refused := _not_a_name(wanted):
         return refused
     library, _, name = wanted.rpartition(":")
-    root = _symbol_root()
-    matches = _inside(sorted(root.glob(f"{library}.kicad_sym" if library
-                                       else "*.kicad_sym"))) if root.is_dir() else []
+    libraries = symbol_libraries()
+    searched = [libraries[library]] if library in libraries else [] if library \
+        else [libraries[n] for n in sorted(libraries)]
+    matches = _inside(searched)
     if not matches:
-        where = f"{library}.kicad_sym" if library else "symbols/"
-        return (f"no {where} among KiCad's symbol libraries. find_part "
-                f"searches them by what a part IS.")
+        where = f"{library}.kicad_sym" if library else "symbol library"
+        return (f"no {where} among KiCad's symbol libraries or the project's symbols/. "
+                f"find_part searches them by what a part IS.")
 
     misses = []
     for path in matches:
@@ -377,8 +428,10 @@ def _functions(library: str, found) -> dict[str, tuple[str, ...]]:
 
 
 @functools.lru_cache(maxsize=256)
-def _part_pins(root: str, library: str, symbol: str):
-    path = pathlib.Path(root) / f"{library}.kicad_sym"
+def _part_pins(where: str, stamp: int, library: str, symbol: str):
+    """Cached per file and modification time: make_part rewrites the
+    project's symbol libraries, and a stale answer would name old pins."""
+    path = pathlib.Path(where)
     if not path.is_file() or not _inside([path]):
         return None
     found = kicad_lib.read_symbol(path.read_text(errors="replace"), symbol, library=library)
@@ -397,7 +450,10 @@ def pin_lookup(library: str, symbol: str):
     """
     if _not_a_name(f"{library}:{symbol}"):
         return None
-    return _part_pins(str(_symbol_root()), library, symbol)
+    path = symbol_libraries().get(library)
+    if path is None:
+        return None
+    return _part_pins(str(path), path.stat().st_mtime_ns, library, symbol)
 
 
 def _render_symbol(found, functions: dict[str, tuple[str, ...]] | None = None) -> str:
