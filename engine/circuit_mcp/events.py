@@ -47,9 +47,14 @@ _OUTCOMES = (("NOT DONE", "not_done"), ("DONE", "done"), ("PASS", "pass"),
              ("FAIL", "fail"), ("REFUSED", "refused"),
              ("SCHEMATIC NOT AVAILABLE", "unavailable"))
 # Most refusals and failures are not prefixed, so their wording is matched on
-# the answer's first line. `refused`: the tool declined the request and did
-# nothing. `failed`: it tried, and a step of it failed. A test run on
+# the answer's first line. `not_found`: a lookup found nothing. `refused`: the
+# tool declined the request and did nothing. `failed`: it tried, and a step of
+# it failed. A test run on
 # 2026-09-28 logged three layout refusals and failures as "ok" before these.
+# A live run (2026-09-28) logged seven "no footprint ... here" answers as "ok".
+_NOT_FOUND = re.compile("|".join([
+    r"^no footprint ", r"^no symbol ", r"^no \S+ among KiCad", r"^nothing matching ",
+]))
 _REFUSED = re.compile("|".join([
     r"^nothing to place", r"^these footprints cannot be resolved", r"^unknown design rule",
     r"must be a length in millimetres", r"^arrange (must be|op \d+)", r"^each op must be",
@@ -76,6 +81,8 @@ def outcome(answer: str) -> str:
     if stated:
         return stated
     first = head.split("\n", 1)[0]
+    if _NOT_FOUND.search(first):
+        return "not_found"
     if _REFUSED.search(first):
         return "refused"
     if _FAILED.search(first):

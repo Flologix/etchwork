@@ -199,3 +199,14 @@ def test_a_first_line_is_kept_short(workspace):
     _tool("REFUSED: " + "x" * 1000)("b.kicad_pcb")
     [event] = _lines(workspace)
     assert len(event["headline"]) == events.HEADLINE
+
+
+# A live run (2026-09-28) logged seven "no footprint ... here" answers as "ok".
+@pytest.mark.parametrize("answer", [
+    "no footprint 'ODU:X' here. Libraries: Diode_THT. find_part searches them by name.",
+    "no symbol 'X' in KiCad's libraries. find_part searches them by what a part IS.",
+    "no Nope.kicad_sym among KiCad's symbol libraries. find_part searches them",
+    "nothing matching 'ODU connector' anywhere in KiCad's symbols or footprints.",
+])
+def test_a_lookup_that_finds_nothing_is_logged_as_not_found(answer):
+    assert events.outcome(answer) == "not_found"
