@@ -362,3 +362,14 @@ def test_an_agents_rules_still_win_over_the_profile(workspace):
     assert (after["clearance"], after["edge"]) == (0.15, 0.4)
     # An agent-given clearance is a fab's, so it reaches every class (release check 2).
     assert set(after["classes"].values()) == {0.15}
+
+
+# --- subprocess hygiene --------------------------------------------------------
+
+def test_pcbnew_snippets_do_not_import_modules_from_the_project(workspace, monkeypatch):
+    """The snippets run with the project as the working directory, and
+    `python3 -c` puts that directory first on sys.path: a `json.py` beside
+    the board replaced the standard library in every pcbnew step."""
+    (workspace / "json.py").write_text("raise SystemExit('shadowed by the project')\n")
+    monkeypatch.chdir(workspace)
+    assert service.python("import json; print(json.dumps(1))") == (0, "1")

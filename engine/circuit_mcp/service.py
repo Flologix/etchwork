@@ -370,7 +370,9 @@ def python(script: str, *args: str) -> tuple[int, str]:
     import in a headless container; it is harmless and would otherwise look
     like a failure, so the exit code decides and the text is only reported.
     """
-    done = subprocess.run(["python3", "-c", script, *args],
+    # -P: `python3 -c` otherwise puts the working directory, the project,
+    # first on sys.path, and a `json.py` there replaced the standard library.
+    done = subprocess.run(["python3", "-P", "-c", script, *args],
                           capture_output=True, text=True, timeout=TIMEOUT)
     return done.returncode, (done.stdout + done.stderr).strip()
 
