@@ -732,12 +732,22 @@ def export_gerbers(board: str, out: str | None = None) -> str:
 # The agent's script as `python3 <script>` would run it -- itself as __main__,
 # its own folder first on sys.path -- after parts.SKIDL_PRELUDE has put the
 # project's symbols/ on SKiDL's search path.
-_RUN_SCRIPT = parts.SKIDL_PRELUDE + r"""
-import runpy as _runpy, sys as _sys
+#
+# SKiDL names its .erc and .log when it is first imported, after the outermost
+# source file on the stack, and falls back to skidl_REPL (no __main__.__file__)
+# or skidl. The prelude imports it, so the prelude runs compiled as the
+# script's own file: SKiDL then names them after the script, as with a plain
+# `python3 board.py`. Without it run_skidl found no <script>.erc and answered
+# "no ERC file" for every board (live run, 2026-09-29).
+_RUN_SCRIPT = r"""
+import os as _os, sys as _sys
 _sys.argv = _sys.argv[1:]
-_sys.path.insert(0, _os.path.dirname(_os.path.abspath(_sys.argv[0])))
+__file__ = _os.path.abspath(_sys.argv[0])
+exec(compile(__SKIDL_PRELUDE__, __file__, "exec"))
+import runpy as _runpy
+_sys.path.insert(0, _os.path.dirname(__file__))
 _runpy.run_path(_sys.argv[0], run_name="__main__")
-"""
+""".replace("__SKIDL_PRELUDE__", repr(parts.SKIDL_PRELUDE))
 
 
 def run_skidl(script: str) -> str:
