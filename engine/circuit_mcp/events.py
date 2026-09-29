@@ -60,12 +60,13 @@ _REFUSED = re.compile("|".join([
     r"must be a length in millimetres", r"^arrange (must be|op \d+)", r"^each op must be",
     r"is outside the project folder", r"is absolute; give a path", r"is a path, not a name",
     r"^no such ", r"changed since the tools last wrote it", r"^give something to search for",
+    r"is not a PDF", r"is larger than \d+ MB", r"^pages must be",
 ]))
 _FAILED = re.compile("|".join([
     r"^layout failed at", r"^DRC failed", r"^DRC could not run", r"^kicad-cli (failed|wrote)",
     r"^the pour failed", r"^the fabrication export failed", r"^the DRC report could not be read",
     r"^the schematic (could not|was drawn, but)", r" failed \(exit -?\d+\):?$",
-    r"timed out after", r"ran but wrote no netlist",
+    r"timed out after", r"ran but wrote no netlist", r"^the datasheet could not be read",
 ]))
 # The first line kept for an answer that is not a success.
 HEADLINE = 160
