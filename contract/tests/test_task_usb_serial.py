@@ -13,7 +13,7 @@ from contract.tests.boards import fp, make, pad
 
 TASK = Path(__file__).resolve().parents[1] / "tasks" / "usb-serial"
 IDS = ["bridge", "cc1_rd", "cc2_rd", "cc_separate", "dp", "dm", "v3_cap", "vcc_cap",
-       "tx_out", "rx_in", "dtr_reset"]
+       "tx_out", "rx_in", "dtr_reset", "v3_not_vcc", "dp_dm_distinct", "tx_rx_distinct"]
 
 
 def _clause(clause_id):

@@ -59,6 +59,20 @@ def _swap(board, ref, a, b, net_a, net_b):
     set_net(board, ref, b, net_a)
 
 
+def _v3_on_vbus(board):
+    # V3 and its capacitor both on VBUS: C2 still decouples the pin (else
+    # `v3_cap` fails too), but V3 is tied to the 5 V supply.
+    set_net(board, "U1", "4", "VBUS")
+    set_net(board, "C2", "1", "VBUS")
+
+
+def _dp_dm_joined(board):
+    # Every D-/UD- pad joins the D+ net: connectivity to the bridge holds
+    # (dp, dm both still reach), only the pair is one net.
+    for ref, number in [("J1", "A7"), ("J1", "B7"), ("U1", "6")]:
+        set_net(board, ref, number, "D+")
+
+
 MUTANTS = {
     "bridge": lambda b: fp(b, "U1").SetValue("CH340E"),
     "cc1_rd": lambda b: fp(b, "R1").SetValue("10k"),
@@ -71,6 +85,12 @@ MUTANTS = {
     "tx_out": lambda b: set_net(b, "J2", "4", "N_X4"),
     "rx_in": lambda b: set_net(b, "J2", "5", "N_X5"),
     "dtr_reset": lambda b: fp(b, "C3").SetValue("1u"),
+    "v3_not_vcc": _v3_on_vbus,
+    # D- joins D+ on the receptacle's own pads (the bridge's UD- follows).
+    "dp_dm_distinct": _dp_dm_joined,
+    # RXD and header pin 5 join the TXD net: both connections still hold,
+    # only the pair is one net.
+    "tx_rx_distinct": lambda b: (set_net(b, "U1", "3", "N_TX"), set_net(b, "J2", "5", "N_TX")),
 }
 
 VARIANTS = {

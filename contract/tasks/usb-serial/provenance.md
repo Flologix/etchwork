@@ -37,6 +37,8 @@ below was fetched and read on 2026-09-29; pages are the printed page numbers.
 | cc_separate | nothing | each CC pin has its own Rd | USB Type-C spec R2.0, §4.5.2.2.3.1, p. 170 |
 | dp, dm | "an ordinary USB host port" | UD+ to D+ and UD- to D- | CH340 datasheet v3B, §4, p. 3 |
 | v3_cap | nothing | a capacitor at V3, 10 nF or more, within 3 mm | CH340 datasheet v3B, §4 V3 row p. 3; §7.1 p. 9 |
+| v3_not_vcc | nothing | V3 is not tied to VCC: in 5 V operation V3 takes only a decoupling capacitor (a V3 on 5 V is the 3.3 V-operation wiring, wrong at 5 V) | CH340 datasheet v3B, §4 V3 row p. 3; §5.1, p. 4 |
+| dp_dm_distinct, tx_rx_distinct | nothing | D+/D- and TXD/RXD are separate nets (a pair joined on both sides still passes the connection clauses) | CH340 datasheet v3B, §4, pp. 3-4 |
 | vcc_cap | nothing | a capacitor at VCC, 100 nF or more, within 3 mm | CH340 datasheet v3B, §4 VCC row p. 3; §7.1 p. 9 |
 | tx_out, rx_in | which header pin is which direction: **supplied** | TXD to pin 4, RXD to pin 5 (the adapter's TXD is the target's input, so TXD goes to the pin the prompt calls data from the adapter) | CH340 datasheet v3B, §4, pp. 3-4 |
 | dtr_reset | "a reset pulse to the target ... when the host opens the serial port": **supplied** | a series capacitor between DTR and pin 6, 10-220 nF | Arduino UNO Rev3 schematic, sheet 1, C5 |
@@ -52,8 +54,10 @@ crystal is a working alternative that fails `bridge` alone.
 ## Widened ranges
 
 - `cc1_rd`, `cc2_rd`: 4.1k-6.1k, the specification's ±20% around 5.1k.
-- `v3_cap`: the datasheet asks for 0.1 µF at V3 (pp. 3, 9). The clause takes 10 nF
-  or more, so any ceramic in the usual range passes.
+- `v3_cap`: WCH CH340 datasheet revisions differ on the V3 decoupling value.
+  The v3B copy read asks for 0.1 µF (pp. 3, 9); v3.4 was not read. The 10 nF
+  floor admits every revision's figure, so any ceramic in the usual range
+  passes.
 - `vcc_cap`: the datasheet asks for 0.1 µF at VCC (p. 3); the clause floor is
   100 nF, the datasheet value.
 - `v3_cap`, `vcc_cap`: 3 mm, "next to the pin" for a 0603 or 0805 capacitor.
@@ -76,3 +80,7 @@ crystal is a working alternative that fails `bridge` alone.
 - The datasheet notes that DTR# on the C and K is also read as a configuration
   input during enumeration (p. 5); a wired-through design is not penalised by
   any clause, and the series capacitor is unaffected.
+- **One-orientation USB wiring passes.** A receptacle with only one D+/D-
+  pair wired (A6/A7 but not B6/B7) passes `dp` and `dm`, because unconnected
+  pads are dropped from a net. A board wired this way works with a cable
+  plugged in one orientation only. No checker asks for both.
