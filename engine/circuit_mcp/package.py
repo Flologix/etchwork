@@ -119,8 +119,9 @@ def _fresh_drc(copy: pathlib.Path) -> tuple[dict, bytes]:
     Any exit but 0 (clean) or 5 (violations found) is a tool failure."""
     report = copy.parent / "drc.json"
     try:
-        run = subprocess.run(service.drc_command(copy, report), capture_output=True,
-                             text=True, timeout=service.TIMEOUT)
+        with service.kicad_config() as env:
+            run = subprocess.run(service.drc_command(copy, report), capture_output=True,
+                                 text=True, timeout=service.TIMEOUT, env=env)
     except subprocess.TimeoutExpired:
         raise _Refused(f"the packaging step's DRC run timed out after {service.TIMEOUT} s")
     except OSError as exc:

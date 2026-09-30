@@ -161,10 +161,10 @@ def _fake_router(workspace, monkeypatch, import_writes=None):
     def fake_python(script, *args):
         calls.append((script, args))
         if script is service._EXPORT_DSN_WITH_KEEPOUTS:
-            pathlib.Path(args[1]).write_text("(pcb)")
+            pathlib.Path(args[1]).write_text("(pcb (unit um))")
             return 0, '{"keepouts": 2, "margin_mm": 0.25}'
         if script is service._EXPORT_DSN:
-            pathlib.Path(args[1]).write_text("(pcb)")
+            pathlib.Path(args[1]).write_text("(pcb (unit um))")
             return 0, "dsn written"
         if import_writes:
             pathlib.Path(args[0]).write_text(import_writes)
@@ -410,3 +410,29 @@ def test_scripts_the_agent_wrote_get_no_secrets_or_proxy(monkeypatch):
                  "http_proxy", "CIRCUIT_REDACT"):
         assert name not in env, name
     assert env["KICAD_SYMBOL_DIR"] == "/syms"
+
+
+# --- KiCad's footprint libraries, for kicad-cli --------------------------------
+
+def test_drc_knows_kicads_own_footprint_libraries(workspace):
+    """Without a footprint-library table kicad-cli flagged every footprint
+    (lib_footprint_issues): 12 warnings on a 12-part board, explained away in
+    every final answer."""
+    shutil.copy(FIXTURES / "blinker.net", workspace / "blinker.net")
+    service.call("pcb", {"netlist": "blinker.net"})
+    service.call("outline", {"board": "blinker.kicad_pcb", "width_mm": 36, "height_mm": 28})
+    report = json.loads((workspace / service.call("drc", {"board": "blinker.kicad_pcb"})["report"]).read_text())
+    assert not [v for v in report["violations"] if v["type"] == "lib_footprint_issues"]
+
+
+def test_the_config_lists_the_projects_own_libraries_in_place_of_kicads(workspace):
+    (workspace / "fp" / "ODU.pretty").mkdir(parents=True)
+    (workspace / "fp" / "Resistor_SMD.pretty").mkdir(parents=True)
+    with service.kicad_config() as env:
+        tables = list(pathlib.Path(env["KICAD_CONFIG_HOME"]).glob("*/fp-lib-table"))
+        assert len(tables) == 1
+        table = tables[0].read_text()
+    assert f'(uri "{workspace}/fp/ODU.pretty")' in table
+    assert table.count('(name "Resistor_SMD")') == 1          # the project's replaces KiCad's
+    assert f'(uri "{workspace}/fp/Resistor_SMD.pretty")' in table
+    assert '(name "Capacitor_SMD")' in table                   # KiCad's own are all there
