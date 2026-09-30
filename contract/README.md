@@ -76,6 +76,11 @@ the part's pins, connected or not, must carry) and `[nets.<alias>]` function
 matchers (`words` matched against pin words, optionally limited to a `part`).
 Clauses name a checker and pass aliases as arguments.
 
+| Task | Board | Tests |
+|---|---|---|
+| `keyfob-base` | two-button 433 MHz coin-cell keyfob | parts, encoder support circuit, envelope |
+| `usbc-ldo` | USB-C in, 3.3 V / 500 mA LDO out | CC pull-downs, regulator rating, regulator caps |
+
 A pad's words are the words of its pin names. Only when the pad has no pin
 names do the words of its net's name count instead, and a KiCad
 auto-generated net name (`Net-(...)`, `unconnected-(...)`) contributes no

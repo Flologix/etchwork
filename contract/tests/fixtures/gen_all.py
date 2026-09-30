@@ -10,6 +10,7 @@ from pathlib import Path
 # fixture directory under contract/tests/fixtures/ -> generator module
 GENERATORS = {
     "keyfob": "gen_keyfob",
+    "usbc-ldo": "gen_usbc_ldo",
 }
 
 
