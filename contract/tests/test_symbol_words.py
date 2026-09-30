@@ -41,6 +41,21 @@ ROWS = [
     ("Transistor_FET", "AO3400A", "3", "D"),
     ("Device", "D", "1", "K"),
     ("Device", "D", "2", "A"),
+    # mcu-i2c
+    ("MCU_Microchip_ATmega", "ATmega328P-A", "4", "VCC"),
+    ("MCU_Microchip_ATmega", "ATmega328P-A", "6", "VCC"),
+    ("MCU_Microchip_ATmega", "ATmega328P-A", "18", "AVCC"),
+    ("MCU_Microchip_ATmega", "ATmega328P-A", "7", "XTAL1"),
+    ("MCU_Microchip_ATmega", "ATmega328P-A", "8", "XTAL2"),
+    ("MCU_Microchip_ATmega", "ATmega328P-A", "27", "SDA"),
+    ("MCU_Microchip_ATmega", "ATmega328P-A", "28", "SCL"),
+    ("MCU_Microchip_ATmega", "ATmega328P-A", "29", "RESET"),
+    ("Sensor", "BME280", "2", "CSB"),
+    ("Sensor", "BME280", "3", "SDI"),
+    ("Sensor", "BME280", "4", "SCK"),
+    ("Sensor", "BME280", "5", "SDO"),
+    ("Sensor", "BME280", "6", "VDDIO"),
+    ("Sensor", "BME280", "8", "VDD"),
 ]
 
 

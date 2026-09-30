@@ -84,6 +84,7 @@ Clauses name a checker and pass aliases as arguments.
 | `usbc-ldo` | USB-C in, 3.3 V / 500 mA LDO out | CC pull-downs, regulator rating, regulator caps |
 | `usb-serial` | USB-C to 5 V serial adapter (CH340C) | USB data pair, TX/RX to the right header pins, auto-reset, bridge caps |
 | `relay-driver` | 3.3 V logic switching a 12 V relay via an N-MOSFET | flyback diode and its orientation, gate pull-down and series resistor, logic-level MOSFET |
+| `mcu-i2c` | ATmega328P at 3.3 V / 8 MHz reading a BME280 over I2C | a cap at every supply pin, AVCC, reset and I2C pull-ups, crystal load caps, sensor strap pins |
 
 A pad's words are the words of its pin names. Only when the pad has no pin
 names do the words of its net's name count instead, and a KiCad
