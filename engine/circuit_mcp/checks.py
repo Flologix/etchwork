@@ -203,6 +203,95 @@ def warnings(facts: dict[str, NetFacts], drc_report: dict | None) -> list[str]:
     return out
 
 
+# --- phase A: placement rules (design §4) -------------------------------------------
+
+def _distance(a, b) -> float:
+    return math.hypot(a.x - b.x, a.y - b.y)
+
+
+def _overlap(a: tuple, b: tuple) -> bool:
+    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+
+def placement(geometry: boardgeom.Geometry, netlist_text: str) -> list[str]:
+    """The placed board against the placement rules: decoupling and crystal
+    proximity, connectors on an edge, nothing inside a keepout."""
+    netlist = netclass.read(netlist_text)
+    pads = {(p.ref, p.number): p for p in geometry.pads}
+    counts: dict[str, int] = {}
+    for p in geometry.pads:
+        counts[p.ref] = counts.get(p.ref, 0) + 1
+    out = []
+
+    # Decoupling: a 2-pin capacitor between a supply and ground, and the
+    # nearest pin that supply serves or comes from: an IC's power input, a
+    # regulator's output, or the connector it enters on. Measured to power
+    # inputs alone, a regulator's output cap beside its VO pin read 38 mm
+    # from the nearest load (live board, 2026-09-29).
+    nets_of: dict[str, dict[str, str]] = {}
+    power_pins: dict[str, list[tuple[str, str]]] = {}
+    for net in netlist.nets:
+        for node in net.nodes:
+            nets_of.setdefault(node.ref, {})[node.pin] = net.name
+            kind = (node.pin_type or "").lower().replace("-", "_")
+            chip = kind in ("power_in", "power_out") and counts.get(node.ref, 0) > 2
+            if chip or node.ref.upper().startswith("J"):
+                power_pins.setdefault(net.name, []).append((node.ref, node.pin))
+    for ref, pins in sorted(nets_of.items()):
+        if not ref.upper().startswith("C") or len(pins) != 2:
+            continue
+        names = list(pins.items())
+        grounded = [netclass._is_ground_name(n) for _, n in names]
+        if grounded.count(True) != 1:
+            continue
+        pin, supply = names[grounded.index(False)]
+        cap_pad = pads.get((ref, pin))
+        targets = [pads[t] for t in power_pins.get(supply, []) if t in pads]
+        if cap_pad is None or not targets:
+            continue
+        nearest = min(targets, key=lambda t: _distance(cap_pad, t))
+        gap = _distance(cap_pad, nearest)
+        if gap > LIMITS["decoupling_mm"]:
+            out.append(f"placement: {ref} (decoupling {nearest.ref} pin {nearest.number}, {supply}) is "
+                       f"{gap:.1f} mm away; the rule is {LIMITS['decoupling_mm']:g} mm -- move it next to "
+                       f"the pin")
+
+    # Crystals: each crystal pad against the IC pin it drives.
+    for net in netlist.nets:
+        crystal = [n for n in net.nodes if n.ref.upper().startswith(("Y", "X"))]
+        chips = [n for n in net.nodes if counts.get(n.ref, 0) > 2 and n not in crystal]
+        for c in crystal:
+            for chip in chips:
+                a, b = pads.get((c.ref, c.pin)), pads.get((chip.ref, chip.pin))
+                if a and b and _distance(a, b) > LIMITS["crystal_mm"]:
+                    out.append(f"placement: {c.ref} (crystal, {net.name} to {chip.ref} pin {chip.pin}) is "
+                               f"{_distance(a, b):.1f} mm away; the rule is {LIMITS['crystal_mm']:g} mm -- "
+                               f"move it next to the pins")
+
+    # Connectors: courtyard to the nearest board edge.
+    edge = geometry.outline
+    for f in geometry.footprints:
+        if edge is None or f.courtyard is None:
+            continue
+        if not (f.library.startswith("Connector") or f.ref.upper().startswith("J")):
+            continue
+        left, top, right, bottom = f.courtyard
+        gap = min(left - edge[0], top - edge[1], edge[2] - right, edge[3] - bottom)
+        if gap > LIMITS["connector_edge_mm"]:
+            out.append(f"placement: {f.ref} (connector) is {gap:.1f} mm from the nearest board edge; the "
+                       f"rule is {LIMITS['connector_edge_mm']:g} mm -- move it to the edge its cable "
+                       f"comes from")
+
+    # Keepouts: no other part's courtyard inside one.
+    for keepout in geometry.keepouts:
+        for f in geometry.footprints:
+            if f.courtyard and f.ref != keepout.owner and _overlap(f.courtyard, keepout.box):
+                owner = f" ({keepout.owner}'s)" if keepout.owner else ""
+                out.append(f"placement: {f.ref} is inside a keepout{owner} -- move it out, or it blocks "
+                           f"what the keepout protects (an antenna's clear area, say)")
+    return out
+
+
 def _read(path: pathlib.Path):
     try:
         return json.loads(path.read_text())
@@ -215,8 +304,15 @@ def board_checks(board: pathlib.Path, netlist: pathlib.Path) -> tuple[dict[str, 
     the <netlist stem>.netclasses.json and <board stem>.drc.json beside them."""
     geometry = boardgeom.read(board.read_text(errors="replace"))
     classes = (_read(netlist.with_suffix(".netclasses.json")) or {}).get("nets", {})
-    facts = measure(geometry, netlist.read_text(errors="replace"), classes)
-    return facts, warnings(facts, _read(board.with_name(f"{board.stem}.drc.json")))
+    text = netlist.read_text(errors="replace")
+    facts = measure(geometry, text, classes)
+    return facts, placement(geometry, text) + warnings(facts, _read(board.with_name(f"{board.stem}.drc.json")))
+
+
+def placement_checks(board: pathlib.Path, netlist: pathlib.Path) -> list[str]:
+    """Phase A alone, for a placed board that is not routed yet."""
+    return placement(boardgeom.read(board.read_text(errors="replace")),
+                     netlist.read_text(errors="replace"))
 
 
 def summary_line(facts: dict[str, NetFacts], warned: list[str]) -> str:

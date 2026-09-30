@@ -220,7 +220,7 @@ def test_run_layout_reports_the_board_checks(workspace):
     assert tools.run_skidl("board.py").startswith("netlist: board.net")
 
     out = tools.run_layout("board.net", 30, 20,
-                           positions={"J1": [6, 10, 0], "R1": [16, 7, 0], "R2": [16, 13, 0]})
+                           positions={"J1": [1.5, 10, 0], "R1": [12, 7, 0], "R2": [12, 13, 0]})
 
     line = next((l for l in out.splitlines() if l.startswith("board checks:")), None)
     assert line and "3 routed nets" in line and "0 warning(s)" in line, out
