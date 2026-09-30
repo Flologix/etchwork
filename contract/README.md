@@ -73,7 +73,9 @@ comparison with a reference design.
 `contract.toml` declares `[parts.<alias>]` allowlists (regexes over `ref`,
 `lib_id`, `value`, a `pads` count list, and `with_pins`: words at least one of
 the part's pins, connected or not, must carry) and `[nets.<alias>]` function
-matchers (`words` matched against pin words, optionally limited to a `part`).
+matchers (`words` matched against pin words,
+optionally limited to a `part`; or `pins`, pad numbers on a `part`, for a
+connector whose pins are named only `Pin_n`).
 Clauses name a checker and pass aliases as arguments.
 
 | Task | Board | Tests |

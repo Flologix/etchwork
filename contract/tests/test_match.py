@@ -256,3 +256,41 @@ def test_matches_without_board_refuses_a_with_pins_spec():
     spec = PartSpec.from_toml("enc", {"ref": "^U", "with_pins": ["K0"]})
     with pytest.raises(ValueError):
         spec.matches(_fp("U1"))
+
+
+# --- NetSpec pins ----------------------------------------------------------------
+
+HDR = {"hdr": PartSpec.from_toml("hdr", {"ref": "^J[0-9]+$", "pads": [6]})}
+
+
+def _header_board():
+    return make(
+        footprints=[fp("J2", pad_count=6), fp("U1", pad_count=16)],
+        pads=[pad("J2", 4, "N_TX", names=["Pin_4"]), pad("J2", 5, "N_RX", names=["Pin_5"]),
+              pad("J2", 6, "", names=["Pin_6"]), pad("U1", 4, "N_U", names=["V3"])])
+
+
+def test_netspec_pins_resolve_by_pad_number_on_the_part():
+    spec = NetSpec.from_toml("tx", {"part": "hdr", "pins": ["4"]}, HDR)
+    assert spec.pins == {"4"}
+    assert resolve_net(_header_board(), spec) == {"N_TX"}
+
+
+def test_netspec_pins_accept_integers_and_several_pins():
+    spec = NetSpec.from_toml("data", {"part": "hdr", "pins": [4, 5]}, HDR)
+    assert spec.pins == {"4", "5"}
+    assert resolve_net(_header_board(), spec) == {"N_TX", "N_RX"}
+
+
+def test_netspec_pins_skip_unconnected_pads():
+    spec = NetSpec.from_toml("rst", {"part": "hdr", "pins": ["6"]}, HDR)
+    assert resolve_net(_header_board(), spec) == frozenset()
+
+
+@pytest.mark.parametrize("table, message", [
+    ({"pins": ["4"]}, "pins needs a part"),
+    ({"part": "hdr", "pins": ["4"], "words": ["TXD"]}, "words or pins, not both"),
+])
+def test_netspec_pins_misuse_is_refused(table, message):
+    with pytest.raises(ValueError, match=message):
+        NetSpec.from_toml("n", table, HDR)
