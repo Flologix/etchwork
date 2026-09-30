@@ -7,7 +7,7 @@ arguments by keyword, and returns a Result.
 from contract.checkers.base import Result
 from contract.checkers.geometry import decoupling_near, outline_within
 from contract.checkers.identity import part_present
-from contract.checkers.topology import net_connects, no_short, series_part_between
+from contract.checkers.topology import diode_across, net_connects, no_short, series_part_between
 
 REGISTRY = {
     "outline_within": outline_within,
@@ -16,6 +16,7 @@ REGISTRY = {
     "series_part_between": series_part_between,
     "net_connects": net_connects,
     "no_short": no_short,
+    "diode_across": diode_across,
 }
 
 __all__ = ["REGISTRY", "Result"]

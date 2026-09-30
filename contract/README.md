@@ -99,6 +99,7 @@ words at all: `Net-(D2-A)` names a designator, not a data input D2.
 | `decoupling_near` | a cap >= N farads across supply and ground, within N mm of a supply pin |
 | `net_connects` | two nets meet; or every matching part reaches a net (optionally each a distinct one) |
 | `no_short` | two nets are distinct |
+| `diode_across` | a diode with its cathode on one net and its anode on another, by pin name; reversed or unnamed fails |
 
 A checker is a pure function `(board, **args) -> Result` over `contract/board.py`.
 It never touches pcbnew; the one pcbnew dump runs inside the engine image
