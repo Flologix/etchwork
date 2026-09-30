@@ -73,8 +73,18 @@ comparison with a reference design.
 `contract.toml` declares `[parts.<alias>]` allowlists (regexes over `ref`,
 `lib_id`, `value`, a `pads` count list, and `with_pins`: words at least one of
 the part's pins, connected or not, must carry) and `[nets.<alias>]` function
-matchers (`words` matched against pin words, optionally limited to a `part`).
+matchers (`words` matched against pin words,
+optionally limited to a `part`; or `pins`, pad numbers on a `part`, for a
+connector whose pins are named only `Pin_n`).
 Clauses name a checker and pass aliases as arguments.
+
+| Task | Board | Tests |
+|---|---|---|
+| `keyfob-base` | two-button 433 MHz coin-cell keyfob | parts, encoder support circuit, envelope |
+| `usbc-ldo` | USB-C in, 3.3 V / 500 mA LDO out | CC pull-downs, regulator rating, regulator caps |
+| `usb-serial` | USB-C to 5 V serial adapter (CH340C) | USB data pair, TX/RX to the right header pins, auto-reset, bridge caps |
+| `relay-driver` | 3.3 V logic switching a 12 V relay via an N-MOSFET | flyback diode and its orientation, gate pull-down and series resistor, logic-level MOSFET |
+| `mcu-i2c` | ATmega328P at 3.3 V / 8 MHz reading a BME280 over I2C | a cap at every supply pin, AVCC, reset and I2C pull-ups, crystal load caps, sensor strap pins |
 
 A pad's words are the words of its pin names. Only when the pad has no pin
 names do the words of its net's name count instead, and a KiCad
@@ -88,9 +98,10 @@ words at all: `Net-(D2-A)` names a designator, not a data input D2.
 | `outline_within` | outline bounding box within W x H (+tol), either orientation |
 | `part_present` | at least `count` parts match an allowlist |
 | `series_part_between` | a two-terminal part of a designator kind, value in range, between two nets; with one net, in series (its shared node carries no other parts) |
-| `decoupling_near` | a cap >= N farads across supply and ground, within N mm of a supply pin |
+| `decoupling_near` | a cap >= N farads across supply and ground, within N mm of a supply pin; with `each`, of every supply pin |
 | `net_connects` | two nets meet; or every matching part reaches a net (optionally each a distinct one) |
 | `no_short` | two nets are distinct |
+| `diode_across` | a diode with its cathode on one net and its anode on another, by pin name; a diode with both ends on one net is not across; any reversed diode fails, even beside a right one (it shorts the supply), and names the ref; unnamed fails |
 
 A checker is a pure function `(board, **args) -> Result` over `contract/board.py`.
 It never touches pcbnew; the one pcbnew dump runs inside the engine image

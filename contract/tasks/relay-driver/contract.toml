@@ -1,0 +1,132 @@
+# relay-driver: the CONTRACT clause list for a 3.3 V logic signal switching
+# a 12 V relay coil through an N-channel MOSFET. HELD OUT: never shown to the
+# agent. Sources and supplied-vs-withheld numbers are in provenance.md
+# (design 2026-09-29-contract-tasks §4.3).
+
+# --- parts --------------------------------------------------------------------
+
+# N-channel MOSFETs whose datasheets specify RDS(on) at VGS <= 2.5 V, so a
+# 3.3 V gate drive turns them fully on.
+[parts.mosfet]
+value = ["(?i)AO3400", "(?i)IRLML2502", "(?i)IRLML6344", "(?i)SI2302"]
+
+[parts.relay]
+lib_id = ["(?i)relay"]
+
+[parts.mosfet_ref]
+ref = ["^Q[0-9]+$"]
+with_pins = ["G"]
+
+# KiCad's relay symbols have unnamed pins: the relay is found by designator,
+# and its coil by the nets it reaches.
+[parts.relay_ref]
+ref = ["^(K|RL|RLY)[0-9]+$"]
+
+# The 12 V terminal (two pads) and the logic header (three pads). Their pins
+# are `Pin_n`, so their nets are found by pad number, as the prompt numbers
+# them.
+[parts.power_in]
+ref = ["^J[0-9]+$"]
+pads = [2]
+
+[parts.logic_hdr]
+ref = ["^J[0-9]+$"]
+pads = [3]
+
+# --- nets ---------------------------------------------------------------------
+
+[nets.in12]
+part = "power_in"
+pins = ["1"]
+
+[nets.ground]
+part = "power_in"
+pins = ["2"]
+
+# The logic header's ground pin: the gate drive is referenced to the source,
+# so this must reach the power ground.
+[nets.logic_gnd_pin]
+part = "logic_hdr"
+pins = ["1"]
+
+[nets.signal]
+part = "logic_hdr"
+pins = ["2"]
+
+[nets.logic_supply]
+part = "logic_hdr"
+pins = ["3"]
+
+[nets.gate]
+part = "mosfet_ref"
+words = ["G"]
+
+[nets.drain]
+part = "mosfet_ref"
+words = ["D"]
+
+[nets.source]
+part = "mosfet_ref"
+words = ["S"]
+
+# --- clauses ------------------------------------------------------------------
+
+[[clause]]
+id = "mosfet"
+statement = "The switch is an N-channel MOSFET fully on at 3.3 V gate drive."
+checker = "part_present"
+args = { part = "mosfet" }
+
+[[clause]]
+id = "relay"
+statement = "A relay is present."
+checker = "part_present"
+args = { part = "relay" }
+
+[[clause]]
+id = "coil_supply"
+statement = "The relay reaches the +12 V terminal."
+checker = "net_connects"
+args = { each_part = "relay_ref", net_b = "in12" }
+
+[[clause]]
+id = "coil_drain"
+statement = "The relay reaches the MOSFET's drain."
+checker = "net_connects"
+args = { each_part = "relay_ref", net_b = "drain" }
+
+[[clause]]
+id = "source_gnd"
+statement = "The MOSFET's source is on ground."
+checker = "net_connects"
+args = { net_a = "source", net_b = "ground" }
+
+[[clause]]
+id = "flyback"
+statement = "A diode is across the coil: cathode on +12 V, anode on the drain."
+checker = "diode_across"
+args = { cathode = "in12", anode = "drain" }
+
+[[clause]]
+id = "gate_pulldown"
+statement = "A 10k-1M resistor runs from the gate to ground."
+checker = "series_part_between"
+args = { net_a = "gate", net_b = "ground", kind = "R", min = 10e3, max = 1e6 }
+
+[[clause]]
+id = "gate_series"
+statement = "A 10R-1k resistor runs from the control signal to the gate."
+checker = "series_part_between"
+args = { net_a = "gate", net_b = "signal", kind = "R", min = 10.0, max = 1e3 }
+
+[[clause]]
+id = "rails_distinct"
+statement = "The +12 V net and the logic supply net are distinct."
+checker = "no_short"
+args = { net_a = "in12", net_b = "logic_supply" }
+
+[[clause]]
+id = "logic_gnd"
+statement = "The logic header's ground (pin 1) is on the power ground."
+checker = "net_connects"
+args = { net_a = "logic_gnd_pin", net_b = "ground" }

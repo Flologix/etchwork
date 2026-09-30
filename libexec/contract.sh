@@ -18,11 +18,11 @@ case "$sub" in
       --entrypoint python3 "$image" \
       -m pytest /opt/contract-src/contract/tests -q -p no:cacheprovider "$@" ;;
   fixtures)
-    # Writable: the generator writes contract/tests/fixtures/keyfob/.
+    # Writable: the generators write contract/tests/fixtures/<task>/.
     exec docker run --rm --network none --pull never --user "$(id -u):$(id -g)" \
       --mount "$src" -e PYTHONPATH=/opt/etchwork:/opt/contract-src \
       --entrypoint python3 "$image" \
-      -m contract.tests.fixtures.gen_keyfob /opt/contract-src/contract/tests/fixtures/keyfob ;;
+      -m contract.tests.fixtures.gen_all /opt/contract-src/contract/tests/fixtures ;;
   *)
     echo "usage: etchwork contract score <task> <board dir> [--out <file>] | test [pytest args] | fixtures" >&2
     exit 2 ;;

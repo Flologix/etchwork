@@ -170,14 +170,16 @@ class NetSpec:
     """A net found by function. `words` are matched against each pad's
     pad_words: its pin names, or its net's name when the pin has none;
     `part`, when given, limits the search to that part's pins. A `part` with
-    no words means every net on it."""
+    no words means every net on it. `pins` instead picks that part's pads by
+    number, for parts whose pin names say nothing (a header's `Pin_4`)."""
     name: str
     words: frozenset[str] = frozenset()
     part: PartSpec | None = None
+    pins: frozenset[str] = frozenset()
 
     @classmethod
     def from_toml(cls, name: str, table: dict, parts: dict[str, PartSpec]) -> NetSpec:
-        unknown = set(table) - {"words", "part"}
+        unknown = set(table) - {"words", "part", "pins"}
         if unknown:
             raise ValueError(f"[nets.{name}]: unknown key(s) {sorted(unknown)}")
         synonyms = _one_words(f"[nets.{name}]", table.get("words", ()))
@@ -189,20 +191,30 @@ class NetSpec:
             if part_value not in parts:
                 raise ValueError(f"[nets.{name}]: part {part_value!r} is not a [parts] alias")
             part = parts[part_value]
+        pins = frozenset(_strings(table.get("pins", ())))
+        if pins and part is None:
+            raise ValueError(f"[nets.{name}]: pins needs a part: pad numbers mean nothing "
+                             "without the part they are on")
+        if pins and synonyms:
+            raise ValueError(f"[nets.{name}]: give words or pins, not both")
         if not synonyms and part is None:
             raise ValueError(f"[nets.{name}] would match every net; give words, a part, or both")
-        return cls(name, synonyms, part)
+        return cls(name, synonyms, part, pins)
 
 
 def resolve_pads(board: Board, spec: NetSpec) -> list[Pad]:
-    """The connected pads a net spec picks out: a pad matches when its
-    pad_words share a word with the spec."""
+    """The connected pads a net spec picks out: by pad number when the spec
+    gives `pins`, else a pad matches when its pad_words share a word with
+    the spec."""
     refs = None if spec.part is None else {f.ref for f in matching(board, spec.part)}
     found = []
     for p in board.pads():
         if not p.net or (refs is not None and p.ref not in refs):
             continue
-        if not spec.words or pad_words(p) & spec.words:
+        if spec.pins:
+            if p.number in spec.pins:
+                found.append(p)
+        elif not spec.words or pad_words(p) & spec.words:
             found.append(p)
     return found
 

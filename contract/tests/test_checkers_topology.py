@@ -1,7 +1,7 @@
 import pytest
 
 from contract.checkers import REGISTRY
-from contract.checkers.topology import net_connects, no_short, series_part_between
+from contract.checkers.topology import diode_across, net_connects, no_short, series_part_between
 from contract.match import NetSpec, PartSpec
 from contract.tests.boards import fp, make, pad
 
@@ -177,3 +177,82 @@ def test_no_short_data_pin_tied_to_supply_fails():
 
 def test_no_short_unresolvable_is_a_failure():
     assert not no_short(keyfob(), net_a=N("x", {"words": ["ZZZ"]}), net_b=SUPPLY).passed
+
+
+# --- diode_across ------------------------------------------------------------------
+
+QPARTS = {"q": PartSpec.from_toml("q", {"ref": "^Q[0-9]+$"})}
+V12 = NetSpec.from_toml("in12", {"words": ["+12V"]}, QPARTS)
+DRAIN = NetSpec.from_toml("drain", {"words": ["D"], "part": "q"}, QPARTS)
+
+
+def _coil(k_net="+12V", a_net="N_DRAIN", names=("K", "A"), diode=True, also=None):
+    """Q1's drain and a +12V terminal, with D1 across them."""
+    pads = [pad("Q1", 3, "N_DRAIN", names=["D"]), pad("J1", 1, "+12V")]
+    footprints = [fp("Q1", "AO3400A", pad_count=3), fp("J1", pad_count=2)]
+    if diode:
+        footprints.append(fp("D1", "1N4148W"))
+        pads += [pad("D1", 1, k_net, names=[names[0]] if names[0] else []),
+                 pad("D1", 2, a_net, names=[names[1]] if names[1] else [])]
+    if also:  # a second diode, D2, with its (cathode net, anode net)
+        footprints.append(fp("D2", "1N4148W"))
+        pads += [pad("D2", 1, also[0], names=["K"]), pad("D2", 2, also[1], names=["A"])]
+    return make(footprints=footprints, pads=pads)
+
+
+def test_diode_across_registered():
+    assert REGISTRY["diode_across"] is diode_across
+
+
+def test_diode_across_passes_cathode_on_supply():
+    r = diode_across(_coil(), cathode=V12, anode=DRAIN)
+    assert r.passed, r.detail
+    assert r.measured == {"across": ["D1"], "reversed": [], "unnamed": []}
+
+
+def test_diode_across_accepts_spelled_out_pin_names():
+    assert diode_across(_coil(names=("CATHODE", "ANODE")), cathode=V12, anode=DRAIN).passed
+
+
+def test_diode_across_fails_reversed_and_says_so():
+    r = diode_across(_coil(k_net="N_DRAIN", a_net="+12V"), cathode=V12, anode=DRAIN)
+    assert not r.passed
+    assert "reversed" in r.detail
+    assert r.measured["reversed"] == ["D1"]
+
+
+def test_diode_across_fails_when_one_right_diode_has_a_reversed_partner():
+    r = diode_across(_coil(also=("N_DRAIN", "+12V")), cathode=V12, anode=DRAIN)
+    assert not r.passed
+    assert "reversed" in r.detail and "D2" in r.detail
+    assert r.measured == {"across": ["D1"], "reversed": ["D2"], "unnamed": []}
+
+
+def test_diode_across_two_right_diodes_pass():
+    assert diode_across(_coil(also=("+12V", "N_DRAIN")), cathode=V12, anode=DRAIN).passed
+
+
+def test_diode_across_with_both_ends_on_one_net_does_not_pass():
+    # Both specs match +12V; D1 has its cathode and its anode there.
+    both = NetSpec.from_toml("both", {"words": ["+12V"]}, QPARTS)
+    r = diode_across(_coil(k_net="+12V", a_net="+12V"), cathode=V12, anode=both)
+    assert not r.passed
+    assert r.measured["across"] == [] and r.measured["reversed"] == []
+
+
+def test_diode_across_fails_when_orientation_cannot_be_told():
+    r = diode_across(_coil(names=("", "")), cathode=V12, anode=DRAIN)
+    assert not r.passed
+    assert "cannot be told" in r.detail
+    assert r.measured["unnamed"] == ["D1"]
+
+
+def test_diode_across_fails_with_no_diode():
+    r = diode_across(_coil(diode=False), cathode=V12, anode=DRAIN)
+    assert not r.passed and "no diode" in r.detail
+
+
+def test_diode_across_fails_when_a_net_is_missing():
+    board = make(footprints=[fp("J1", pad_count=2)], pads=[pad("J1", 1, "+12V")])
+    r = diode_across(board, cathode=V12, anode=DRAIN)
+    assert not r.passed and "no net matches drain" in r.detail

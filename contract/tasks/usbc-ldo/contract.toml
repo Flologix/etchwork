@@ -1,0 +1,127 @@
+# usbc-ldo: the CONTRACT clause list for a USB-C powered board supplying
+# 3.3 V at up to 500 mA through an LDO. HELD OUT: never shown to the agent.
+# Sources, supplied-vs-withheld numbers and widened ranges are in
+# provenance.md. Every clause is a range or a relation, never a comparison
+# with a reference (design 2026-09-29-contract-tasks §4.1).
+
+# --- parts: allowlists, never exact library ids -------------------------------
+
+[parts.usb]
+lib_id = ["(?i)USB_C"]
+
+# Regulators whose datasheets rate them for >= 500 mA output. The prompt
+# names none: choosing one that carries the load is what ldo_rating tests.
+[parts.ldo]
+value = ["(?i)AP2112", "(?i)AMS1117", "(?i)LD1117", "(?i)XC6220", "(?i)TLV757",
+         "(?i)AP7361", "(?i)NCP1117", "(?i)LM1117"]
+
+# The receptacle among the connectors: the J* with a CC1 pin.
+[parts.usb_ref]
+ref = ["^J[0-9]+$"]
+with_pins = ["CC1"]
+
+# The regulator by function, not by allowlist, so a regulator outside `ldo`
+# fails ldo_rating and nothing else. KiCad's regulator symbols spell the
+# pins three ways: VIN/VOUT, VI/VO (AMS1117) and IN/OUT (TLV757).
+[parts.ldo_ref]
+ref = ["^U[0-9]+$"]
+with_pins = ["VOUT", "VO", "OUT"]
+
+# The output header: the two-pad connector.
+[parts.out_header]
+ref = ["^J[0-9]+$"]
+pads = [2]
+
+# --- nets: by function --------------------------------------------------------
+
+[nets.ground]
+words = ["GND", "VSS", "0V"]
+
+[nets.vbus]
+part = "usb_ref"
+words = ["VBUS"]
+
+[nets.cc1]
+part = "usb_ref"
+words = ["CC1"]
+
+[nets.cc2]
+part = "usb_ref"
+words = ["CC2"]
+
+# The three spellings of the regulator's input and output pins.
+[nets.ldo_vin]
+part = "ldo_ref"
+words = ["VIN", "VI", "IN"]
+
+[nets.ldo_vout]
+part = "ldo_ref"
+words = ["VOUT", "VO", "OUT"]
+
+# Pin 1 of the output header, by number (the prompt numbers it): the output
+# must reach pin 1, so a header with its pins swapped fails.
+[nets.out_p1]
+part = "out_header"
+pins = ["1"]
+
+# --- clauses ------------------------------------------------------------------
+
+[[clause]]
+id = "usb_conn"
+statement = "A USB-C receptacle is present."
+checker = "part_present"
+args = { part = "usb" }
+
+[[clause]]
+id = "ldo_rating"
+statement = "The regulator is one rated for at least 500 mA output."
+checker = "part_present"
+args = { part = "ldo" }
+
+[[clause]]
+id = "cc1_rd"
+statement = "CC1 has a 4.1k-6.1k resistor to ground (Rd, 5.1k +-20%)."
+checker = "series_part_between"
+args = { net_a = "cc1", net_b = "ground", kind = "R", min = 4.1e3, max = 6.1e3 }
+
+[[clause]]
+id = "cc2_rd"
+statement = "CC2 has a 4.1k-6.1k resistor to ground (Rd, 5.1k +-20%)."
+checker = "series_part_between"
+args = { net_a = "cc2", net_b = "ground", kind = "R", min = 4.1e3, max = 6.1e3 }
+
+[[clause]]
+id = "cc_separate"
+statement = "CC1 and CC2 are distinct nets, each with its own Rd."
+checker = "no_short"
+args = { net_a = "cc1", net_b = "cc2" }
+
+[[clause]]
+id = "vbus_to_ldo"
+statement = "The receptacle's VBUS reaches the regulator's input."
+checker = "net_connects"
+args = { net_a = "vbus", net_b = "ldo_vin" }
+
+[[clause]]
+id = "ldo_out"
+statement = "The regulator's output reaches pin 1 of the output header."
+checker = "net_connects"
+args = { net_a = "out_p1", net_b = "ldo_vout" }
+
+[[clause]]
+id = "cin"
+statement = "A capacitor of at least 1 uF sits within 3 mm of the regulator's input pin."
+checker = "decoupling_near"
+args = { pin = "ldo_vin", ground = "ground", min_farads = 1e-6, max_mm = 3.0 }
+
+[[clause]]
+id = "cout"
+statement = "A capacitor of at least 1 uF sits within 3 mm of the regulator's output pin."
+checker = "decoupling_near"
+args = { pin = "ldo_vout", ground = "ground", min_farads = 1e-6, max_mm = 3.0 }
+
+[[clause]]
+id = "rails_distinct"
+statement = "The USB 5 V net and the 3.3 V output net are distinct."
+checker = "no_short"
+args = { net_a = "vbus", net_b = "ldo_vout" }

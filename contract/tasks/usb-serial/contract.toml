@@ -1,0 +1,176 @@
+# usb-serial: the CONTRACT clause list for a USB-C to 5 V serial adapter on a
+# CH340C with a 6-pin target header. HELD OUT: never shown to the agent.
+# Sources and supplied-vs-withheld numbers are in provenance.md (design
+# 2026-09-29-contract-tasks §4.2).
+
+# --- parts --------------------------------------------------------------------
+
+# The CH340 variants with an internal clock AND a DTR pin: the C and K. The E
+# and N have no DTR, so they cannot drive the reset the prompt asks for; the
+# G needs an external crystal.
+[parts.bridge]
+value = ["(?i)CH340[CK]"]
+
+[parts.usb_ref]
+ref = ["^J[0-9]+$"]
+with_pins = ["CC1"]
+
+[parts.bridge_ref]
+ref = ["^U[0-9]+$"]
+with_pins = ["UD+"]
+
+# The target header: the six-pad connector. Its pins are `Pin_n`, so its
+# nets are found by pad number (the prompt numbers them).
+[parts.header_ref]
+ref = ["^J[0-9]+$"]
+pads = [6]
+
+# --- nets -----------------------------------------------------------------------
+
+[nets.ground]
+words = ["GND", "VSS", "0V"]
+
+[nets.cc1]
+part = "usb_ref"
+words = ["CC1"]
+
+[nets.cc2]
+part = "usb_ref"
+words = ["CC2"]
+
+[nets.conn_dp]
+part = "usb_ref"
+words = ["D+"]
+
+# Words split on '-', so the receptacle's `D-` pin is the word `D`.
+[nets.conn_dm]
+part = "usb_ref"
+words = ["D"]
+
+[nets.br_dp]
+part = "bridge_ref"
+words = ["UD+"]
+
+# `UD-` is the word `UD`, as above.
+[nets.br_dm]
+part = "bridge_ref"
+words = ["UD"]
+
+[nets.br_v3]
+part = "bridge_ref"
+words = ["V3"]
+
+[nets.br_vcc]
+part = "bridge_ref"
+words = ["VCC"]
+
+[nets.br_txd]
+part = "bridge_ref"
+words = ["TXD"]
+
+[nets.br_rxd]
+part = "bridge_ref"
+words = ["RXD"]
+
+# KiCad names the pin `~{DTR}`: the word is `DTR`.
+[nets.br_dtr]
+part = "bridge_ref"
+words = ["DTR"]
+
+[nets.hdr_p4]
+part = "header_ref"
+pins = ["4"]
+
+[nets.hdr_p5]
+part = "header_ref"
+pins = ["5"]
+
+[nets.hdr_p6]
+part = "header_ref"
+pins = ["6"]
+
+# --- clauses ------------------------------------------------------------------
+
+[[clause]]
+id = "bridge"
+statement = "A CH340C or CH340K bridge is present."
+checker = "part_present"
+args = { part = "bridge" }
+
+[[clause]]
+id = "cc1_rd"
+statement = "CC1 has a 4.1k-6.1k resistor to ground (Rd, 5.1k +-20%)."
+checker = "series_part_between"
+args = { net_a = "cc1", net_b = "ground", kind = "R", min = 4.1e3, max = 6.1e3 }
+
+[[clause]]
+id = "cc2_rd"
+statement = "CC2 has a 4.1k-6.1k resistor to ground (Rd, 5.1k +-20%)."
+checker = "series_part_between"
+args = { net_a = "cc2", net_b = "ground", kind = "R", min = 4.1e3, max = 6.1e3 }
+
+[[clause]]
+id = "cc_separate"
+statement = "CC1 and CC2 are distinct nets, each with its own Rd."
+checker = "no_short"
+args = { net_a = "cc1", net_b = "cc2" }
+
+[[clause]]
+id = "dp"
+statement = "The bridge's UD+ reaches the receptacle's D+."
+checker = "net_connects"
+args = { net_a = "br_dp", net_b = "conn_dp" }
+
+[[clause]]
+id = "dm"
+statement = "The bridge's UD- reaches the receptacle's D-."
+checker = "net_connects"
+args = { net_a = "br_dm", net_b = "conn_dm" }
+
+[[clause]]
+id = "v3_cap"
+statement = "A capacitor of at least 10 nF sits within 3 mm of the bridge's V3 pin."
+checker = "decoupling_near"
+args = { pin = "br_v3", ground = "ground", min_farads = 10e-9, max_mm = 3.0 }
+
+[[clause]]
+id = "vcc_cap"
+statement = "A capacitor of at least 100 nF sits within 3 mm of the bridge's VCC pin."
+checker = "decoupling_near"
+args = { pin = "br_vcc", ground = "ground", min_farads = 100e-9, max_mm = 3.0 }
+
+[[clause]]
+id = "tx_out"
+statement = "The bridge's TXD reaches header pin 4 (data from adapter to target)."
+checker = "net_connects"
+args = { net_a = "br_txd", net_b = "hdr_p4" }
+
+[[clause]]
+id = "rx_in"
+statement = "The bridge's RXD reaches header pin 5 (data from target to adapter)."
+checker = "net_connects"
+args = { net_a = "br_rxd", net_b = "hdr_p5" }
+
+[[clause]]
+id = "dtr_reset"
+statement = "A 10-220 nF capacitor is in series between the bridge's DTR and header pin 6."
+checker = "series_part_between"
+args = { net_a = "br_dtr", net_b = "hdr_p6", kind = "C", min = 10e-9, max = 220e-9 }
+
+[[clause]]
+id = "v3_not_vcc"
+statement = "The bridge's V3 pin is not tied to its 5 V supply (5 V operation: V3 takes only a decoupling capacitor)."
+checker = "no_short"
+args = { net_a = "br_v3", net_b = "br_vcc" }
+
+[[clause]]
+id = "dp_dm_distinct"
+statement = "The receptacle's D+ and D- are distinct nets."
+checker = "no_short"
+args = { net_a = "conn_dp", net_b = "conn_dm" }
+
+[[clause]]
+id = "tx_rx_distinct"
+statement = "The bridge's TXD and RXD are distinct nets."
+checker = "no_short"
+args = { net_a = "br_txd", net_b = "br_rxd" }

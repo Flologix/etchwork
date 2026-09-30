@@ -1,0 +1,212 @@
+# mcu-i2c: the CONTRACT clause list for an ATmega328P at 3.3 V / 8 MHz
+# reading a BME280 over I2C. HELD OUT: never shown to the agent. Sources and
+# supplied-vs-withheld numbers are in provenance.md (design
+# 2026-09-29-contract-tasks §4.4).
+
+# --- parts --------------------------------------------------------------------
+
+[parts.mcu]
+# The ATmega328 and 328P in any package; the 328PB is a different part.
+value = ["(?i)ATmega328(?!PB)"]
+
+[parts.sensor]
+value = ["(?i)BME280"]
+
+# An 8 MHz crystal: `8MHz`, `8 MHz`, `8.000MHz`, `8M`; never 16 or 80.
+[parts.crystal]
+ref = ["^Y[0-9]+$"]
+value = ["(?i)^8(\\.0+)?\\s*M"]
+
+[parts.mcu_ref]
+ref = ["^U[0-9]+$"]
+with_pins = ["AVCC"]
+
+[parts.sensor_ref]
+ref = ["^U[0-9]+$"]
+with_pins = ["CSB"]
+
+[parts.crystal_ref]
+ref = ["^Y[0-9]+$"]
+
+# --- nets ---------------------------------------------------------------------
+
+[nets.ground]
+words = ["GND", "VSS", "0V"]
+
+[nets.mcu_supply]
+part = "mcu_ref"
+words = ["VCC", "AVCC"]
+
+[nets.mcu_vcc]
+part = "mcu_ref"
+words = ["VCC"]
+
+[nets.mcu_avcc]
+part = "mcu_ref"
+words = ["AVCC"]
+
+# KiCad names it `~{RESET}/PC6`.
+[nets.mcu_reset]
+part = "mcu_ref"
+words = ["RESET"]
+
+[nets.xtal1]
+part = "mcu_ref"
+words = ["XTAL1"]
+
+[nets.xtal2]
+part = "mcu_ref"
+words = ["XTAL2"]
+
+# SDA and SCL come from the engine's pin-function table for the TQFP and DIP
+# symbols only; the QFN symbols (ATmega328P-M, -MM, ATmega328-M) name pins 27
+# and 28 (MM: 23 and 24) just PC4 and PC5. Both words are accepted, on the
+# MCU only.
+[nets.mcu_sda]
+part = "mcu_ref"
+words = ["SDA", "PC4"]
+
+[nets.mcu_scl]
+part = "mcu_ref"
+words = ["SCL", "PC5"]
+
+# KiCad's BME280 names its I2C pins SDI (data) and SCK (clock).
+[nets.sen_sdi]
+part = "sensor_ref"
+words = ["SDI"]
+
+[nets.sen_sck]
+part = "sensor_ref"
+words = ["SCK"]
+
+[nets.sen_csb]
+part = "sensor_ref"
+words = ["CSB"]
+
+[nets.sen_sdo]
+part = "sensor_ref"
+words = ["SDO"]
+
+[nets.sen_supply]
+part = "sensor_ref"
+words = ["VDD", "VDDIO"]
+
+# Either rail: SDO strapped to supply or to ground sets the I2C address.
+[nets.rails]
+words = ["VCC", "AVCC", "VDD", "VDDIO", "GND", "VSS"]
+
+# --- clauses ------------------------------------------------------------------
+
+[[clause]]
+id = "mcu"
+statement = "An ATmega328P is present."
+checker = "part_present"
+args = { part = "mcu" }
+
+[[clause]]
+id = "sensor"
+statement = "A BME280 is present."
+checker = "part_present"
+args = { part = "sensor" }
+
+[[clause]]
+id = "crystal"
+statement = "An 8 MHz crystal is present."
+checker = "part_present"
+args = { part = "crystal" }
+
+[[clause]]
+id = "mcu_decoupling"
+statement = "A capacitor of at least 100 nF sits within 3 mm of each VCC and AVCC pin."
+checker = "decoupling_near"
+args = { pin = "mcu_supply", ground = "ground", min_farads = 100e-9, max_mm = 3.0, each = true }
+
+[[clause]]
+id = "avcc"
+statement = "AVCC is connected to the supply."
+checker = "net_connects"
+args = { net_a = "mcu_avcc", net_b = "mcu_vcc" }
+
+[[clause]]
+id = "reset_pullup"
+statement = "A 4.7k-100k resistor runs from RESET to the supply."
+checker = "series_part_between"
+args = { net_a = "mcu_reset", net_b = "mcu_vcc", kind = "R", min = 4.7e3, max = 100e3 }
+
+[[clause]]
+id = "crystal_xtal1"
+statement = "The crystal reaches XTAL1."
+checker = "net_connects"
+args = { each_part = "crystal_ref", net_b = "xtal1" }
+
+[[clause]]
+id = "crystal_xtal2"
+statement = "The crystal reaches XTAL2."
+checker = "net_connects"
+args = { each_part = "crystal_ref", net_b = "xtal2" }
+
+[[clause]]
+id = "xtal1_load"
+statement = "A 10-33 pF capacitor runs from XTAL1 to ground."
+checker = "series_part_between"
+args = { net_a = "xtal1", net_b = "ground", kind = "C", min = 10e-12, max = 33e-12 }
+
+[[clause]]
+id = "xtal2_load"
+statement = "A 10-33 pF capacitor runs from XTAL2 to ground."
+checker = "series_part_between"
+args = { net_a = "xtal2", net_b = "ground", kind = "C", min = 10e-12, max = 33e-12 }
+
+[[clause]]
+id = "sda_pullup"
+statement = "A 1k-10k resistor pulls SDA up to the supply."
+checker = "series_part_between"
+args = { net_a = "mcu_sda", net_b = "mcu_vcc", kind = "R", min = 1e3, max = 10e3 }
+
+[[clause]]
+id = "scl_pullup"
+statement = "A 1k-10k resistor pulls SCL up to the supply."
+checker = "series_part_between"
+args = { net_a = "mcu_scl", net_b = "mcu_vcc", kind = "R", min = 1e3, max = 10e3 }
+
+[[clause]]
+id = "sda_wired"
+statement = "The sensor's SDI (I2C data) reaches the MCU's SDA."
+checker = "net_connects"
+args = { net_a = "sen_sdi", net_b = "mcu_sda" }
+
+[[clause]]
+id = "scl_wired"
+statement = "The sensor's SCK (I2C clock) reaches the MCU's SCL."
+checker = "net_connects"
+args = { net_a = "sen_sck", net_b = "mcu_scl" }
+
+[[clause]]
+id = "csb_high"
+statement = "The sensor's CSB is tied to the sensor's own supply, selecting I2C."
+checker = "net_connects"
+args = { net_a = "sen_csb", net_b = "sen_supply" }
+
+[[clause]]
+id = "sda_scl_distinct"
+statement = "The MCU's SDA and SCL are distinct nets."
+checker = "no_short"
+args = { net_a = "mcu_sda", net_b = "mcu_scl" }
+
+[[clause]]
+id = "xtal_distinct"
+statement = "XTAL1 and XTAL2 are distinct nets."
+checker = "no_short"
+args = { net_a = "xtal1", net_b = "xtal2" }
+
+[[clause]]
+id = "sdo_tied"
+statement = "The sensor's SDO is tied directly to supply or ground, setting its address."
+checker = "net_connects"
+args = { net_a = "sen_sdo", net_b = "rails" }
+
+[[clause]]
+id = "sensor_decoupling"
+statement = "A capacitor of at least 100 nF sits within 3 mm of each of the sensor's VDD and VDDIO pins."
+checker = "decoupling_near"
+args = { pin = "sen_supply", ground = "ground", min_farads = 100e-9, max_mm = 3.0, each = true }

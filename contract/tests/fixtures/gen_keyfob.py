@@ -22,7 +22,9 @@ from pathlib import Path
 
 import pcbnew
 
-FP_ROOT = Path("/usr/share/kicad/footprints")
+from contract.tests.fixtures.fixture_lib import (build as build_board, fp, mm, outline, pad,
+                                                 rename_net, set_net, write_all)
+
 OUTLINE = (36.0, 22.0)
 
 # ref -> (library, footprint, value, centre (mm), {pad number: (net, pin name)})
@@ -52,60 +54,11 @@ PARTS = {
 }
 
 
-def _mm(x, y):
-    return pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y))
-
-
-def _net(board, name):
-    found = board.FindNet(name)
-    if found is None:
-        found = pcbnew.NETINFO_ITEM(board, name)
-        board.Add(found)
-    return found
-
-
-def _outline(board, w, h):
-    for item in list(board.GetDrawings()):
-        if item.GetLayer() == pcbnew.Edge_Cuts:
-            board.Remove(item)
-    corners = [(0, 0), (w, 0), (w, h), (0, h)]
-    for a, b in zip(corners, corners[1:] + corners[:1]):
-        seg = pcbnew.PCB_SHAPE(board)
-        seg.SetShape(pcbnew.SHAPE_T_SEGMENT)
-        seg.SetStart(_mm(*a))
-        seg.SetEnd(_mm(*b))
-        seg.SetLayer(pcbnew.Edge_Cuts)
-        seg.SetWidth(pcbnew.FromMM(0.1))
-        board.Add(seg)
-
-
-def _fp(board, ref):
-    return next(f for f in board.GetFootprints() if f.GetReference() == ref)
-
-
-def _pad(board, ref, number):
-    return next(p for p in _fp(board, ref).Pads() if p.GetNumber() == number)
-
-
-def _set_net(board, ref, number, net):
-    # Every pad with that number: a switch or holder may repeat one.
-    for pad in _fp(board, ref).Pads():
-        if pad.GetNumber() == number:
-            pad.SetNet(_net(board, net))
-
-
-def _rename_net(board, old, new):
-    """Every pad on `old` moves to `new`, as if the net had been named so."""
-    for pad in board.GetPads():
-        if pad.GetNetname() == old:
-            pad.SetNet(_net(board, new))
-
-
 def _cap_beside_transmitter(board):
     # C1's supply pad (1) 1.2 mm from U2:VDD, far from U1:VDD. The cap is
     # still across VCC and GND: only where it sits is wrong.
-    vdd = _pad(board, "U2", "5").GetPosition()
-    c1 = _fp(board, "C1")
+    vdd = pad(board, "U2", "5").GetPosition()
+    c1 = fp(board, "C1")
     c1.SetPosition(pcbnew.VECTOR2I(vdd.x + pcbnew.FromMM(2.0), vdd.y))
 
 
@@ -114,17 +67,17 @@ def _isolate_encoder_supply(board):
     # never reaches: the encoder is unpowered, but still decoupled (else this
     # would fail `decoupling` too). U2 stays on VCC, so any-IC binding of the
     # encoder supply would still have seen a powered VDD pin.
-    _set_net(board, "U1", "8", "VENC")
-    _set_net(board, "C1", "1", "VENC")
+    set_net(board, "U1", "8", "VENC")
+    set_net(board, "C1", "1", "VENC")
 
 
 def _led_straight_off_dout(board):
     # D1's anode straight on DOUT, no resistor in series; the 1k R2 now runs
     # from DOUT to the transmitter's DATA input instead. R2 touches the LED's
     # net but does not limit its current.
-    _set_net(board, "D1", "2", "DOUT")
-    _set_net(board, "R2", "2", "TX_DATA")
-    _set_net(board, "U2", "6", "TX_DATA")
+    set_net(board, "D1", "2", "DOUT")
+    set_net(board, "R2", "2", "TX_DATA")
+    set_net(board, "U2", "6", "TX_DATA")
 
 
 def _switch_on_auto_named_net(board):
@@ -132,45 +85,28 @@ def _switch_on_auto_named_net(board):
     # whose words include D1 (a data-input synonym), and SW2 moves onto it
     # off its K1 net. No encoder data input is reached by SW2; only reading
     # the auto-name as function would say otherwise.
-    _rename_net(board, "DOUT", "Net-(D1-A)")
-    _set_net(board, "SW2", "2", "Net-(D1-A)")
+    rename_net(board, "DOUT", "Net-(D1-A)")
+    set_net(board, "SW2", "2", "Net-(D1-A)")
 
 
 def build():
-    board = pcbnew.BOARD()
-    _outline(board, *OUTLINE)
-    for ref, (lib, name, value, (x, y), pins) in PARTS.items():
-        fp = pcbnew.FootprintLoad(str(FP_ROOT / f"{lib}.pretty"), name)
-        if fp is None:
-            sys.exit(f"footprint {lib}:{name} is not in {FP_ROOT}")
-        fp.SetFPID(pcbnew.LIB_ID(lib, name))
-        fp.SetReference(ref)
-        fp.SetValue(value)
-        board.Add(fp)
-        fp.SetPosition(_mm(x, y))
-        for pad in fp.Pads():
-            net, pin = pins[pad.GetNumber()]
-            if net:
-                pad.SetNet(_net(board, net))
-            if pin:
-                pad.SetPinFunction(pin)
-    return board
+    return build_board(PARTS, OUTLINE)
 
 
 MUTANTS = {
-    "envelope": lambda b: _outline(b, 40.0, 22.0),
-    "coincell": lambda b: _fp(b, "BT1").SetFPID(
+    "envelope": lambda b: outline(b, 40.0, 22.0),
+    "coincell": lambda b: fp(b, "BT1").SetFPID(
         pcbnew.LIB_ID("Battery", "BatteryHolder_Keystone_3000_1x12mm")),
-    "encoder": lambda b: _fp(b, "U1").SetValue("LM358"),
-    "buttons": lambda b: _fp(b, "SW2").SetFPID(pcbnew.LIB_ID(
+    "encoder": lambda b: fp(b, "U1").SetValue("LM358"),
+    "buttons": lambda b: fp(b, "SW2").SetFPID(pcbnew.LIB_ID(
         "Button_Switch_SMD", "SW_DIP_SPSTx01_Slide_6.7x4.1mm_W6.73mm_P2.54mm_LowProfile_JPin")),
-    "led": lambda b: _fp(b, "D1").SetFPID(pcbnew.LIB_ID("Diode_SMD", "D_0603_1608Metric")),
-    "rosc": lambda b: _fp(b, "R1").SetValue("100k"),
-    "led_limit": lambda b: _fp(b, "R2").SetValue("100"),
-    "decoupling": lambda b: _fp(b, "C1").SetPosition(_mm(30.0, 10.0)),
-    "btn_inputs": lambda b: _set_net(b, "SW2", "2", "N_SW1"),
-    "btn_not_shorted": lambda b: _set_net(b, "U1", "5", "VCC"),
-    "batt_supply": lambda b: _set_net(b, "BT1", "1", "VBATX"),
+    "led": lambda b: fp(b, "D1").SetFPID(pcbnew.LIB_ID("Diode_SMD", "D_0603_1608Metric")),
+    "rosc": lambda b: fp(b, "R1").SetValue("100k"),
+    "led_limit": lambda b: fp(b, "R2").SetValue("100"),
+    "decoupling": lambda b: fp(b, "C1").SetPosition(mm(30.0, 10.0)),
+    "btn_inputs": lambda b: set_net(b, "SW2", "2", "N_SW1"),
+    "btn_not_shorted": lambda b: set_net(b, "U1", "5", "VCC"),
+    "batt_supply": lambda b: set_net(b, "BT1", "1", "VBATX"),
 }
 
 # Adversarial variants: `<clause>--<case>`, each failing `<clause>` alone.
@@ -178,45 +114,14 @@ VARIANTS = {
     "decoupling--near-transmitter": _cap_beside_transmitter,
     "batt_supply--encoder-vdd-isolated": _isolate_encoder_supply,
     "led_limit--no-series-resistor": _led_straight_off_dout,
-    "buttons--spring-contact": lambda b: _fp(b, "SW2").SetFPID(
+    "buttons--spring-contact": lambda b: fp(b, "SW2").SetFPID(
         pcbnew.LIB_ID("Connector", "SpringContact_Harwin_S1941-46R")),
     "btn_inputs--auto-named-net": _switch_on_auto_named_net,
 }
 
 
-# Fixed so every build() draws the same uuid sequence for the same items:
-# SaveBoard serializes footprints (and their pads) sorted by uuid, so a
-# random seed would give every variant its own file order and make even a
-# one-line mutation diff as a full rewrite (spec §6: fixtures must be
-# diffable). Any constant works; this one has no other significance.
-UUID_SEED = 0xC0FFEE
-
-
 def main(out_dir) -> None:
-    out_dir = Path(out_dir)
-    # KiCad's footprint-library plugin cache warms lazily on first use, and
-    # a cold cache draws a different number of uuids than a warm one for
-    # the same footprints -- so the first variant built in a process would
-    # never line up against the rest even with identical seeding. One
-    # throwaway build, before any variant is seeded and generated for real,
-    # pays that one-time cost so every real build() below starts warm.
-    pcbnew.KIID.SeedGenerator(UUID_SEED)
-    build()
-    edits = {**MUTANTS, **VARIANTS}
-    for name in ["clean", *edits]:
-        pcbnew.KIID.SeedGenerator(UUID_SEED)
-        board = build()
-        if name != "clean":
-            edits[name](board)
-        path = out_dir / name / "kicad" / "board.kicad_pcb"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        pcbnew.SaveBoard(str(path), board)
-        # SaveBoard also writes a project and a local-settings file next to
-        # the board; nothing here reads either, so drop them rather than
-        # leaving them for the next `./etchwork contract fixtures` to churn.
-        for suffix in (".kicad_pro", ".kicad_prl"):
-            path.with_suffix(suffix).unlink(missing_ok=True)
-        print(f"wrote {path}")
+    write_all(out_dir, build, {**MUTANTS, **VARIANTS})
 
 
 if __name__ == "__main__":

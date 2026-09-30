@@ -25,10 +25,11 @@ def outline_within(board: Board, *, width_mm: float, height_mm: float,
 
 
 def decoupling_near(board: Board, *, pin: NetSpec, ground: NetSpec,
-                    min_farads: float, max_mm: float) -> Result:
+                    min_farads: float, max_mm: float, each: bool = False) -> Result:
     """A capacitor of at least min_farads across the supply pin's net and
     ground, with its supply-side pad within max_mm of the pin (pad centre to
-    pad centre)."""
+    pad centre). With `each`, every pad `pin` matches needs one, not just the
+    best-placed pad; one capacitor may serve two pins it sits near."""
     targets = resolve_pads(board, pin)
     if not targets:
         return Result(False, f"no pad matches {pin.name}, so there is no supply pin to decouple")
@@ -36,6 +37,8 @@ def decoupling_near(board: Board, *, pin: NetSpec, ground: NetSpec,
     if not grounds:
         return Result(False, f"no net matches {ground.name}")
     supply = {p.net for p in targets} - grounds
+    if each:
+        return _decoupling_each(board, pin, targets, grounds, supply, min_farads, max_mm)
     by_ref = pads_by_ref(board)
     best, seen = None, []
     for f in board.footprints():
@@ -63,3 +66,39 @@ def decoupling_near(board: Board, *, pin: NetSpec, ground: NetSpec,
     d, ref, value, at = best
     return Result(d <= max_mm, f"{ref} ({value}) is {d:.2f} mm from {at}; limit {max_mm} mm",
                   {"distance_mm": round(d, 3), "cap": ref, "value": value, "pin": at})
+
+
+def _decoupling_each(board: Board, pin: NetSpec, targets, grounds, supply,
+                     min_farads: float, max_mm: float) -> Result:
+    by_ref = pads_by_ref(board)
+    caps = []  # (ref, the cap's supply-side pads), qualifying caps only
+    for f in board.footprints():
+        if not is_kind(f, "C"):
+            continue
+        own = by_ref.get(f.ref, [])
+        nets = {p.net for p in own}
+        value = parse_value(f.value)
+        if nets & supply and nets & grounds and value is not None and value >= min_farads:
+            caps.append((f.ref, [p for p in own if p.net in supply]))
+    per_pin, missing = {}, []
+    for tp in sorted(targets, key=lambda p: (p.ref, len(p.number), p.number)):
+        at = f"{tp.ref}:{tp.number}"
+        best = None
+        for ref, pads in caps:
+            for cp in pads:
+                if cp.net == tp.net:
+                    d = math.dist(cp.pos, tp.pos)
+                    if best is None or d < best[0]:
+                        best = (d, ref)
+        per_pin[at] = None if best is None else {"cap": best[1], "distance_mm": round(best[0], 3)}
+        if best is None:
+            missing.append(at)
+        elif best[0] > max_mm:
+            missing.append(f"{at} (nearest {best[1]} at {best[0]:.2f} mm)")
+    measured = {"pins": per_pin}
+    if missing:
+        return Result(False, f"{pin.name}: no capacitor >= {min_farads:g} F within {max_mm} mm "
+                             f"of {', '.join(missing)}", measured)
+    found = ", ".join(f"{at} {m['cap']} at {m['distance_mm']:.2f} mm" for at, m in per_pin.items())
+    return Result(True, f"every {pin.name} pin has a capacitor >= {min_farads:g} F within "
+                        f"{max_mm} mm: {found}", measured)
