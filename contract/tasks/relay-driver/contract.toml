@@ -43,6 +43,12 @@ pins = ["1"]
 part = "power_in"
 pins = ["2"]
 
+# The logic header's ground pin: the gate drive is referenced to the source,
+# so this must reach the power ground.
+[nets.logic_gnd_pin]
+part = "logic_hdr"
+pins = ["1"]
+
 [nets.signal]
 part = "logic_hdr"
 pins = ["2"]
@@ -118,3 +124,9 @@ id = "rails_distinct"
 statement = "The +12 V net and the logic supply net are distinct."
 checker = "no_short"
 args = { net_a = "in12", net_b = "logic_supply" }
+
+[[clause]]
+id = "logic_gnd"
+statement = "The logic header's ground (pin 1) is on the power ground."
+checker = "net_connects"
+args = { net_a = "logic_gnd_pin", net_b = "ground" }

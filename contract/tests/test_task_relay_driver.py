@@ -11,7 +11,7 @@ from contract.match import parse_value
 
 TASK = Path(__file__).resolve().parents[1] / "tasks" / "relay-driver"
 IDS = ["mosfet", "relay", "coil_supply", "coil_drain", "source_gnd", "flyback",
-       "gate_pulldown", "gate_series", "rails_distinct"]
+       "gate_pulldown", "gate_series", "rails_distinct", "logic_gnd"]
 
 
 def _clause(clause_id):

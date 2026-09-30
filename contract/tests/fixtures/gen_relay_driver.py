@@ -57,7 +57,15 @@ MUTANTS = {
     "gate_pulldown": lambda b: fp(b, "R2").SetValue("1k"),
     "gate_series": lambda b: fp(b, "R1").SetValue("10k"),
     "rails_distinct": lambda b: set_net(b, "J2", "3", "+12V"),
+    "logic_gnd": lambda b: set_net(b, "J2", "1", "N_LGND"),
 }
+
+
+def _drain_on_supply(board):
+    # The drain, the relay's low side and the diode's anode all on +12V: the
+    # diode then has both ends on one net.
+    for ref, pad in (("Q1", "3"), ("K1", "10"), ("D1", "2")):
+        set_net(board, ref, pad, "+12V")
 
 VARIANTS = {
     # The flyback diode turned round: it now shorts +12V through the MOSFET.
@@ -66,8 +74,12 @@ VARIANTS = {
     # A diode with no K/A pin names: its orientation cannot be read.
     "flyback--unnamed-pins": lambda b: _clear_pin_names(b, "D1"),
     # The control signal straight onto the gate; R1 is left off to one side.
+    "flyback--drain-on-supply": _drain_on_supply,
     "gate_series--no-resistor": lambda b: set_net(b, "J2", "2", "N_GATE"),
 }
+
+# Read from the grade: the drain on +12 V fails flyback and nothing else.
+EXPECT = {"flyback--drain-on-supply": {"flyback"}}
 
 
 def main(out_dir) -> None:

@@ -39,6 +39,7 @@ were not read and are not cited; AND8116/D is used instead.
 | A 3.3 V logic relay driver puts a free-wheeling diode across the relay coil, with the cathode toward +12 V and the anode toward the switch, to clamp the coil's turn-off spike | onsemi AND8116/D Rev. 2 | p. 2, Figure 1 "Typical Discrete Relay Driver" (D2; text: "provides a clamp function to suppress the voltage spike ... during the turn-off") |
 | An N-MOSFET relay driver has a 1.0 kOhm resistor in series with the gate and a 300 kOhm resistor from gate to source | onsemi AND8116/D Rev. 2 | p. 2, Figure 2 and the bullet "Bias Resistors (1.0 k in the Gate and 300 k between Gate and Source)" |
 | A gate-to-source pull-down keeps the MOSFET off when the drive is faulty or unpowered; a kOhm-range value is usually suitable | Nexperia AN90059 Rev. 1 | section 6 "Protection circuits", p. 25, Fig. 30 |
+| The gate drive is referenced to the MOSFET's source, so the logic ground must be common with the source (power) ground for the gate voltage to mean anything | Engineering fact, no document page cited: every RDS(on) figure above is specified at a gate-to-source voltage, and the gate drive is the header's signal against the header's ground | (none; the datasheets' VGS conditions) |
 | A series gate resistor sets the switching speed and damps gate-loop oscillation | Nexperia AN90059 Rev. 1 | section 3.3 "Gate resistance", p. 9 |
 
 Disagreements with the brief: none of substance. The brief says the
@@ -57,6 +58,7 @@ or below 2.5 V, so the list is unchanged. No clause states any RDS(on) figure.
 | flyback | nothing: the prompt does not say "diode" | a diode across the coil, cathode on +12 V, anode on the drain | AND8116/D, p. 2, Fig. 1 |
 | gate_pulldown | nothing: the prompt does not say "resistor" | a resistor from gate to ground, 10k-1M | Nexperia AN90059 §6, p. 25; AND8116/D Fig. 2 |
 | gate_series | nothing | a resistor from the control signal to the gate, 10R-1k | Nexperia AN90059 §3.3, p. 9; AND8116/D Fig. 2 |
+| logic_gnd | the header's pin 1 is ground: **supplied** | the logic ground must be common with the power ground | the datasheets' VGS conditions (gate-to-source); engineering fact |
 | rails_distinct | two separate supplies are named | the +12 V and logic supply nets must not be joined | prompt structure |
 
 ## Allowlists
@@ -89,3 +91,8 @@ VGS <= 2.5 V is a defensible alternative that fails `mosfet` alone.
   `J*`; a board using other connectors fails the clauses that name them.
 - A snubber or TVS in place of the diode also fails `flyback`, though it can
   protect the MOSFET.
+- A drain shorted to +12 V has no clause of its own: `flyback` fails, because
+  the diode then has both ends on one net (pinned by
+  `flyback--drain-on-supply`).
+- `logic_gnd` reads the header's pin 1 by number, like the other header
+  clauses; a board using another connector fails it.
