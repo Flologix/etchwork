@@ -472,11 +472,21 @@ def run_layout(netlist: str, width_mm: float, height_mm: float,
         if repair_note:
             lines.append(repair_note)
         lines.append(kicad.summarise(report))
-        lines += _board_checks(board, netlist) if route else []
+        lines += _board_checks(board, netlist) if route else _placement_checks(board, netlist)
         lines.append(f"Board: {board}")
         return "\n".join(lines)
     finally:
         record_board(board)
+
+
+def _placement_checks(board: str, netlist: str) -> list[str]:
+    """Placement rules on a placed, unrouted board (board-checks phase A): a
+    fix now costs a moved part, not a re-route."""
+    try:
+        warned = checks.placement_checks(paths.inside(board), paths.inside(netlist))
+    except Exception as error:  # a check must never fail the layout
+        return [f"placement checks: could not run ({type(error).__name__}: {error})"]
+    return [f"placement checks: {len(warned)} warning(s)", *(f"  - {w}" for w in warned)]
 
 
 def _board_checks(board: str, netlist: str) -> list[str]:

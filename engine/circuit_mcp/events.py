@@ -92,6 +92,7 @@ def outcome(answer: str) -> str:
 
 
 _BOARD_CHECKS = re.compile(r"^board checks: .*?; (\d+) warning", re.M)
+_PLACEMENT = re.compile(r"^placement checks: (\d+) warning", re.M)
 
 
 def metrics(answer: str) -> dict:
@@ -101,6 +102,9 @@ def metrics(answer: str) -> dict:
     checked = _BOARD_CHECKS.search(answer)
     if checked:
         found["board_check_warnings"] = int(checked.group(1))
+    placed = _PLACEMENT.search(answer)
+    if placed:
+        found["placement_warnings"] = int(placed.group(1))
     return found
 
 

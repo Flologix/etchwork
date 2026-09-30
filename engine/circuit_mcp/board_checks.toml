@@ -33,3 +33,17 @@ source = "rule of thumb for USB 2.0 full speed; high speed needs far tighter"
 [limits.power_drop_fraction]
 value = 0.02
 source = "rule of thumb: 2 % of the rail at the tier's upper current"
+
+# --- phase A: placement rules (design 4), checked before routing -------------
+
+[limits.decoupling_mm]
+value = 3.0
+source = "rule of thumb: a decoupling capacitor's power pad within a few mm of the IC pin it serves"
+
+[limits.crystal_mm]
+value = 5.0
+source = "rule of thumb: the crystal's pads within a few mm of the oscillator pins"
+
+[limits.connector_edge_mm]
+value = 1.0
+source = "rule of thumb: a connector's courtyard at the board edge, so a cable can reach it"
