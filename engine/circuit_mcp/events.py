@@ -91,8 +91,20 @@ def outcome(answer: str) -> str:
     return "ok"
 
 
+_BOARD_CHECKS = re.compile(r"^board checks: .*?; (\d+) warning", re.M)
+
+
 def metrics(answer: str) -> dict:
-    """The DRC counts from the headline a DRC-bearing tool printed, if any."""
+    """The DRC counts from the headline a DRC-bearing tool printed, and the
+    board checks' warning count, if any."""
+    found = _drc_metrics(answer)
+    checked = _BOARD_CHECKS.search(answer)
+    if checked:
+        found["board_check_warnings"] = int(checked.group(1))
+    return found
+
+
+def _drc_metrics(answer: str) -> dict:
     first = answer.lstrip().split("\n", 1)[0]
     if "DRC clean, 0 unconnected" in first:
         return {"drc_errors": 0, "unconnected": 0, "violation_types": []}

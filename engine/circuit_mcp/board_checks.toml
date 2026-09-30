@@ -1,0 +1,35 @@
+# Board checks (docs/superpowers/specs/2026-09-29-board-checks-design.md):
+# every constant and limit, with where it came from. Limits marked "rule of
+# thumb" are starting values: every check warns, never blocks (design 3.4),
+# and the event log's worst values are what they get tuned from.
+
+[copper.resistivity_ohm_m]
+value = 1.68e-8
+source = "https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity"
+quote = "copper: 1.68e-8 ohm m at 20 C"
+
+[copper.thickness_mm]
+value = 0.035
+source = "https://jlcpcb.com/help/article/jlcpcb-copper-weight"
+quote = "1 oz/ft2 copper: 34.8 um nominal, commonly 35 um (outer layers, JLCPCB standard)"
+
+# Current each tier is checked at: its upper bound, so a drop is the worst the
+# tier allows. gt_5a has no upper bound; it is checked at 10 A.
+[tier_current_a]
+lt_0_5a = 0.5
+0_5a_to_2a = 2.0
+2a_to_5a = 5.0
+gt_5a = 10.0
+source = "the net-class tiers (netclass_data.json); gt_5a at 10 A by assumption"
+
+[limits.crystal_length_mm]
+value = 10.0
+source = "rule of thumb: keep crystal traces short and direct"
+
+[limits.diff_pair_mismatch_mm]
+value = 2.0
+source = "rule of thumb for USB 2.0 full speed; high speed needs far tighter"
+
+[limits.power_drop_fraction]
+value = 0.02
+source = "rule of thumb: 2 % of the rail at the tier's upper current"
