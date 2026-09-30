@@ -20,6 +20,10 @@ ROWS = [
     ("Regulator_Linear", "AP2112K-3.3", "5", "VOUT"),
     ("Regulator_Linear", "AMS1117-3.3", "3", "VI"),
     ("Regulator_Linear", "AMS1117-3.3", "2", "VO"),
+    ("Regulator_Linear", "TLV75733PDBV", "1", "IN"),
+    ("Regulator_Linear", "TLV75733PDBV", "5", "OUT"),
+    ("Regulator_Linear", "XC6220B331MR", "1", "VIN"),
+    ("Regulator_Linear", "XC6220B331MR", "5", "VOUT"),
 ]
 
 

@@ -21,10 +21,11 @@ ref = ["^J[0-9]+$"]
 with_pins = ["CC1"]
 
 # The regulator by function, not by allowlist, so a regulator outside `ldo`
-# fails ldo_rating and nothing else. VO is the AMS1117 family's VOUT.
+# fails ldo_rating and nothing else. KiCad's regulator symbols spell the
+# pins three ways: VIN/VOUT, VI/VO (AMS1117) and IN/OUT (TLV757).
 [parts.ldo_ref]
 ref = ["^U[0-9]+$"]
-with_pins = ["VOUT", "VO"]
+with_pins = ["VOUT", "VO", "OUT"]
 
 # The output header: the two-pad connector.
 [parts.out_header]
@@ -48,14 +49,14 @@ words = ["CC1"]
 part = "usb_ref"
 words = ["CC2"]
 
-# VI/VO: the AMS1117 family's pin names.
+# The three spellings of the regulator's input and output pins.
 [nets.ldo_vin]
 part = "ldo_ref"
-words = ["VIN", "VI"]
+words = ["VIN", "VI", "IN"]
 
 [nets.ldo_vout]
 part = "ldo_ref"
-words = ["VOUT", "VO"]
+words = ["VOUT", "VO", "OUT"]
 
 # --- clauses ------------------------------------------------------------------
 

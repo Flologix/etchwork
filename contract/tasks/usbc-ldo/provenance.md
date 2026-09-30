@@ -87,6 +87,8 @@ are each rated 150-250 mA in the documents above.
 
 ## Known limits
 
+- The regulator's input and output pins are matched by any of three
+  spellings KiCad's regulator symbols use: VIN/VOUT, VI/VO and IN/OUT.
 - A board with two regulators is graded on both regulators' pins together.
 - The output header is found as the two-pad `J*`; a board that brings the
   output out on a larger connector fails `ldo_out`.

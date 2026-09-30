@@ -86,8 +86,8 @@ def _ldo_board(vin="VIN", vout="VOUT"):
               pad("J2", 1, "+3V3", names=["Pin_1"]), pad("J2", 2, "GND", names=["Pin_2"])])
 
 
-@pytest.mark.parametrize("vin, vout", [("VIN", "VOUT"), ("VI", "VO")])
-def test_ams1117_pin_names_are_found(vin, vout):
+@pytest.mark.parametrize("vin, vout", [("VIN", "VOUT"), ("VI", "VO"), ("IN", "OUT")])
+def test_regulator_pin_spellings_are_found(vin, vout):
     board = _ldo_board(vin, vout)
     for clause_id in ["vbus_to_ldo", "ldo_out", "cin", "cout", "rails_distinct"]:
         result = _run(clause_id, board)
