@@ -12,6 +12,7 @@ GENERATORS = {
     "keyfob": "gen_keyfob",
     "usbc-ldo": "gen_usbc_ldo",
     "usb-serial": "gen_usb_serial",
+    "relay-driver": "gen_relay_driver",
 }
 
 

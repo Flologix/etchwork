@@ -35,6 +35,12 @@ ROWS = [
     ("Interface_USB", "CH340C", "13", "DTR"),
     ("Interface_USB", "CH340C", "16", "VCC"),
     ("Interface_USB", "CH340K", "4", "DTR"),
+    # relay-driver
+    ("Transistor_FET", "AO3400A", "1", "G"),
+    ("Transistor_FET", "AO3400A", "2", "S"),
+    ("Transistor_FET", "AO3400A", "3", "D"),
+    ("Device", "D", "1", "K"),
+    ("Device", "D", "2", "A"),
 ]
 
 

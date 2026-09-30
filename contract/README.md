@@ -83,6 +83,7 @@ Clauses name a checker and pass aliases as arguments.
 | `keyfob-base` | two-button 433 MHz coin-cell keyfob | parts, encoder support circuit, envelope |
 | `usbc-ldo` | USB-C in, 3.3 V / 500 mA LDO out | CC pull-downs, regulator rating, regulator caps |
 | `usb-serial` | USB-C to 5 V serial adapter (CH340C) | USB data pair, TX/RX to the right header pins, auto-reset, bridge caps |
+| `relay-driver` | 3.3 V logic switching a 12 V relay via an N-MOSFET | flyback diode and its orientation, gate pull-down and series resistor, logic-level MOSFET |
 
 A pad's words are the words of its pin names. Only when the pad has no pin
 names do the words of its net's name count instead, and a KiCad
