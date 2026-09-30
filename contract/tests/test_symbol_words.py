@@ -24,6 +24,17 @@ ROWS = [
     ("Regulator_Linear", "TLV75733PDBV", "5", "OUT"),
     ("Regulator_Linear", "XC6220B331MR", "1", "VIN"),
     ("Regulator_Linear", "XC6220B331MR", "5", "VOUT"),
+    # usb-serial
+    ("Connector", "USB_C_Receptacle_USB2.0_16P", "A6", "D+"),
+    ("Connector", "USB_C_Receptacle_USB2.0_16P", "A7", "D"),
+    ("Interface_USB", "CH340C", "2", "TXD"),
+    ("Interface_USB", "CH340C", "3", "RXD"),
+    ("Interface_USB", "CH340C", "4", "V3"),
+    ("Interface_USB", "CH340C", "5", "UD+"),
+    ("Interface_USB", "CH340C", "6", "UD"),
+    ("Interface_USB", "CH340C", "13", "DTR"),
+    ("Interface_USB", "CH340C", "16", "VCC"),
+    ("Interface_USB", "CH340K", "4", "DTR"),
 ]
 
 

@@ -21,6 +21,7 @@ FIXTURES = HERE / "fixtures"
 # task -> generator module; fixtures live in fixtures/<task>/
 TASKS = {
     "usbc-ldo": "gen_usbc_ldo",
+    "usb-serial": "gen_usb_serial",
 }
 
 
