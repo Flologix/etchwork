@@ -29,9 +29,10 @@ def _verdict(report: dict) -> tuple[str, str | None]:
     """`(PASS|FAIL, both counts)` read from the REPORT, not the exit code.
 
     kicad-cli's --exit-code-violations answers 5 for any violation at all,
-    warnings included, and `lib_footprint_issues` is unavoidable whenever the
-    footprint library table is not configured -- which it is not, in a
-    container. Treating exit 5 as failure therefore fails every correct board.
+    warnings included -- a silkscreen overlap is enough -- so treating exit 5
+    as failure fails every correct board. (lib_footprint_issues, once on
+    every board because the container had no footprint-library table, is gone
+    since service.kicad_config gives each DRC run one.)
     Measured: one ladder rep read that FAIL, believed it, and spent the rest of
     its turn fixing a board that was already right.
 

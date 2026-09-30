@@ -5,11 +5,14 @@ because the tools now run inside this container. Each pcbnew step still
 runs as its own python3 subprocess, so a crash in pcbnew fails one step,
 not the server.
 """
+import contextlib
+import functools
 import json
 import os
 import pathlib
 import re
 import subprocess
+import tempfile
 
 from circuit_mcp import fab, paths
 
@@ -335,6 +338,58 @@ print("ses imported")
 """
 
 
+# --- KiCad's footprint libraries, for kicad-cli -------------------------------
+#
+# kicad-cli reads its footprint-library table from the user's KiCad config,
+# and the container has none: DRC flagged every footprint as
+# lib_footprint_issues ("the current configuration does not include the
+# footprint library"), 12 warnings on a 12-part board that every final answer
+# then explained away (live run, 2026-09-29). Each kicad-cli run that reads
+# footprints gets a throwaway config: KiCad's own table, plus the project's
+# fp/ libraries (parts.fp_libraries' rule: a project library replaces KiCad's
+# of the same name). Nothing is written into the project.
+
+FP_TABLE_TEMPLATE = pathlib.Path(os.environ.get("CIRCUIT_FP_TABLE",
+                                                "/usr/share/kicad/template/fp-lib-table"))
+_LIB_NAME = re.compile(r'\(lib \(name "([^"]+)"')
+
+
+@functools.cache
+def _kicad_version() -> str:
+    """`10.0`: the config folder kicad-cli reads, from its own version."""
+    try:
+        done = subprocess.run(["kicad-cli", "version"], capture_output=True, text=True, timeout=60)
+        found = re.match(r"(\d+\.\d+)", done.stdout.strip())
+        return found.group(1) if found else "10.0"
+    except (OSError, subprocess.TimeoutExpired):
+        return "10.0"
+
+
+@contextlib.contextmanager
+def kicad_config():
+    """The environment for one kicad-cli run: KICAD_CONFIG_HOME in a temp
+    folder whose fp-lib-table lists KiCad's libraries and the project's."""
+    from circuit_mcp import parts          # parts does not import service
+    project = parts.project_fp_libraries()
+    mine = {d.stem for d in project}
+    lines = []
+    if FP_TABLE_TEMPLATE.is_file():
+        for line in FP_TABLE_TEMPLATE.read_text(errors="replace").splitlines():
+            name = _LIB_NAME.search(line)
+            if name is None or name.group(1) not in mine:
+                lines.append(line)
+    else:
+        lines = ["(fp_lib_table", "\t(version 7)", ")"]
+    closing = max(i for i, line in enumerate(lines) if line.strip() == ")")
+    lines[closing:closing] = [f'\t(lib (name "{d.stem}") (type "KiCad") (uri "{d}") (options "") '
+                              f'(descr "this project\'s own library"))' for d in project]
+    with tempfile.TemporaryDirectory() as tmp:
+        folder = pathlib.Path(tmp) / _kicad_version()
+        folder.mkdir()
+        (folder / "fp-lib-table").write_text("\n".join(lines) + "\n")
+        yield {**os.environ, "KICAD_CONFIG_HOME": tmp}
+
+
 def drc_command(source: pathlib.Path, report: pathlib.Path, kind: str = "drc") -> list[str]:
     """The one DRC command line: run_job runs it in the workspace, and the
     packaging step re-runs it on a copy of the delivered board."""
@@ -351,8 +406,9 @@ def run_job(kind: str, board: str, out: str) -> dict:
     target = paths.inside(out)
     target.parent.mkdir(parents=True, exist_ok=True)
 
-    done = subprocess.run(drc_command(source, target, kind), capture_output=True,
-                          text=True, timeout=TIMEOUT)
+    with kicad_config() as env:
+        done = subprocess.run(drc_command(source, target, kind), capture_output=True,
+                              text=True, timeout=TIMEOUT, env=env)
     return {
         # 0 clean, 5 violations found, anything else is a tool failure. Passed
         # through rather than judged here for the same reason app/kicad.py
