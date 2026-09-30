@@ -97,7 +97,7 @@ words at all: `Net-(D2-A)` names a designator, not a data input D2.
 | `outline_within` | outline bounding box within W x H (+tol), either orientation |
 | `part_present` | at least `count` parts match an allowlist |
 | `series_part_between` | a two-terminal part of a designator kind, value in range, between two nets; with one net, in series (its shared node carries no other parts) |
-| `decoupling_near` | a cap >= N farads across supply and ground, within N mm of a supply pin |
+| `decoupling_near` | a cap >= N farads across supply and ground, within N mm of a supply pin; with `each`, of every supply pin |
 | `net_connects` | two nets meet; or every matching part reaches a net (optionally each a distinct one) |
 | `no_short` | two nets are distinct |
 | `diode_across` | a diode with its cathode on one net and its anode on another, by pin name; reversed or unnamed fails |
