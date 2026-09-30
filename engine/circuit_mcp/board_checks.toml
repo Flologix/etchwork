@@ -47,3 +47,43 @@ source = "rule of thumb: the crystal's pads within a few mm of the oscillator pi
 [limits.connector_edge_mm]
 value = 1.0
 source = "rule of thumb: a connector's courtyard at the board edge, so a cable can reach it"
+
+# --- phase C: EMC checks (design 6) --------------------------------------------
+#
+# A trace radiates according to its signal's edge time, not its clock rate,
+# and to the loop its return current takes. Fast nets are chosen by class and
+# by name (design 11.4, as suggested); each has an assumed edge time. None of
+# these is a simulation: they flag what deserves a person's look.
+
+[emc.signal_speed_mm_per_ns]
+value = 150.0
+source = "rule of thumb: roughly half the speed of light on FR-4"
+
+[emc.critical_fraction]
+value = 0.1667
+source = "rule of thumb: a trace longer than v * t_rise / 6 is electrically long"
+
+[emc.edge_ns]
+clock = 1.0
+gpio = 2.0
+diff_pair = 4.0
+switch_node = 5.0
+source = "assumptions: MCU GPIO edges ~2 ns; USB 2.0 full speed rises in 4-20 ns (the fastest used); clocks 1 ns; regulator switch nodes 5 ns"
+
+[emc.name_words]
+clock = ["CLK", "CLOCK", "MCLK", "BCLK"]
+gpio = ["SCK", "MOSI", "MISO", "TX", "RX", "TXD", "RXD", "CS"]
+switch_node = ["SW", "LX", "PH"]
+source = "the net-name words that mark a fast net, matched as whole words (SPI_SCK). Not I2C (SCL, SDA): its lines rise through pull-ups, 300-1000 ns by the I2C spec"
+
+[emc.plane_coverage]
+value = 0.90
+source = "rule of thumb: a fast net should run over its reference ground plane for nearly all its length"
+
+[emc.sample_step_mm]
+value = 0.5
+source = "sampling interval along a trace for the plane checks"
+
+[emc.gap_mm]
+value = 2.0
+source = "rule of thumb: an unfilled stretch this long between filled ground, under a fast net, is a gap its return current detours around (short breaks at via and pad antipads are ignored)"

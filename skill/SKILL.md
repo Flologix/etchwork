@@ -29,7 +29,7 @@ Changes go through the SKiDL script, never by editing the board file. If `run_la
 
 ## Finishing
 Done means `check_done` returns DONE. Then:
-- write the final answer: what the board is, where the files are (including the schematic PDF), the nets awaiting the human's decision exactly as `check_done` listed them, and its board-check warnings (voltage drop, crystal length, pair mismatch, clearance) as it states them — they are rules of thumb for the human to weigh, not failures to fix unasked;
+- write the final answer: what the board is, where the files are (including the schematic PDF), the nets awaiting the human's decision exactly as `check_done` listed them, and its board-check warnings (placement, voltage drop, crystal length, pair mismatch, clearance, and EMC: fast nets off or across the ground pour, electrically long nets, stubs, islands) as it states them — they are rules of thumb for the human to weigh, not failures to fix unasked;
 - stop.
 
 After DONE, KiCad's DRC is the only authority on clearances and connectivity. Do not write your own clearance, netlist or gerber checkers: a home-made checker once invented a short that did not exist.
