@@ -56,7 +56,8 @@ AMS1117-3.3 symbol says VI and VO, which is why the net specs match both.
 | ldo_rating | "3.3 V at up to 500 mA", "a linear regulator": **supplied** | which regulators are rated for it (allowlist below) | each regulator's datasheet, page 1 |
 | cc1_rd, cc2_rd | nothing | Rd = 5.1 kΩ ±20% (4.1k-6.1k) on each CC pin | USB Type-C spec R2.0, Table 4-25, p. 236 |
 | cc_separate | nothing | each CC pin has its own Rd | USB Type-C spec R2.0, §4.5.2.2.3.1, p. 170 |
-| vbus_to_ldo, ldo_out | the power path, implied | — | — |
+| vbus_to_ldo | the power path, implied | — | — |
+| ldo_out | "pin 1 is 3.3 V, pin 2 is ground": **supplied**, by number | that the regulator's output must reach pin 1 (a reversed header fails; pinned by `ldo_out--reversed-header`) | prompt structure |
 | cin, cout | nothing | >= 1 µF within 3 mm of each regulator pin | regulator datasheets (see Widened ranges) |
 | rails_distinct | nothing | 5 V and 3.3 V are separate nets | — |
 

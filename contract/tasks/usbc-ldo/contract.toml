@@ -58,6 +58,12 @@ words = ["VIN", "VI", "IN"]
 part = "ldo_ref"
 words = ["VOUT", "VO", "OUT"]
 
+# Pin 1 of the output header, by number (the prompt numbers it): the output
+# must reach pin 1, so a header with its pins swapped fails.
+[nets.out_p1]
+part = "out_header"
+pins = ["1"]
+
 # --- clauses ------------------------------------------------------------------
 
 [[clause]]
@@ -98,9 +104,9 @@ args = { net_a = "vbus", net_b = "ldo_vin" }
 
 [[clause]]
 id = "ldo_out"
-statement = "The regulator's output reaches the output header."
+statement = "The regulator's output reaches pin 1 of the output header."
 checker = "net_connects"
-args = { each_part = "out_header", net_b = "ldo_vout" }
+args = { net_a = "out_p1", net_b = "ldo_vout" }
 
 [[clause]]
 id = "cin"

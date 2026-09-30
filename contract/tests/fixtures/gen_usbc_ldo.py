@@ -85,6 +85,9 @@ VARIANTS = {
     # A 250 mA part in the regulator's place.
     "ldo_rating--250ma": lambda b: fp(b, "U1").SetValue("HT7333-A"),
     # CC1 wired straight to ground: R1 is left on a CC1 net of its own.
+    # The output header's pins swapped: +3V3 on pin 2, ground on pin 1.
+    "ldo_out--reversed-header": lambda b: (set_net(b, "J2", "1", "GND"),
+                                           set_net(b, "J2", "2", "+3V3")),
     "cc1_rd--direct-to-gnd": lambda b: set_net(b, "J1", "A5", "GND"),
 }
 

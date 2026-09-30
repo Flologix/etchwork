@@ -71,7 +71,7 @@ def test_common_value_spellings_fall_in_range(spelling):
         assert parse_value(cap) >= _clause("cin").args["min_farads"], cap
 
 
-def _ldo_board(vin="VIN", vout="VOUT"):
+def _ldo_board(vin="VIN", vout="VOUT", header=("+3V3", "GND")):
     """J1 USB-C VBUS -> U1 regulator (pin names vin/vout) -> J2, 1u caps by each pin."""
     return make(
         footprints=[fp("J1", "USB_C", pad_count=16), fp("U1", "LDO", pad_count=3),
@@ -83,7 +83,8 @@ def _ldo_board(vin="VIN", vout="VOUT"):
               pad("U1", 2, "+3V3", pos=(5.0, 0.0), names=[vout]),
               pad("C1", 1, "VBUS", pos=(-1.2, 0.0)), pad("C1", 2, "GND"),
               pad("C2", 1, "+3V3", pos=(6.2, 0.0)), pad("C2", 2, "GND"),
-              pad("J2", 1, "+3V3", names=["Pin_1"]), pad("J2", 2, "GND", names=["Pin_2"])])
+              pad("J2", 1, header[0], names=["Pin_1"]),
+              pad("J2", 2, header[1], names=["Pin_2"])])
 
 
 @pytest.mark.parametrize("vin, vout", [("VIN", "VOUT"), ("VI", "VO"), ("IN", "OUT")])
@@ -92,3 +93,8 @@ def test_regulator_pin_spellings_are_found(vin, vout):
     for clause_id in ["vbus_to_ldo", "ldo_out", "cin", "cout", "rails_distinct"]:
         result = _run(clause_id, board)
         assert result.passed, (clause_id, result.detail)
+
+
+def test_reversed_output_header_fails_ldo_out():
+    assert _run("ldo_out", _ldo_board()).passed  # J2 pin 1 is on +3V3
+    assert not _run("ldo_out", _ldo_board(header=("GND", "+3V3"))).passed
