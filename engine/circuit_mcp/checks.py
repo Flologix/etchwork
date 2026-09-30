@@ -292,6 +292,107 @@ def placement(geometry: boardgeom.Geometry, netlist_text: str) -> list[str]:
     return out
 
 
+# --- phase C: EMC checks (design §6) ---------------------------------------------------
+
+EMC = _DATA["emc"]
+_OTHER_LAYER = {"F.Cu": "B.Cu", "B.Cu": "F.Cu"}
+
+
+def _inside(points, x: float, y: float) -> bool:
+    """Ray casting: is (x, y) inside the polygon? A fill's outline is
+    fractured by KiCad into one simple polygon, holes included."""
+    inside, j = False, len(points) - 1
+    for i in range(len(points)):
+        (xi, yi), (xj, yj) = points[i], points[j]
+        if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def on_fill(geometry: boardgeom.Geometry, net: str, layer: str, x: float, y: float) -> bool:
+    return any(f.net == net and f.layer == layer and f.box[0] <= x <= f.box[2]
+               and f.box[1] <= y <= f.box[3] and _inside(f.points, x, y) for f in geometry.fills)
+
+
+def _fast(net: str, cls: str | None) -> tuple[str, float | None] | None:
+    """`(kind, assumed edge time in ns)` for a fast net, or None. Crystals
+    and RF are checked for their plane only: their edges are not digital."""
+    if cls == "diff_pair":
+        return "diff pair", EMC["edge_ns"]["diff_pair"]
+    if cls in ("crystal", "rf_50ohm"):
+        return cls.replace("_50ohm", ""), None
+    words = set(re.split(r"[^A-Z0-9]+", net.upper()))
+    for kind in ("clock", "switch_node", "gpio"):
+        if words & set(EMC["name_words"][kind]):
+            return kind.replace("_", " "), EMC["edge_ns"][kind]
+    return None
+
+
+def emc(geometry: boardgeom.Geometry, netlist_text: str, classes: dict,
+        drc_report: dict | None) -> list[str]:
+    """The routed board's EMC warnings: fast nets off or across their ground
+    plane, or electrically long; stubs and islands from DRC."""
+    netlist = netclass.read(netlist_text)
+    names = {n.name for n in netlist.nets} | {s.net for s in geometry.segments}
+    grounds = [n for n in names if (classes.get(n) or {}).get("class") == "ground"
+               or netclass._is_ground_name(n)]
+    step = EMC["sample_step_mm"]["value"]
+    out = []
+    for net in sorted(names):
+        fast = _fast(net, (classes.get(net) or {}).get("class"))
+        segments = [s for s in geometry.segments if s.net == net and s.layer in _OTHER_LAYER]
+        if fast is None or not segments:
+            continue
+        kind, edge = fast
+        covered = total = 0
+        widest_gap = 0.0
+        for s in segments:
+            below = _OTHER_LAYER[s.layer]
+            count = max(1, math.ceil(s.length / step))
+            run, seen_ground = 0.0, False
+            for k in range(count):
+                t = (k + 0.5) / count
+                x, y = s.x1 + (s.x2 - s.x1) * t, s.y1 + (s.y2 - s.y1) * t
+                grounded = any(on_fill(geometry, g, below, x, y) for g in grounds)
+                piece = s.length / count
+                total += piece
+                if grounded:
+                    covered += piece
+                    if seen_ground and run:
+                        widest_gap = max(widest_gap, run)
+                    run, seen_ground = 0.0, True
+                elif seen_ground:
+                    run += piece
+        share = covered / total if total else 1.0
+        if grounds and share < EMC["plane_coverage"]["value"]:
+            out.append(f"emc: {net} runs over ground for {share * 100:.0f} % of its length (the rule of "
+                       f"thumb is {EMC['plane_coverage']['value'] * 100:g} %): its return current has no "
+                       f"plane to follow -- route it over the ground pour")
+        if widest_gap >= EMC["gap_mm"]["value"]:
+            out.append(f"emc: {net} crosses a {widest_gap:.1f} mm gap in the ground pour: its return "
+                       f"current detours round it, and the loop radiates -- route it round the gap, or "
+                       f"close the gap")
+        length = sum(s.length for s in geometry.segments if s.net == net)
+        if edge is not None:
+            critical = EMC["signal_speed_mm_per_ns"]["value"] * edge * EMC["critical_fraction"]["value"]
+            if length > critical:
+                out.append(f"emc: {net} is {length:.1f} mm, electrically long for a ~{edge:g} ns edge "
+                           f"(over {critical:.0f} mm) on a {kind} net: keep it over solid ground, shorten "
+                           f"it, or add series termination")
+    for v in (drc_report or {}).get("violations", []):
+        items = v.get("items") or [{}]
+        where = items[0].get("pos") or {}
+        at = f" at ({where.get('x', 0):g}, {where.get('y', 0):g})" if where else ""
+        what = items[0].get("description", "?")
+        if v.get("type") in ("track_dangling", "via_dangling"):
+            out.append(f"emc: a dangling track or via ({what}){at}: a stub radiates -- remove it")
+        elif v.get("type") == "isolated_copper":
+            out.append(f"emc: an isolated copper island ({what}){at}: unconnected copper -- remove it "
+                       f"or connect it to its net")
+    return out
+
+
 def _read(path: pathlib.Path):
     try:
         return json.loads(path.read_text())
@@ -306,7 +407,8 @@ def board_checks(board: pathlib.Path, netlist: pathlib.Path) -> tuple[dict[str, 
     classes = (_read(netlist.with_suffix(".netclasses.json")) or {}).get("nets", {})
     text = netlist.read_text(errors="replace")
     facts = measure(geometry, text, classes)
-    return facts, placement(geometry, text) + warnings(facts, _read(board.with_name(f"{board.stem}.drc.json")))
+    drc = _read(board.with_name(f"{board.stem}.drc.json"))
+    return facts, placement(geometry, text) + warnings(facts, drc) + emc(geometry, text, classes, drc)
 
 
 def placement_checks(board: pathlib.Path, netlist: pathlib.Path) -> list[str]:

@@ -72,6 +72,15 @@ class Keepout:
     box: Box
 
 
+@dataclass(frozen=True)
+class Fill:
+    """One filled region of a pour: its net, its layer, its outline."""
+    net: str
+    layer: str
+    points: tuple[tuple[float, float], ...]
+    box: Box
+
+
 @dataclass
 class Geometry:
     segments: list[Segment] = field(default_factory=list)
@@ -82,6 +91,7 @@ class Geometry:
     footprints: list[Footprint] = field(default_factory=list)
     keepouts: list[Keepout] = field(default_factory=list)
     outline: Box | None = None
+    fills: list[Fill] = field(default_factory=list)
 
 
 def _blocks(text: str, head: str, indent: str = "\t") -> list[str]:
@@ -230,6 +240,13 @@ def read(text: str) -> Geometry:
     for block in _blocks(text, "zone"):
         if "(keepout" not in block and "filled_polygon" in block:
             geometry.poured.add(_net(block))
+            for region in _blocks(block, "filled_polygon", r"\t\t"):
+                layer = re.search(r'\(layer "([^"]+)"\)', region)
+                points = tuple((float(a), float(b)) for a, b in
+                               re.findall(r"\(xy ([-\d.]+) ([-\d.]+)\)", region))
+                if layer and len(points) >= 3:
+                    geometry.fills.append(Fill(net=_net(block), layer=layer.group(1),
+                                               points=points, box=_box(points)))
         elif "(keepout" in block:
             box = _box([(float(a), float(b)) for a, b in re.findall(r"\(xy ([-\d.]+) ([-\d.]+)\)", block)])
             if box:
