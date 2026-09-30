@@ -70,6 +70,20 @@ def _sdo_via_resistor(board):
     place(board, "R4", *_RES, "10k", (38.0, 24.0), {"1": ("N_SDO", ""), "2": ("+3V3", "")})
 
 
+def _sda_scl_joined(board):
+    # SCL, the sensor's SCK and R3 all move onto the SDA net: both wiring and
+    # both pull-ups still hold, only the pair is one net.
+    for ref, number in [("U1", "28"), ("U2", "4"), ("R3", "1")]:
+        set_net(board, ref, number, "N_SDA")
+
+
+def _xtal_joined(board):
+    # XTAL2, the crystal's second pad and C2 all move onto the XTAL1 net:
+    # the crystal still reaches both pins and both loads still hold.
+    for ref, number in [("U1", "8"), ("Y1", "2"), ("C2", "1")]:
+        set_net(board, ref, number, "XT1")
+
+
 MUTANTS = {
     "mcu": lambda b: fp(b, "U1").SetValue("ATmega32U4-AU"),
     "sensor": lambda b: fp(b, "U2").SetValue("BMP280"),
@@ -86,6 +100,8 @@ MUTANTS = {
     "sda_wired": lambda b: set_net(b, "U2", "3", "N_SDA2"),
     "scl_wired": lambda b: set_net(b, "U2", "4", "N_SCL2"),
     "csb_high": lambda b: set_net(b, "U2", "2", "GND"),
+    "sda_scl_distinct": _sda_scl_joined,
+    "xtal_distinct": _xtal_joined,
     "sdo_tied": lambda b: set_net(b, "U2", "5", "N_SDO"),
     "sensor_decoupling": lambda b: fp(b, "C5").SetPosition(mm(26.0, 32.0)),
 }

@@ -36,18 +36,18 @@ instead; it is the Microchip document, redistributed by a distributor.
 | The I2C pull-up has an upper bound set by the rise time and bus capacitance, and a lower bound set by the supply and the 3 mA low-level sink current | NXP UM10204 | §7.1, p. 50, Figures 41 and 42; worked example in §7.2.4, p. 52 |
 | SDA is the MCU's PC4 and SCL its PC5 | ATmega328P datasheet | p. 12 pin configuration, PC4 (ADC4/SDA/PCINT12) and PC5 (ADC5/SCL/PCINT13) |
 
-Disagreements with the brief, and what changed:
+Disagreements with the design (spec §4.4), and what changed:
 
-- The brief cites BME280 document BST-BME280-DS002. The fetched document
+- The design cites BME280 document BST-BME280-DS002. The fetched document
   (revision 1.24) is BST-BME280-DS001-24; DS002 was an older number (the
   distributor copy of revision 1.6 carries it). The source wins; the number
   above is the one read.
-- The brief says the low-power crystal oscillator section gives 12-22 pF and
+- The design says the low-power crystal oscillator section gives 12-22 pF and
   AVR042 recommends 10 kOhm for reset. Confirmed: the datasheet gives 12-22 pF
   (Table 9-3) but AVR042 §5.3 gives 22-33 pF for standard crystals, and AVR042
   Figure 3-1 draws 4.7 kOhm for the reset pull-up (10 kOhm is only the
   debugWIRE lower bound). The clause ranges are unchanged and admit both.
-- The brief points the UM10204 pull-up range at 1k-10k. The manual gives no
+- The design points the UM10204 pull-up range at 1k-10k. The manual gives no
   single range, only the two limits above; the bounds are our judgement (see
   Widened ranges).
 
@@ -64,13 +64,15 @@ Disagreements with the brief, and what changed:
 | xtal1_load, xtal2_load | nothing | a capacitor from each oscillator pin to ground, 10-33 pF | datasheet p. 39 Table 9-3; AVR042 §5.3, p. 15 |
 | sda_pullup, scl_pullup | nothing | a resistor from each line to the supply, 1k-10k | BME280 p. 39 Figure 17; UM10204 §7.1, p. 50 |
 | sda_wired, scl_wired | "over I2C" | the sensor's data and clock reach the MCU's SDA and SCL | BME280 p. 38 pin table |
-| csb_high, sdo_tied | nothing | CSB on the supply; SDO tied directly to a rail | BME280 §6.1, §6.2, p. 32-33 |
+| csb_high, sdo_tied | nothing | CSB on the sensor's own supply; SDO tied directly to a rail | BME280 §6.1, §6.2, p. 32-33 |
+| sda_scl_distinct, xtal_distinct | nothing | SDA and SCL are separate nets; XTAL1 and XTAL2 are separate nets | ATmega328P datasheet p. 12 (separate pins); §9.3 Figure 9-2, p. 38 |
 | sensor_decoupling | nothing | a cap of at least 100 nF within 3 mm of every VDD and VDDIO pin | BME280 p. 39 Figure 17 |
 
 ## Allowlists
 
 `mcu` passes any part whose value contains `ATmega328` (P or non-P, any
-package). `sensor` passes `BME280`; the BMP280 (no humidity, different part)
+package), except the ATmega328PB, a different part (pinned by
+`test_mcu_allowlist`). `sensor` passes `BME280`; the BMP280 (no humidity, different part)
 fails. `crystal` matches a `Y` reference whose value starts with 8 MHz in the
 spellings `8MHz`, `8 MHz`, `8.000MHz`, `8M`; 16, 18 and 80 MHz and 8 kHz fail.
 The 8 MHz value is not an arbitrary choice: 3.3 V limits the part to 10 MHz.
@@ -114,8 +116,22 @@ fails.
 
 ## Known limits
 
-- SDA and SCL on the MCU are matched through the engine's pin-function table,
-  not KiCad's symbol, which names the pins PC4 and PC5.
+- SDA and SCL on the MCU are matched by either word: `SDA`/`SCL` (the
+  engine's pin-function table, which covers the TQFP and DIP symbols only) or
+  `PC4`/`PC5` (KiCad's names, the only ones the QFN symbols carry). Both are
+  limited to the MCU part. `test_symbol_words.py` pins the pads in every
+  package symbol the `mcu` allowlist accepts.
+- **An LC- or ferrite-filtered AVCC fails `avcc`.** The datasheet (§1.1.7)
+  and AVR042 recommend a low-pass filter on AVCC when the ADC is used, but
+  `avcc` asks that AVCC share a net with VCC, so a filtered AVCC is a correct
+  design that fails. The clause stays as is (the datasheet's base rule is
+  "externally connected to VCC").
+- `csb_high` asks that CSB share a net with the sensor's own VDD/VDDIO, so a
+  ferrite-isolated sensor rail passes.
+- The crystal value regex is anchored (`^8`), so a value spelt with a leading
+  word or part number (`Crystal 8MHz`, `ABLS-8.000MHZ`) fails `crystal`, and
+  its designator must match `^Y[0-9]+$`: a crystal referenced `X1` or `XTAL1`
+  is not found.
 - SDO tied through a resistor fails `sdo_tied` (pinned by
   `sdo_tied--via-resistor-only`); the datasheet asks for a direct
   connection.
