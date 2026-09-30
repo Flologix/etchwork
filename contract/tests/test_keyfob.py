@@ -11,6 +11,7 @@ pytest.importorskip("pcbnew")
 
 from contract import dump, score  # noqa: E402
 from contract.board import Board  # noqa: E402
+from contract.tests.fixture_checks import canonical  # noqa: E402
 from contract.tests.fixtures import gen_keyfob  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -82,23 +83,10 @@ def test_adversarial_variant_fails_its_clause_and_only_it(variant):
     assert _not_passing(result) == {variant.split("--")[0]}, _explain(result)
 
 
-def _canonical(data: dict) -> dict:
-    # pcbnew.SaveBoard writes footprints (and their pads) sorted by each
-    # item's own random UUID, so the same script run twice produces the
-    # same content in a different order. UUIDs never reach this dump, so
-    # sort by the fields that do -- ref for footprints, (ref, number) for
-    # pads -- and compare content, not incidental file order.
-    return {
-        **data,
-        "footprints": sorted(data["footprints"], key=lambda f: f["ref"]),
-        "pads": sorted(data["pads"], key=lambda p: (p["ref"], p["number"])),
-    }
-
-
 def test_committed_fixtures_match_the_generator(tmp_path):
     # UUIDs differ run to run, so compare what the grader sees, not bytes.
     gen_keyfob.main(tmp_path)
     for variant in sorted(p.name for p in FIXTURES.iterdir()):
         committed = _dump(FIXTURES / variant / "kicad" / "board.kicad_pcb")
         fresh = dump.dump(tmp_path / variant / "kicad" / "board.kicad_pcb")
-        assert _canonical(committed) == _canonical(fresh), variant
+        assert canonical(committed) == canonical(fresh), variant
