@@ -16,7 +16,7 @@ import json
 import pathlib
 import subprocess
 
-from circuit_mcp import kicad, kicad_lib, netclass, parts, paths, service
+from circuit_mcp import checks, kicad, kicad_lib, netclass, parts, paths, service
 from circuit_mcp import rules as rules_mod
 from circuit_mcp.parts import describe_board
 
@@ -472,10 +472,22 @@ def run_layout(netlist: str, width_mm: float, height_mm: float,
         if repair_note:
             lines.append(repair_note)
         lines.append(kicad.summarise(report))
+        lines += _board_checks(board, netlist) if route else []
         lines.append(f"Board: {board}")
         return "\n".join(lines)
     finally:
         record_board(board)
+
+
+def _board_checks(board: str, netlist: str) -> list[str]:
+    """The routed board measured and checked (board-checks design, phase B):
+    one summary line, then a line per warning. Never costs the layout its
+    answer: a check that fails to run says so instead."""
+    try:
+        facts, warned = checks.board_checks(paths.inside(board), paths.inside(netlist))
+    except Exception as error:  # a check must never fail the layout
+        return [f"board checks: could not run ({type(error).__name__}: {error})"]
+    return [checks.summary_line(facts, warned), *(f"  - {w}" for w in warned)]
 
 
 def net_evidence(netlist: str, offset: int = 0, limit: int = 40) -> str:

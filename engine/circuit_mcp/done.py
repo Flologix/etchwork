@@ -13,7 +13,7 @@ an auto-poke is always safe.
 import json
 import pathlib
 
-from circuit_mcp import kicad, kicad_lib, partspec, paths, schematic, summary, tools
+from circuit_mcp import checks, kicad, kicad_lib, partspec, paths, schematic, summary, tools
 
 
 def _older(path: pathlib.Path, board: pathlib.Path) -> bool:
@@ -90,6 +90,19 @@ def _schematic(netlist: pathlib.Path) -> list[str]:
         return ["the schematic does not match the netlist: run `export_schematic` ("
                 + "; ".join(mismatch[:5]) + ")"]
     return []
+
+
+def _board_checks(board: pathlib.Path, source: pathlib.Path) -> list[str]:
+    """The board checks' warnings (board-checks design): reported, never
+    blocking DONE (§3.4)."""
+    try:
+        _, warned = checks.board_checks(board, source)
+    except Exception:  # a check must never fail check_done
+        return []
+    if not warned:
+        return []
+    return ["Board checks (warnings, not blocking DONE; put these in your final answer):",
+            *(f"- {w}" for w in warned)]
 
 
 def _parts_awaiting(source: pathlib.Path) -> list[str]:
@@ -169,4 +182,5 @@ def check_done(netlist: str, board: str | None = None) -> str:
         "Nets awaiting the human's decision (put these in your final answer):",
         *_flagged(source),
         *_parts_awaiting(source),
+        *_board_checks(path, source),
     ])
