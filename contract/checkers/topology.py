@@ -161,9 +161,12 @@ def _pin_words(pad) -> frozenset[str]:
 
 def diode_across(board: Board, *, cathode: NetSpec, anode: NetSpec) -> Result:
     """A `D` part with its cathode pad on a `cathode` net and its anode pad on
-    an `anode` net. A diode across the two nets the other way round fails,
-    and says so: a reversed flyback diode shorts the supply. A diode whose
-    pins carry no K/A names fails too: its orientation cannot be told."""
+    an `anode` net. A diode with both ends on one net is never across: it
+    does nothing. Any diode across the two nets the other way round fails
+    the clause, even when another diode is right, and the detail names it:
+    a reversed diode across the supply shorts it whatever else is fitted. A
+    diode whose pins carry no K/A names cannot count as across: its
+    orientation cannot be told."""
     k_nets, a_nets = resolve_net(board, cathode), resolve_net(board, anode)
     for spec, nets in ((cathode, k_nets), (anode, a_nets)):
         if not nets:
@@ -177,20 +180,23 @@ def diode_across(board: Board, *, cathode: NetSpec, anode: NetSpec) -> Result:
         k = {p.net for p in pads if _pin_words(p) & _CATHODE}
         a = {p.net for p in pads if _pin_words(p) & _ANODE}
         nets = {p.net for p in pads}
-        if k & k_nets and a & a_nets:
+        if k & k_nets and a & a_nets and k.isdisjoint(a):
             right.append(f.ref)
-        elif k & a_nets and a & k_nets:
+        elif k & a_nets and a & k_nets and k.isdisjoint(a):
             backwards.append(f.ref)
         elif not (k or a) and nets & k_nets and nets & a_nets:
             unnamed.append(f.ref)
     measured = {"across": right, "reversed": backwards, "unnamed": unnamed}
     where = f"{cathode.name} ({_names(k_nets)}) and {anode.name} ({_names(a_nets)})"
+    if backwards:
+        return Result(False, f"{', '.join(backwards)} across {where} is reversed: its anode "
+                             f"is on {cathode.name}"
+                             + (f" ({', '.join(right)} is the right way round, but a reversed "
+                                "diode shorts the supply whatever else is fitted)"
+                                if right else ""), measured)
     if right:
         return Result(True, f"{', '.join(right)} across {where}, cathode on {cathode.name}",
                       measured)
-    if backwards:
-        return Result(False, f"{', '.join(backwards)} across {where} is reversed: its anode "
-                             f"is on {cathode.name}", measured)
     if unnamed:
         return Result(False, f"{', '.join(unnamed)} spans {where}, but its pins have no K/A "
                              "names, so its orientation cannot be told", measured)
