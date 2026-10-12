@@ -1,5 +1,17 @@
 # Etchwork
 
+```text
+  o----------------------------------------------------------------o
+  |                                                                |
+  |   _____  _____   ____  _   _ __        __  ___   ____   _  __  |
+  |  | ____||_   _| / ___|| | | |\ \      / / / _ \ |  _ \ | |/ /  |
+  |  |  _|    | |  | |    | |_| | \ \ /\ / / | | | || |_) || ' /   |
+  |  | |___   | |  | |___ |  _  |  \ V  V /  | |_| ||  _ < | . \   |
+  |  |_____|  |_|   \____||_| |_|   \_/\_/    \___/ |_| \_\|_|\_\  |
+  |                                                                |
+[]+===================== text in, Gerbers out =====================+[]
+```
+
 A PCB design toolkit for AI coding agents. Write a sentence about what you need, and the engine produces a routed, DRC-clean, fab-ready KiCad board with Gerbers. It runs as an MCP server in Docker.
 
 ## Requirements
@@ -134,4 +146,8 @@ requirements a prompt implied, the first slice of "not guaranteed".
 
 ## Licence
 
-Proprietary; see [LICENSE](LICENSE). Contact FlologixAI for licensing. [NOTICE](NOTICE) records where this code came from.
+MIT; see [LICENSE](LICENSE). Contributions are welcome: see [CONTRIBUTING](CONTRIBUTING.md).
+
+The engine image built by `etchwork build` bundles third-party software under its own licences,
+notably KiCad and Freerouting (both GPL-3.0). [NOTICE](NOTICE) lists them and records where this
+code came from.

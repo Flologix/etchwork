@@ -1,3 +1,6 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+
+# Internal design specs and plans; kept out of the public repo.
+docs/superpowers/
