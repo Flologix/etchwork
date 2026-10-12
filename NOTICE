@@ -1,7 +1,31 @@
 Etchwork
+Copyright (c) 2026 FlologixAI. Licensed under the MIT License (see LICENSE).
 
-This repository was extracted on 2026-09-27 from the flai repository
-(github.com/FlologixAI/flai) at commit 8e37357d2, where it
-was developed as flai's "circuit" feature (docker/circuit, docker/runner,
-crates/flai-circuit, and the circuit docs under docs/superpowers). The full
-commit history of that code remains in the flai repository.
+Origin
+------
+This repository was extracted on 2026-09-27 from FlologixAI's flai repository
+at commit 8e37357d2, where it was developed as flai's "circuit" feature.
+
+Third-party software
+--------------------
+Etchwork's own source is MIT. The engine image that `etchwork build` creates
+(engine/Dockerfile) downloads and bundles the following, each under its own
+licence. They run as separate programs or libraries; their licences apply to
+them, not to Etchwork's source.
+
+  KiCad (base image kicad/kicad)   GPL-3.0-or-later   https://www.kicad.org
+  Freerouting 2.4.1                GPL-3.0            https://github.com/freerouting/freerouting
+  SKiDL 2.3.0                      MIT                https://github.com/devbisme/skidl
+  kinet2pcb 1.1.4                  MIT                https://github.com/devbisme/kinet2pcb
+  MCP Python SDK 1.30.0            MIT                https://github.com/modelcontextprotocol/python-sdk
+  pypdfium2 5.13.0                 Apache-2.0 / BSD-3-Clause (PDFium)
+                                                      https://github.com/pypdfium2-team/pypdfium2
+  OpenJDK 25 (Debian package)      GPL-2.0 with Classpath Exception
+
+The image applies two small patches at build time: one to kinet2pcb
+(engine/Dockerfile) and one to SKiDL (engine/patches/). The KiCad symbol and
+footprint libraries are CC-BY-SA-4.0 with an exception for designs made with
+them, so boards Etchwork produces are not bound by that licence.
+
+If you redistribute a built engine image, you take on the GPL's obligations
+for KiCad and Freerouting, including offering their corresponding source.

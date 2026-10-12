@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      # The KiCad base image is several GB; clear room for it.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Docker version
+        run: docker version --format '{{.Server.Version}}'
+
+      - name: Build engine image
+        run: ./etchwork build
+
+      - name: Engine tests
+        run: ./etchwork test
+
+      - name: CLI tests
+        run: sh tests/cli_test.sh
