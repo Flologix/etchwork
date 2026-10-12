@@ -1,6 +1,5 @@
 """The local event log: one JSON line per tool call, in the project.
 
-Flywheel design §5 (docs/superpowers/specs/2026-09-28-flywheel-design.md).
 Every board run shows what the tools get right and wrong -- the refusals,
 the DRC failures a layout converged through, the calls a DONE board took --
 and until now all of it went away with the session. This keeps it, in

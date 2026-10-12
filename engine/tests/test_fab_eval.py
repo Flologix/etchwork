@@ -1,9 +1,7 @@
-"""The fab-profile eval, pre-registered in the spec's §6: six real projects
+"""The fab-profile evaluation covers six real projects
 (board + .kicad_pro), DRC'd as saved and with the profile, plus a synthetic
 outline board. DRC only, so it runs with the suite; the one test that routes
 is opt-in (CIRCUIT_ROUTING_EVAL=1).
-
-Spec: docs/superpowers/specs/2026-09-24-circuit-fab-profile-design.md.
 """
 import json
 import os

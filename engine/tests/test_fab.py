@@ -1,6 +1,4 @@
 """The fab profile, pure: every number sourced, floors only, the custom rules.
-
-Spec: docs/superpowers/specs/2026-09-24-circuit-fab-profile-design.md §3-4.
 """
 from circuit_mcp import fab, tools
 

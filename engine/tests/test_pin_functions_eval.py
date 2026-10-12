@@ -1,7 +1,6 @@
-"""The pin-function eval, pre-registered in the spec's §5: real KiCad libraries,
+"""The pin-function evaluation covers real KiCad libraries,
 six real netlists from earlier runs, and every single-pin miswiring of them.
 
-Spec: docs/superpowers/specs/2026-09-24-circuit-pin-functions-design.md.
 Runs inside the image, where /usr/share/kicad/symbols exists.
 """
 import re

@@ -1,5 +1,4 @@
-"""Board checks, phase A (docs/superpowers/specs/2026-09-29-board-checks-design.md
-§4): placement rules, checked on the placed board before routing, where a
+"""Board checks, phase A: placement rules, checked on the placed board before routing, where a
 fix costs a moved part. Every rule warns; none blocks DONE."""
 import json
 

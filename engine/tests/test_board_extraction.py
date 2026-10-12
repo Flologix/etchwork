@@ -1,5 +1,4 @@
-"""Board checks, phase B (docs/superpowers/specs/2026-09-29-board-checks-design.md
-§5): every routed net measured -- length, vias, narrowest width, path
+"""Board checks, phase B: every routed net measured -- length, vias, narrowest width, path
 resistance, voltage drop -- and checked against its class. Every check warns;
 none blocks DONE (§3.4)."""
 import json
