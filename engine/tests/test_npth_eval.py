@@ -1,8 +1,6 @@
-"""The NPTH-keepout eval, pre-registered in the spec's §5: five real boards,
+"""The NPTH-keepout evaluation covers five real boards,
 stripped of copper and routed by freerouting with and without keepouts, then
 checked by KiCad's DRC.
-
-Spec: docs/superpowers/specs/2026-09-24-circuit-npth-keepout-design.md.
 Real routing takes about four minutes, so it runs only when asked:
 
     CIRCUIT_ROUTING_EVAL=1 python3 -m pytest tests/test_npth_eval.py

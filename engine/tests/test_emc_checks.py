@@ -1,5 +1,4 @@
-"""Board checks, phase C (docs/superpowers/specs/2026-09-29-board-checks-design.md
-§6): EMC. A trace radiates according to its signal's edge time and the loop
+"""Board checks, phase C: EMC. A trace radiates according to its signal's edge time and the loop
 its return current takes, so the checks are: a fast net over its ground
 plane, not crossing a gap in it, not electrically long; and no stubs or
 copper islands. Every check warns; none blocks DONE."""

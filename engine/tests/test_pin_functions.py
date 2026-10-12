@@ -1,6 +1,5 @@
 """The pin-function check, pure: netlist text and a canned lookup in, findings out.
 
-Spec: docs/superpowers/specs/2026-09-24-circuit-pin-functions-design.md §3.3.
 The real-library, real-netlist eval is test_pin_functions_eval.py.
 """
 from circuit_mcp import kicad_lib

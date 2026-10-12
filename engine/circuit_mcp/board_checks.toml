@@ -1,4 +1,4 @@
-# Board checks (docs/superpowers/specs/2026-09-29-board-checks-design.md):
+# Board checks: sourced constants and warning-only rule-of-thumb limits.
 # every constant and limit, with where it came from. Limits marked "rule of
 # thumb" are starting values: every check warns, never blocks (design 3.4),
 # and the event log's worst values are what they get tuned from.

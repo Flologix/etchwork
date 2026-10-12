@@ -1,8 +1,7 @@
-"""The thermal-repair eval, pre-registered in the spec's §5: five real boards,
+"""The thermal-repair evaluation covers five real boards,
 each poured twice -- once with the repair switched off (the baseline, measured
 now rather than remembered) and once with it -- then checked by KiCad's DRC.
 
-Spec: docs/superpowers/specs/2026-09-24-circuit-thermal-repair-design.md.
 Runs inside the image (pcbnew, kicad-cli). Slow: two pours and two DRCs a board.
 """
 import collections
