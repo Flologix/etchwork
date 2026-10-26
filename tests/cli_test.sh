@@ -241,6 +241,50 @@ else
   fail "edited skill: printed a kept/not-overwritten message" "$out9b"
 fi
 
+# --- 9c: marv client, twice ---
+d9c="$scratch/marv-dir"
+mkdir -p "$d9c"
+printf '# my board\n' > "$d9c/AGENTS.md"
+"$etchwork" init "$d9c" --client marv >/dev/null 2>&1
+"$etchwork" init "$d9c" --client marv >/dev/null 2>&1
+args9c=$(json_get "$d9c/.mcp.json" "' '.join(d['mcpServers']['etchwork']['args'])")
+case "$args9c" in
+  *"--pull never"*":/workspace $image") pass "marv: .mcp.json runs the built image, never pulling" ;;
+  *) fail "marv: .mcp.json runs the built image, never pulling" "$args9c" ;;
+esac
+count9c=$(grep -c '<!-- etchwork-skill:begin -->' "$d9c/AGENTS.md" 2>/dev/null || echo 0)
+if [ "$count9c" = 1 ] && grep -q '^name: etchwork$' "$d9c/AGENTS.md" \
+   && grep -q '^# my board$' "$d9c/AGENTS.md"; then
+  pass "marv twice: one skill block, the file's own text kept"
+else
+  fail "marv twice: one skill block, the file's own text kept" "count=$count9c"
+fi
+count9c_py=$(grep -c '<!-- etchwork-python:begin -->' "$d9c/CLAUDE.md" 2>/dev/null || echo 0)
+if [ "$count9c_py" = 1 ] && grep -q 'python3' "$d9c/CLAUDE.md" && grep -q 'board.py' "$d9c/CLAUDE.md"; then
+  pass "marv twice: one CLAUDE.md python block naming board.py"
+else
+  fail "marv twice: one CLAUDE.md python block naming board.py" "count=$count9c_py"
+fi
+count9c_ig=$(grep -cxF '.etchwork/' "$d9c/.gitignore" 2>/dev/null || echo 0)
+if [ "$count9c_ig" = 1 ] && grep -qxF 'parts/*.part.toml' "$d9c/.gitignore" \
+   && grep -qxF 'fp/*.pretty/*.kicad_mod' "$d9c/.gitignore" \
+   && ! grep -qxF 'mcp__etchwork__*' "$d9c/.gitignore" \
+   && ! grep -q 'gerbers' "$d9c/.gitignore"; then
+  pass "marv twice: .gitignore has .etchwork/ and the skill's paths once, no tool names, no board output"
+else
+  fail "marv twice: .gitignore has .etchwork/ and the skill's paths once, no tool names, no board output" "count=$count9c_ig: $(cat "$d9c/.gitignore")"
+fi
+# A user's own .gitignore lines survive.
+d9d="$scratch/marv-gitignore"
+mkdir -p "$d9d"
+printf '*.pdf\n' > "$d9d/.gitignore"
+"$etchwork" init "$d9d" --client marv >/dev/null 2>&1
+if grep -qxF '*.pdf' "$d9d/.gitignore" && grep -qxF '.etchwork/' "$d9d/.gitignore"; then
+  pass "marv: an existing .gitignore keeps its lines"
+else
+  fail "marv: an existing .gitignore keeps its lines" "$(cat "$d9d/.gitignore")"
+fi
+
 # --- 10: no Docker ---
 d10="$scratch/no-docker"
 mkdir -p "$d10"
@@ -294,6 +338,40 @@ if [ "$rc11b" = 0 ] && [ -f "$d11b/.mcp.json" ] && [ ! -e "$d11b/AGENTS.md" ] \
   pass "detect: the folder's own config beats PATH"
 else
   fail "detect: the folder's own config beats PATH" "exit $rc11b: $out11b"
+fi
+
+d11ab="$scratch/detect-agents-md-is-codex"
+mkdir -p "$d11ab"
+printf '# notes\n' > "$d11ab/AGENTS.md"
+out11ab=$(PATH=$(agent_path marv) "$etchwork" init "$d11ab" </dev/null 2>&1)
+rc11ab=$?
+if [ "$rc11ab" = 0 ] && [ ! -e "$d11ab/.mcp.json" ] \
+   && printf '%s\n' "$out11ab" | grep -q "^client: codex (this folder already has its config)"; then
+  pass "detect: AGENTS.md alone is codex, not marv (Marv reads it, but codex writes it)"
+else
+  fail "detect: AGENTS.md alone is codex, not marv (Marv reads it, but codex writes it)" "exit $rc11ab: $out11ab"
+fi
+
+d11ma="$scratch/detect-mcp-json-is-marv"
+mkdir -p "$d11ma"
+printf '{"mcpServers": {}}\n' > "$d11ma/.mcp.json"
+out11ma=$(PATH=$(agent_path) "$etchwork" init "$d11ma" </dev/null 2>&1)
+rc11ma=$?
+if [ "$rc11ma" = 0 ] && [ -f "$d11ma/AGENTS.md" ] \
+   && printf '%s\n' "$out11ma" | grep -q "^client: marv (this folder already has its config)"; then
+  pass "detect: .mcp.json alone is marv"
+else
+  fail "detect: .mcp.json alone is marv" "exit $rc11ma: $out11ma"
+fi
+
+d11mp="$scratch/detect-only-marv"
+out11mp=$(PATH=$(agent_path marv) "$etchwork" init "$d11mp" </dev/null 2>&1)
+rc11mp=$?
+if [ "$rc11mp" = 0 ] && [ -f "$d11mp/.mcp.json" ] \
+   && printf '%s\n' "$out11mp" | grep -q "^client: marv (the only supported agent on PATH)"; then
+  pass "detect: the only agent on PATH (marv)"
+else
+  fail "detect: the only agent on PATH (marv)" "exit $rc11mp: $out11mp"
 fi
 
 d11c="$scratch/detect-ambiguous"
