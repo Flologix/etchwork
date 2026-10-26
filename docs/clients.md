@@ -12,8 +12,10 @@ and prints the tag as `IMAGE=<tag>` when it's done.
 Without `--client`, `init` picks the client itself and prints which and why:
 
 1. the one whose config the folder already has (`.claude/` → claude-code,
-   `AGENTS.md` → codex, `.flai-code/` → flai), if exactly one;
-2. otherwise the only supported agent on `PATH` (`claude`, `codex`, `flai`);
+   `AGENTS.md` → codex, `.flai-code/` → flai, `.mcp.json` → marv), if
+   exactly one;
+2. otherwise the only supported agent on `PATH` (`claude`, `codex`, `flai`,
+   `marv`);
 3. otherwise it asks, in a terminal, and without one exits 2 naming the
    candidates and writing nothing. Pass `--client` in scripts and CI.
 
@@ -91,6 +93,49 @@ Then type:
 ```
 /etchwork design a board for <what you need>
 ```
+
+## Marv
+
+```sh
+etchwork init <project-dir> --client marv --build
+```
+
+This writes four things:
+
+- an `etchwork` entry in `<project-dir>/.mcp.json` — the same `docker run`
+  stanza as Claude Code's, kept alongside any other servers already there.
+  Marv reads a project's `.mcp.json` **only when it starts**, so start it
+  after this exists;
+- the skill in `<project-dir>/AGENTS.md`, between the same
+  `<!-- etchwork-skill:begin -->` / `<!-- etchwork-skill:end -->` markers
+  Codex's path uses (Marv reads `AGENTS.md`, so re-running either client
+  replaces that one block and leaves the rest of the file alone);
+- a short `## Python` block in `<project-dir>/CLAUDE.md`, between
+  `<!-- etchwork-python:begin -->` / `<!-- etchwork-python:end -->`: the
+  board script runs with plain `python3`, no venv or build step;
+- `.gitignore` entries for what the engine and the skill write and the board
+  doesn't: `.etchwork/`, `*.kicad_prl`, `*.kicad_dru.orig`, plus the paths
+  the skill quotes for the engine (`parts/*.part.toml`,
+  `fp/*.pretty/*.kicad_mod`, `symbols/*.kicad_sym`, `*.netclasses.json`).
+  A checkout of the board stays the board; Gerber output is yours and stays
+  tracked. Existing lines in the file are kept.
+
+```sh
+cd <project-dir> && marv
+```
+
+Then, once, in Marv:
+
+```
+/mcp trust
+```
+
+That approves the project's server; without it Marv won't start the engine.
+Then ask in plain words, e.g. "design a board for <what you need>".
+
+If the project's latest commit still has `.etchwork/` in it, `init` says
+so: Marv's checkpoints and undo would restore the event log on every turn.
+Fix it with `git rm -r --cached .etchwork`.
 
 ## Any other MCP client
 
